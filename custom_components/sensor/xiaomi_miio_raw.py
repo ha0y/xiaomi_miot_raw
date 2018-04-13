@@ -208,7 +208,8 @@ class XiaomiMiioGenericDevice(Entity):
             _props = self._properties.copy()
             values = []
             while _props:
-                values.extend(await self.hass.async_add_job(self._device.send, 'get_prop', _props[:15]))
+                values.extend(await self.hass.async_add_job(
+                    self._device.send, 'get_prop', _props[:15]))
                 _props[:] = _props[15:]
 
             _LOGGER.debug("Response of the get properties call: %s", values)
