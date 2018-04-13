@@ -8,7 +8,15 @@ Credits: Thanks to [Rytilahti](https://github.com/rytilahti/python-miio) for all
 
 ## Features
 
-TBD.
+* Power (on, off)
+* Sensor value (RSSI in dBm of the WiFi connection)
+* Raw command (method + params)
+* Set properties (property list)
+* Attributes (can be extended by "Set properties")
+  - model
+  - firmware_version
+  - hardware_version
+  - properties
 
 ## Setup
 
