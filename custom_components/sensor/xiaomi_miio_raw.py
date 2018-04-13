@@ -203,9 +203,14 @@ class XiaomiMiioGenericDevice(Entity):
         from miio import DeviceException
 
         try:
-            values = await self.hass.async_add_job(self._device.send,
-                                                   'get_prop',
-                                                   self._properties)
+            # A single request is limited to 16 properties. Therefore the
+            # properties are divided into multiple requests
+            _props = self._properties.copy()
+            values = []
+            while _props:
+                values.extend(await self.hass.async_add_job(self._device.send, 'get_prop', _props[:15]))
+                _props[:] = _props[15:]
+
             _LOGGER.debug("Response of the get properties call: %s", values)
 
             properties_count = len(self._properties)
