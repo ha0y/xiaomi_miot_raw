@@ -61,8 +61,6 @@ logger:
 
 ## Platform services
 
-## Platform services
-
 #### Service `sensor.xiaomi_miio_raw_set_properties`
 
 Update the list of the retrieved properties.
