@@ -34,12 +34,16 @@ sensor:
     name: Any Xiaomi MiIO device
     host: 192.168.130.73
     token: 56197337f51f287d69a8a16cf0677379
+    property: 'humidity'
+    unit: '%'
 ```
 
 Configuration variables:
 - **host** (*Required*): The IP of your miio device.
 - **token** (*Required*): The API token of your miio device.
 - **name** (*Optional*): The name of your miio device.
+- **property** (*Optional*): Property used as sensor value. WiFi RSSI if unset.
+- **unit** (*Optional*): Measurement unit of the property. dBm if unset.
 
 ## Debugging
 

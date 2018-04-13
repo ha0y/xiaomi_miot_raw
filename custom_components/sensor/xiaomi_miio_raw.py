@@ -17,10 +17,15 @@ _LOGGER = logging.getLogger(__name__)
 DEFAULT_NAME = 'Xiaomi Miio Device'
 DATA_KEY = 'sensor.xiaomi_miio_raw'
 
+CONF_PROPERTY='property'
+CONF_UNIT='unit'
+
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_HOST): cv.string,
     vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+    vol.Optional(CONF_PROPERTY): cv.string,
+    vol.Optional(CONF_UNIT, default='dBm'): cv.string,
 })
 
 REQUIREMENTS = ['python-miio>=0.3.7']
@@ -75,6 +80,8 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     host = config.get(CONF_HOST)
     name = config.get(CONF_NAME)
     token = config.get(CONF_TOKEN)
+    sensor_property = config.get(CONF_PROPERTY)
+    sensor_unit = config.get(CONF_UNIT)
 
     _LOGGER.info("Initializing with host %s (token %s...)", host, token[:5])
 
@@ -87,7 +94,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
                      device_info.firmware_version,
                      device_info.hardware_version)
 
-        device = XiaomiMiioGenericDevice(name, miio_device, device_info)
+        device = XiaomiMiioGenericDevice(name, miio_device, device_info, sensor_property, sensor_unit)
     except DeviceException:
         raise PlatformNotReady
 
@@ -124,15 +131,16 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 class XiaomiMiioGenericDevice(Entity):
     """Representation of a Xiaomi Air Quality Monitor."""
 
-    def __init__(self, name, device, device_info):
+    def __init__(self, name, device, device_info, sensor_property, sensor_unit):
         """Initialize the entity."""
         self._name = name
         self._device = device
         self._model = device_info.model
+        self._sensor_property = sensor_property
+        self._unit_of_measurement = sensor_unit
         self._unique_id = "{}-{}".format(device_info.model,
                                          device_info.mac_address)
         self._icon = 'mdi:flask-outline'
-        self._unit_of_measurement = 'dBm'
 
         self._properties = ['power']
         self._available = None
@@ -234,13 +242,16 @@ class XiaomiMiioGenericDevice(Entity):
             self._available = False
             _LOGGER.error("Got exception while fetching the state: %s", ex)
 
-        try:
-            device_info = await self.hass.async_add_job(self._device.info)
-            self._state = device_info.accesspoint.get('rssi', self._model)
+        if self._sensor_property is not None:
+            self._state = state.get(self._sensor_property)
+        else:
+            try:
+                device_info = await self.hass.async_add_job(self._device.info)
+                self._state = device_info.accesspoint.get('rssi', self._model)
 
-        except DeviceException as ex:
-            self._available = False
-            _LOGGER.error("Got exception while fetching device info: %s", ex)
+            except DeviceException as ex:
+                self._available = False
+                _LOGGER.error("Got exception while fetching device info: %s", ex)
 
     async def async_turn_on(self, **kwargs):
         """Turn the miio device on."""
