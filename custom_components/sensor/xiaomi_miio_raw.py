@@ -17,8 +17,8 @@ _LOGGER = logging.getLogger(__name__)
 DEFAULT_NAME = 'Xiaomi Miio Device'
 DATA_KEY = 'sensor.xiaomi_miio_raw'
 
-CONF_PROPERTY='property'
-CONF_UNIT='unit'
+CONF_PROPERTY = 'property'
+CONF_UNIT = 'unit'
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_HOST): cv.string,
@@ -94,7 +94,8 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
                      device_info.firmware_version,
                      device_info.hardware_version)
 
-        device = XiaomiMiioGenericDevice(name, miio_device, device_info, sensor_property, sensor_unit)
+        device = XiaomiMiioGenericDevice(name, miio_device, device_info,
+                                         sensor_property, sensor_unit)
     except DeviceException:
         raise PlatformNotReady
 
@@ -131,7 +132,8 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 class XiaomiMiioGenericDevice(Entity):
     """Representation of a Xiaomi Air Quality Monitor."""
 
-    def __init__(self, name, device, device_info, sensor_property, sensor_unit):
+    def __init__(self, name, device, device_info, sensor_property,
+                 sensor_unit):
         """Initialize the entity."""
         self._name = name
         self._device = device
@@ -251,7 +253,8 @@ class XiaomiMiioGenericDevice(Entity):
 
             except DeviceException as ex:
                 self._available = False
-                _LOGGER.error("Got exception while fetching device info: %s", ex)
+                _LOGGER.error(
+                    "Got exception while fetching device info: %s", ex)
 
     async def async_turn_on(self, **kwargs):
         """Turn the miio device on."""
