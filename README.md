@@ -37,9 +37,9 @@ sensor:
 ```
 
 Configuration variables:
-- **host** (*Required*): The IP of your light.
-- **token** (*Required*): The API token of your light.
-- **name** (*Optional*): The name of your light.
+- **host** (*Required*): The IP of your miio device.
+- **token** (*Required*): The API token of your miio device.
+- **name** (*Optional*): The name of your miio device.
 
 ## Debugging
 
