@@ -17,15 +17,18 @@ _LOGGER = logging.getLogger(__name__)
 DEFAULT_NAME = 'Xiaomi Miio Device'
 DATA_KEY = 'sensor.xiaomi_miio_raw'
 
-CONF_PROPERTY = 'property'
-CONF_UNIT = 'unit'
+CONF_SENSOR_PROPERTY = 'sensor_property'
+CONF_SENSOR_UNIT = 'sensor_unit'
+CONF_DEFAULT_PROPERTIES = 'default_properties'
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_HOST): cv.string,
     vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_PROPERTY): cv.string,
-    vol.Optional(CONF_UNIT, default='dBm'): cv.string,
+    vol.Optional(CONF_SENSOR_PROPERTY): cv.string,
+    vol.Optional(CONF_SENSOR_UNIT, default='dBm'): cv.string,
+    vol.Optional(CONF_DEFAULT_PROPERTIES, default=['power']):
+        vol.All(cv.ensure_list, [cv.string]),
 })
 
 REQUIREMENTS = ['python-miio>=0.3.7']
@@ -78,10 +81,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
         hass.data[DATA_KEY] = {}
 
     host = config.get(CONF_HOST)
-    name = config.get(CONF_NAME)
     token = config.get(CONF_TOKEN)
-    sensor_property = config.get(CONF_PROPERTY)
-    sensor_unit = config.get(CONF_UNIT)
 
     _LOGGER.info("Initializing with host %s (token %s...)", host, token[:5])
 
@@ -94,8 +94,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
                      device_info.firmware_version,
                      device_info.hardware_version)
 
-        device = XiaomiMiioGenericDevice(name, miio_device, device_info,
-                                         sensor_property, sensor_unit)
+        device = XiaomiMiioGenericDevice(miio_device, config, device_info)
     except DeviceException:
         raise PlatformNotReady
 
@@ -132,19 +131,24 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 class XiaomiMiioGenericDevice(Entity):
     """Representation of a Xiaomi Air Quality Monitor."""
 
-    def __init__(self, name, device, device_info, sensor_property,
-                 sensor_unit):
+    def __init__(self, device, config, device_info):
         """Initialize the entity."""
-        self._name = name
         self._device = device
+
+        self._name = config.get(CONF_NAME)
+        self._sensor_property = config.get(CONF_SENSOR_PROPERTY)
+        self._unit_of_measurement = config.get(CONF_SENSOR_UNIT)
+        self._properties = config.get(CONF_DEFAULT_PROPERTIES)
+
+        if self._sensor_property is not None:
+            self._properties.append(self._sensor_property)
+            self._properties = list(set(self._properties))
+
         self._model = device_info.model
-        self._sensor_property = sensor_property
-        self._unit_of_measurement = sensor_unit
         self._unique_id = "{}-{}".format(device_info.model,
                                          device_info.mac_address)
         self._icon = 'mdi:flask-outline'
 
-        self._properties = ['power']
         self._available = None
         self._state = None
         self._state_attrs = {
@@ -270,7 +274,10 @@ class XiaomiMiioGenericDevice(Entity):
 
     async def async_set_properties(self, properties: list):
         """Set properties. Will be retrieved on next update."""
-        self._properties = properties
+        if self._sensor_property is not None:
+            properties.append(self._sensor_property)
+
+        self._properties = list(set(properties))
         self._state_attrs.update({
             ATTR_PROPERTIES: self._properties
         })
