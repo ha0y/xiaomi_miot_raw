@@ -40,15 +40,41 @@ sensor:
     default_properties:
       - power
       - temperature
+
+sensor:
+  - platform: xiaomi_miio_raw
+    name: Any Xiaomi MiIO device
+    host: 192.168.130.73
+    token: 56197337f51f287d69a8a16cf0677379
+    turn_on_command: 'set_power'
+    turn_on_parameters: 'on'
+    turn_off_command: 'set_power'
+    turn_off_parameters: 'off'
+    state_property: 'power'
+    state_on_value: 'on'
+    state_off_value: 'off'
+
 ```
 
-Configuration variables:
+Configuration variables (sensor platform):
 - **host** (*Required*): The IP of your miio device.
 - **token** (*Required*): The API token of your miio device.
 - **name** (*Optional*): The name of your miio device.
 - **sensor_property** (*Optional*): Property used as sensor value. WiFi RSSI if unset.
 - **sensor_unit** (*Optional*): Measurement unit of the property. dBm if unset.
 - **default_properties** (*Optional*): List of requested properties. ['power'] if unset.
+
+Configuration variables (switch platform):
+- **host** (*Required*): The IP of your miio device.
+- **token** (*Required*): The API token of your miio device.
+- **name** (*Optional*): The name of your miio device.
+- **turn_on_command** (*Optional*): The miIO command to send on `switch.turn_on`. Default value: `set_power`.
+- **turn_on_parameters** (*Optional*): The miIO commands parameters. Default value: `on`.
+- **turn_off_command** (*Optional*): The miIO command to send on `switch.turn_off`. Default value: `set_power`.
+- **turn_off_parameters** (*Optional*): The miIO commands parameters. Default value: `off`.
+- **state_property** (*Optional*): The miIO property which provides the current state.
+- **state_on_value** (*Optional*): The value of the `state_property` which indicates the `is_on` state. Default value: 'on'
+- **state_off_value** (*Optional*): The value of the `state_property` which indicates the `is_off` state. Default value: 'off'
 
 ## Debugging
 
@@ -61,6 +87,7 @@ logger:
   default: warn
   logs:
     custom_components.sensor.xiaomi_miio_raw: debug
+    custom_components.switch.xiaomi_miio_raw: debug
     miio: debug
 ```
 
