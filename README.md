@@ -41,7 +41,7 @@ sensor:
       - power
       - temperature
 
-sensor:
+switch:
   - platform: xiaomi_miio_raw
     name: Any Xiaomi MiIO device
     host: 192.168.130.73
