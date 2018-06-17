@@ -21,6 +21,7 @@ CONF_TURN_OFF_PARAMETERS = 'turn_off_parameters'
 CONF_STATE_PROPERTY = 'state_property'
 CONF_STATE_ON_VALUE = 'state_on_value'
 CONF_STATE_OFF_VALUE = 'state_off_value'
+CONF_UPDATE_INSTANT = 'update_instant'
 
 ATTR_STATE_PROPERTY = CONF_STATE_PROPERTY
 ATTR_STATE_VALUE = 'state_value'
@@ -38,6 +39,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_STATE_PROPERTY, default='power'): cv.string,
     vol.Optional(CONF_STATE_ON_VALUE, default='on'): cv.string,
     vol.Optional(CONF_STATE_OFF_VALUE, default='off'): cv.string,
+    vol.Optional(CONF_UPDATE_INSTANT, default=True): cv.boolean,
 })
 
 REQUIREMENTS = ['python-miio>=0.3.7']
@@ -94,6 +96,8 @@ class XiaomiMiioGenericDevice(SwitchDevice):
         self._state_property = config.get(CONF_STATE_PROPERTY)
         self._state_on_value = config.get(CONF_STATE_ON_VALUE)
         self._state_off_value = config.get(CONF_STATE_OFF_VALUE)
+        self._update_instant = config.get(CONF_UPDATE_INSTANT)
+        self._skip_update = False
 
         self._model = device_info.model
         self._unique_id = "{}-{}-{}".format(device_info.model,
@@ -184,13 +188,14 @@ class XiaomiMiioGenericDevice(SwitchDevice):
         from miio import DeviceException
 
         # On state change some devices doesn't provide the new state immediately.
-        if self._skip_update:
+        if self._update_instant is False and self._skip_update:
             self._skip_update = False
             return
 
         try:
             state = await self.hass.async_add_job(
                 self._device.send, 'get_prop', [self._state_property])
+            state = state.pop()
 
             _LOGGER.debug("Got new state: %s", state)
 
@@ -201,6 +206,9 @@ class XiaomiMiioGenericDevice(SwitchDevice):
             elif state == self._state_off_value:
                 self._state = False
             else:
+                _LOGGER.warning(
+                    "New state (%s) doesn't match expected values: %s/%s",
+                    state, self._state_on_value, self._state_off_value)
                 self._state = None
 
             self._state_attrs.update({
