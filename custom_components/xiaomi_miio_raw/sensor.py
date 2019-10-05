@@ -31,8 +31,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
         vol.All(cv.ensure_list, [cv.string]),
 })
 
-REQUIREMENTS = ['python-miio>=0.3.7']
-
 ATTR_MODEL = 'model'
 ATTR_FIRMWARE_VERSION = 'firmware_version'
 ATTR_HARDWARE_VERSION = 'hardware_version'

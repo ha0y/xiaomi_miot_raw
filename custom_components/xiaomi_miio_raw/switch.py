@@ -42,8 +42,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_UPDATE_INSTANT, default=True): cv.boolean,
 })
 
-REQUIREMENTS = ['python-miio>=0.3.7']
-
 ATTR_MODEL = 'model'
 ATTR_FIRMWARE_VERSION = 'firmware_version'
 ATTR_HARDWARE_VERSION = 'hardware_version'
