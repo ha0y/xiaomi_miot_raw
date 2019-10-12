@@ -5,48 +5,52 @@ import logging
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.switch import (SwitchDevice, PLATFORM_SCHEMA, )
-from homeassistant.const import (CONF_NAME, CONF_HOST, CONF_TOKEN, )
+from homeassistant.components.switch import SwitchDevice, PLATFORM_SCHEMA
+from homeassistant.const import CONF_NAME, CONF_HOST, CONF_TOKEN
 from homeassistant.exceptions import PlatformNotReady
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = 'Xiaomi Miio Device'
-DATA_KEY = 'switch.xiaomi_miio_raw'
+DEFAULT_NAME = "Xiaomi Miio Device"
+DATA_KEY = "switch.xiaomi_miio_raw"
 
-CONF_TURN_ON_COMMAND = 'turn_on_command'
-CONF_TURN_ON_PARAMETERS = 'turn_on_parameters'
-CONF_TURN_OFF_COMMAND = 'turn_off_command'
-CONF_TURN_OFF_PARAMETERS = 'turn_off_parameters'
-CONF_STATE_PROPERTY = 'state_property'
-CONF_STATE_ON_VALUE = 'state_on_value'
-CONF_STATE_OFF_VALUE = 'state_off_value'
-CONF_UPDATE_INSTANT = 'update_instant'
+CONF_TURN_ON_COMMAND = "turn_on_command"
+CONF_TURN_ON_PARAMETERS = "turn_on_parameters"
+CONF_TURN_OFF_COMMAND = "turn_off_command"
+CONF_TURN_OFF_PARAMETERS = "turn_off_parameters"
+CONF_STATE_PROPERTY = "state_property"
+CONF_STATE_ON_VALUE = "state_on_value"
+CONF_STATE_OFF_VALUE = "state_off_value"
+CONF_UPDATE_INSTANT = "update_instant"
 
 ATTR_STATE_PROPERTY = CONF_STATE_PROPERTY
-ATTR_STATE_VALUE = 'state_value'
+ATTR_STATE_VALUE = "state_value"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_HOST): cv.string,
-    vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_TURN_ON_COMMAND, default='set_power'): cv.string,
-    vol.Optional(CONF_TURN_ON_PARAMETERS, default=['on']):
-        vol.All(cv.ensure_list, [cv.string]),
-    vol.Optional(CONF_TURN_OFF_COMMAND, default='set_power'): cv.string,
-    vol.Optional(CONF_TURN_OFF_PARAMETERS, default=['off']):
-        vol.All(cv.ensure_list, [cv.string]),
-    vol.Optional(CONF_STATE_PROPERTY, default='power'): cv.string,
-    vol.Optional(CONF_STATE_ON_VALUE, default='on'): cv.string,
-    vol.Optional(CONF_STATE_OFF_VALUE, default='off'): cv.string,
-    vol.Optional(CONF_UPDATE_INSTANT, default=True): cv.boolean,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_HOST): cv.string,
+        vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_TURN_ON_COMMAND, default="set_power"): cv.string,
+        vol.Optional(CONF_TURN_ON_PARAMETERS, default=["on"]): vol.All(
+            cv.ensure_list, [cv.string]
+        ),
+        vol.Optional(CONF_TURN_OFF_COMMAND, default="set_power"): cv.string,
+        vol.Optional(CONF_TURN_OFF_PARAMETERS, default=["off"]): vol.All(
+            cv.ensure_list, [cv.string]
+        ),
+        vol.Optional(CONF_STATE_PROPERTY, default="power"): cv.string,
+        vol.Optional(CONF_STATE_ON_VALUE, default="on"): cv.string,
+        vol.Optional(CONF_STATE_OFF_VALUE, default="off"): cv.string,
+        vol.Optional(CONF_UPDATE_INSTANT, default=True): cv.boolean,
+    }
+)
 
-ATTR_MODEL = 'model'
-ATTR_FIRMWARE_VERSION = 'firmware_version'
-ATTR_HARDWARE_VERSION = 'hardware_version'
+ATTR_MODEL = "model"
+ATTR_FIRMWARE_VERSION = "firmware_version"
+ATTR_HARDWARE_VERSION = "hardware_version"
 
-SUCCESS = ['ok']
+SUCCESS = ["ok"]
 
 
 # pylint: disable=unused-argument
@@ -54,6 +58,7 @@ SUCCESS = ['ok']
 def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     """Set up the sensor from config."""
     from miio import Device, DeviceException
+
     if DATA_KEY not in hass.data:
         hass.data[DATA_KEY] = {}
 
@@ -66,10 +71,12 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
         miio_device = Device(host, token)
         device_info = miio_device.info()
         model = device_info.model
-        _LOGGER.info("%s %s %s detected",
-                     model,
-                     device_info.firmware_version,
-                     device_info.hardware_version)
+        _LOGGER.info(
+            "%s %s %s detected",
+            model,
+            device_info.firmware_version,
+            device_info.hardware_version,
+        )
 
         device = XiaomiMiioGenericDevice(miio_device, config, device_info)
     except DeviceException:
@@ -98,10 +105,10 @@ class XiaomiMiioGenericDevice(SwitchDevice):
         self._skip_update = False
 
         self._model = device_info.model
-        self._unique_id = "{}-{}-{}".format(device_info.model,
-                                            device_info.mac_address,
-                                            self._state_property)
-        self._icon = 'mdi:flask-outline'
+        self._unique_id = "{}-{}-{}".format(
+            device_info.model, device_info.mac_address, self._state_property
+        )
+        self._icon = "mdi:flask-outline"
 
         self._available = None
         self._state = None
@@ -109,7 +116,7 @@ class XiaomiMiioGenericDevice(SwitchDevice):
             ATTR_MODEL: self._model,
             ATTR_FIRMWARE_VERSION: device_info.firmware_version,
             ATTR_HARDWARE_VERSION: device_info.hardware_version,
-            ATTR_STATE_PROPERTY: self._state_property
+            ATTR_STATE_PROPERTY: self._state_property,
         }
 
     @property
@@ -150,9 +157,9 @@ class XiaomiMiioGenericDevice(SwitchDevice):
     async def _try_command(self, mask_error, func, *args, **kwargs):
         """Call a device command handling error messages."""
         from miio import DeviceException
+
         try:
-            result = await self.hass.async_add_job(
-                partial(func, *args, **kwargs))
+            result = await self.hass.async_add_job(partial(func, *args, **kwargs))
 
             _LOGGER.info("Response received from miio device: %s", result)
 
@@ -164,8 +171,11 @@ class XiaomiMiioGenericDevice(SwitchDevice):
     async def async_turn_on(self, **kwargs):
         """Turn on."""
         result = await self._try_command(
-            "Turning the miio device on failed.", self._device.send,
-            self._turn_on_command, self._turn_on_parameters)
+            "Turning the miio device on failed.",
+            self._device.send,
+            self._turn_on_command,
+            self._turn_on_parameters,
+        )
 
         if result:
             self._state = True
@@ -174,8 +184,11 @@ class XiaomiMiioGenericDevice(SwitchDevice):
     async def async_turn_off(self, **kwargs):
         """Turn off."""
         result = await self._try_command(
-            "Turning the miio device off failed.", self._device.send,
-            self._turn_off_command, self._turn_off_parameters)
+            "Turning the miio device off failed.",
+            self._device.send,
+            self._turn_off_command,
+            self._turn_off_parameters,
+        )
 
         if result:
             self._state = False
@@ -192,7 +205,8 @@ class XiaomiMiioGenericDevice(SwitchDevice):
 
         try:
             state = await self.hass.async_add_job(
-                self._device.send, 'get_prop', [self._state_property])
+                self._device.send, "get_prop", [self._state_property]
+            )
             state = state.pop()
 
             _LOGGER.debug("Got new state: %s", state)
@@ -206,12 +220,13 @@ class XiaomiMiioGenericDevice(SwitchDevice):
             else:
                 _LOGGER.warning(
                     "New state (%s) doesn't match expected values: %s/%s",
-                    state, self._state_on_value, self._state_off_value)
+                    state,
+                    self._state_on_value,
+                    self._state_off_value,
+                )
                 self._state = None
 
-            self._state_attrs.update({
-                ATTR_STATE_VALUE: state
-            })
+            self._state_attrs.update({ATTR_STATE_VALUE: state})
 
         except DeviceException as ex:
             self._available = False
