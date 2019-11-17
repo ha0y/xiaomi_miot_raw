@@ -19,6 +19,7 @@ DATA_KEY = "sensor.xiaomi_miio_raw"
 CONF_SENSOR_PROPERTY = "sensor_property"
 CONF_SENSOR_UNIT = "sensor_unit"
 CONF_DEFAULT_PROPERTIES = "default_properties"
+CONF_DEFAULT_PROPERTIES_GETTER = "default_properties_getter"
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -26,7 +27,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Optional(CONF_SENSOR_PROPERTY): cv.string,
-        vol.Optional(CONF_SENSOR_UNIT, default="dBm"): cv.string,
+        vol.Optional(CONF_DEFAULT_PROPERTIES_GETTER, default="get_prop"): cv.string,
         vol.Optional(CONF_DEFAULT_PROPERTIES, default=["power"]): vol.All(
             cv.ensure_list, [cv.string]
         ),
@@ -150,6 +151,7 @@ class XiaomiMiioGenericDevice(Entity):
         self._sensor_property = config.get(CONF_SENSOR_PROPERTY)
         self._unit_of_measurement = config.get(CONF_SENSOR_UNIT)
         self._properties = config.get(CONF_DEFAULT_PROPERTIES)
+        self._properties_getter = config.get(CONF_DEFAULT_PROPERTIES_GETTER)
 
         if self._sensor_property is not None:
             self._properties.append(self._sensor_property)
@@ -234,7 +236,7 @@ class XiaomiMiioGenericDevice(Entity):
             while _props:
                 values.extend(
                     await self.hass.async_add_job(
-                        self._device.send, "get_prop", _props[:15]
+                        self._device.send, self._properties_getter, _props[:15]
                     )
                 )
                 _props[:] = _props[15:]

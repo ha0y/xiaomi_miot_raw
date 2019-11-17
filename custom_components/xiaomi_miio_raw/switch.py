@@ -19,6 +19,7 @@ CONF_TURN_ON_PARAMETERS = "turn_on_parameters"
 CONF_TURN_OFF_COMMAND = "turn_off_command"
 CONF_TURN_OFF_PARAMETERS = "turn_off_parameters"
 CONF_STATE_PROPERTY = "state_property"
+CONF_STATE_PROPERTY_GETTER = "state_property_getter"
 CONF_STATE_ON_VALUE = "state_on_value"
 CONF_STATE_OFF_VALUE = "state_off_value"
 CONF_UPDATE_INSTANT = "update_instant"
@@ -40,6 +41,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
             cv.ensure_list, [cv.string]
         ),
         vol.Optional(CONF_STATE_PROPERTY, default="power"): cv.string,
+        vol.Optional(CONF_STATE_PROPERTY_GETTER, default="get_prop"): cv.string,
         vol.Optional(CONF_STATE_ON_VALUE, default="on"): cv.string,
         vol.Optional(CONF_STATE_OFF_VALUE, default="off"): cv.string,
         vol.Optional(CONF_UPDATE_INSTANT, default=True): cv.boolean,
@@ -99,6 +101,7 @@ class XiaomiMiioGenericDevice(SwitchDevice):
         self._turn_off_command = config.get(CONF_TURN_OFF_COMMAND)
         self._turn_off_parameters = config.get(CONF_TURN_OFF_PARAMETERS)
         self._state_property = config.get(CONF_STATE_PROPERTY)
+        self._state_property_getter = config.get(CONF_STATE_PROPERTY_GETTER)
         self._state_on_value = config.get(CONF_STATE_ON_VALUE)
         self._state_off_value = config.get(CONF_STATE_OFF_VALUE)
         self._update_instant = config.get(CONF_UPDATE_INSTANT)
@@ -205,7 +208,7 @@ class XiaomiMiioGenericDevice(SwitchDevice):
 
         try:
             state = await self.hass.async_add_job(
-                self._device.send, "get_prop", [self._state_property]
+                self._device.send, self._state_property_getter, [self._state_property]
             )
             state = state.pop()
 
