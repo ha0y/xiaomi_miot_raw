@@ -4,7 +4,7 @@
   "documentation": "https://github.com/syssi/xiaomi_raw",
   "requirements": [
     "construct==2.9.45",
-    "python-miio==0.4.6"
+    "python-miio==0.4.7"
   ],
   "dependencies": [],
   "codeowners": [
