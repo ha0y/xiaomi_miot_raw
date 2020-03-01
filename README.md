@@ -18,6 +18,12 @@ Credits: Thanks to [Rytilahti](https://github.com/rytilahti/python-miio) for all
   - hardware_version
   - properties
 
+
+## Install
+
+You can install this custom component by adding this repository ([https://github.com/syssi/xiaomi_raw](https://github.com/syssi/xiaomi_raw/)) to [HACS](https://hacs.xyz/) in the settings menu of HACS first. You will find the custom component in the integration menu afterwards, look for 'Xiaomi MiIO Raw'. Alternatively, you can install it manually by copying the custom_component folder to your Home Assistant configuration folder.
+
+
 ## Setup
 
 ```yaml
@@ -37,11 +43,12 @@ sensor:
     # Optional and device specific config parameters
     property: 'humidity'
     unit: '%'
+    default_properties_getter: 'get_prop'
     default_properties:
       - power
       - temperature
 
-sensor:
+switch:
   - platform: xiaomi_miio_raw
     name: Any Xiaomi MiIO device
     host: 192.168.130.73
@@ -51,6 +58,7 @@ sensor:
     turn_off_command: 'set_power'
     turn_off_parameters: 'off'
     state_property: 'power'
+    state_property_getter: 'get_prop'
     state_on_value: 'on'
     state_off_value: 'off'
 
@@ -63,6 +71,7 @@ Configuration variables (sensor platform):
 - **sensor_property** (*Optional*): Property used as sensor value. WiFi RSSI if unset.
 - **sensor_unit** (*Optional*): Measurement unit of the property. dBm if unset.
 - **default_properties** (*Optional*): List of requested properties. ['power'] if unset.
+- **default_properties_getter** (*Optional*): Method to requested properties. Default value: `get_prop`
 
 Configuration variables (switch platform):
 - **host** (*Required*): The IP of your miio device.
@@ -73,6 +82,7 @@ Configuration variables (switch platform):
 - **turn_off_command** (*Optional*): The miIO command to send on `switch.turn_off`. Default value: `set_power`.
 - **turn_off_parameters** (*Optional*): The miIO commands parameters. Default value: `off`.
 - **state_property** (*Optional*): The miIO property which provides the current state.
+- **state_property_getter** (*Optional*): Method to requested properties. Default value: `get_prop`
 - **state_on_value** (*Optional*): The value of the `state_property` which indicates the `is_on` state. Default value: 'on'
 - **state_off_value** (*Optional*): The value of the `state_property` which indicates the `is_off` state. Default value: 'off'
 
