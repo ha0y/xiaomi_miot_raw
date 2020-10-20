@@ -1,10 +1,12 @@
 {
   "domain": "xiaomi_miio_raw",
   "name": "Custom component for Home Assistant to faciliate the reverse engeneering of Xiaomi MiIO devices",
+  "config_flow": false,
   "documentation": "https://github.com/syssi/xiaomi_raw",
+  "issue_tracker": "https://github.com/syssi/xiaomi_raw/issues",
   "requirements": [
-    "construct==2.9.45",
-    "python-miio>=0.4.8"
+    "construct==2.10.56",
+    "python-miio>=0.5.3"
   ],
   "dependencies": [],
   "codeowners": [
