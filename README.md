@@ -109,7 +109,7 @@ Update the list of the retrieved properties.
 
 | Service data attribute    | Optional | Description                                                                |
 |---------------------------|----------|----------------------------------------------------------------------------|
-| `entity_id`               |      yes | Only act on a specific fan entity. Else targets all.                       |
+| `entity_id`               |       no | Only act on a specific Xiaomi miIO fan entity.                             |
 | `properties`              |      yes | List of properties. The default is `['power']`                             |
 
 
@@ -126,7 +126,7 @@ Send a command to the device.
 
 | Service data attribute    | Optional | Description                                                                |
 |---------------------------|----------|----------------------------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific fan entity.                                         |
+| `entity_id`               |       no | Only act on a specific Xiaomi miIO fan entity.                             |
 | `method`                  |       no | Method name of the command. Example: `set_power`                           |
 | `params`                  |      yes | List of parameters. Example: `['on']`                                      |
 
@@ -161,5 +161,5 @@ Turn the device off.
 
 | Service data attribute    | Optional | Description                                                          |
 |---------------------------|----------|----------------------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific xiaomi miio entity.                           |
+| `entity_id`               |       no | Only act on a specific Xiaomi miIO fan entity.                       |
 
