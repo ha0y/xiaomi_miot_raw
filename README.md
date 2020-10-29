@@ -103,30 +103,30 @@ logger:
 
 ## Platform services
 
-#### Service `sensor.xiaomi_miio_raw_set_properties`
+#### Service `xiaomi_miio_raw.sensor_set_properties`
 
 Update the list of the retrieved properties.
 
 | Service data attribute    | Optional | Description                                                                |
 |---------------------------|----------|----------------------------------------------------------------------------|
-| `entity_id`               |      yes | Only act on a specific fan entity. Else targets all.                       |
+| `entity_id`               |       no | Only act on a specific Xiaomi miIO fan entity.                             |
 | `properties`              |      yes | List of properties. The default is `['power']`                             |
 
 
 ```
 # http://localhost:8123/dev-service
 
-Service: sensor.xiaomi_miio_raw_set_properties
+Service: xiaomi_miio_raw.sensor_set_properties
 Service Data: {"properties":["power","temperature","humidity","aqi"]}
 ```
 
-#### Service `sensor.xiaomi_miio_raw_command`
+#### Service `xiaomi_miio_raw.sensor_raw_command`
 
 Send a command to the device.
 
 | Service data attribute    | Optional | Description                                                                |
 |---------------------------|----------|----------------------------------------------------------------------------|
-| `entity_id`               |      yes | Only act on a specific fan entity. Else targets all.                       |
+| `entity_id`               |       no | Only act on a specific Xiaomi miIO fan entity.                             |
 | `method`                  |       no | Method name of the command. Example: `set_power`                           |
 | `params`                  |      yes | List of parameters. Example: `['on']`                                      |
 
@@ -135,31 +135,31 @@ Send a command to the device.
 # http://localhost:8123/dev-service
 
 # Turn the device on
-Service: sensor.xiaomi_miio_raw_command
+Service: xiaomi_miio_raw.sensor_raw_command
 Service Data: {"method":"set_power","params":["on"]}
 
 # Turn the device off
-Service: sensor.xiaomi_miio_raw_command
+Service: xiaomi_miio_raw.sensor_raw_command
 Service Data: {"method":"set_power","params":["off"]}
 
 # Request some properties
-Service: sensor.xiaomi_miio_raw_command
+Service: xiaomi_miio_raw.sensor_raw_command
 Service Data: {"method":"get_prop","params":["power","temperature","humidity","aqi"]}
 ```
 
-#### Service `sensor.xiaomi_miio_raw_turn_on`
+#### Service `xiaomi_miio_raw.sensor_turn_on`
 
 Turn the device on.
 
 | Service data attribute    | Optional | Description                                                          |
 |---------------------------|----------|----------------------------------------------------------------------|
-| `entity_id`               |      yes | Only act on a specific xiaomi miio entity. Else targets all.         |
+| `entity_id`               |       no | Only act on a specific xiaomi miio entity.                           |
 
-#### Service `sensor.xiaomi_miio_raw_turn_off`
+#### Service `xiaomi_miio_raw.sensor_turn_off`
 
 Turn the device off.
 
 | Service data attribute    | Optional | Description                                                          |
 |---------------------------|----------|----------------------------------------------------------------------|
-| `entity_id`               |      yes | Only act on a specific xiaomi miio entity. Else targets all.         |
+| `entity_id`               |       no | Only act on a specific Xiaomi miIO fan entity.                       |
 
