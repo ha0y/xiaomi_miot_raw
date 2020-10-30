@@ -1,0 +1,6 @@
+{
+  "name": "Xiaomi MiIO Raw",
+  "content_in_root": false,
+  "render_readme": true,
+  "iot_class": "local_polling"
+}

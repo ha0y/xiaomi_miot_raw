@@ -1,20 +1,20 @@
-from collections import defaultdict
 import asyncio
-from functools import partial
 import logging
-
-import voluptuous as vol
+from collections import defaultdict
+from functools import partial
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.entity import Entity
-from homeassistant.components.sensor import PLATFORM_SCHEMA, DOMAIN
-from homeassistant.const import CONF_NAME, CONF_HOST, CONF_TOKEN, ATTR_ENTITY_ID
+import voluptuous as vol
+from homeassistant.components.sensor import PLATFORM_SCHEMA
+from homeassistant.const import ATTR_ENTITY_ID, CONF_HOST, CONF_NAME, CONF_TOKEN
 from homeassistant.exceptions import PlatformNotReady
+from homeassistant.helpers.entity import Entity
 
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = "Xiaomi Miio Device"
 DATA_KEY = "sensor.xiaomi_miio_raw"
+DOMAIN = "xiaomi_miio_raw"
 
 CONF_SENSOR_PROPERTY = "sensor_property"
 CONF_SENSOR_UNIT = "sensor_unit"
@@ -60,10 +60,10 @@ SERVICE_SCHEMA_COMMAND = SERVICE_SCHEMA.extend(
     }
 )
 
-SERVICE_CUSTOM_TURN_ON = "xiaomi_miio_raw_turn_on"
-SERVICE_CUSTOM_TURN_OFF = "xiaomi_miio_raw_turn_off"
-SERVICE_SET_PROPERTIES = "xiaomi_miio_raw_set_properties"
-SERVICE_COMMAND = "xiaomi_miio_raw_command"
+SERVICE_CUSTOM_TURN_ON = "sensor_turn_on"
+SERVICE_CUSTOM_TURN_OFF = "sensor_turn_off"
+SERVICE_SET_PROPERTIES = "sensor_set_properties"
+SERVICE_COMMAND = "sensor_raw_command"
 
 SERVICE_TO_METHOD = {
     SERVICE_CUSTOM_TURN_ON: {"method": "async_turn_on"},

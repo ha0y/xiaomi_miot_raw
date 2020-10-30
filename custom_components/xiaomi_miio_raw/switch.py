@@ -1,12 +1,11 @@
 import asyncio
-from functools import partial
 import logging
-
-import voluptuous as vol
+from functools import partial
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.switch import SwitchDevice, PLATFORM_SCHEMA
-from homeassistant.const import CONF_NAME, CONF_HOST, CONF_TOKEN
+import voluptuous as vol
+from homeassistant.components.switch import PLATFORM_SCHEMA, SwitchDevice
+from homeassistant.const import CONF_HOST, CONF_NAME, CONF_TOKEN
 from homeassistant.exceptions import PlatformNotReady
 
 _LOGGER = logging.getLogger(__name__)
