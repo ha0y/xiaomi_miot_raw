@@ -38,6 +38,7 @@ ATTR_MODEL = "model"
 ATTR_FIRMWARE_VERSION = "firmware_version"
 ATTR_HARDWARE_VERSION = "hardware_version"
 ATTR_PROPERTIES = "properties"
+ATTR_SENSOR_PROPERTY = "sensor_property"
 ATTR_METHOD = "method"
 ATTR_PARAMS = "params"
 
@@ -170,6 +171,7 @@ class XiaomiMiioGenericDevice(Entity):
             ATTR_FIRMWARE_VERSION: device_info.firmware_version,
             ATTR_HARDWARE_VERSION: device_info.hardware_version,
             ATTR_PROPERTIES: self._properties,
+            ATTR_SENSOR_PROPERTY: self._sensor_property,
         }
 
     @property
