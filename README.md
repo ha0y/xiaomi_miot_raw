@@ -41,12 +41,23 @@ sensor:
     host: 192.168.130.73
     token: 56197337f51f287d69a8a16cf0677379
     # Optional and device specific config parameters
-    property: 'humidity'
-    unit: '%'
+    sensor_property: 'humidity'
+    sensor_unit: '%'
     default_properties_getter: 'get_prop'
     default_properties:
+      - humidity
       - power
       - temperature
+
+  # If your device doesn't support multiple named properties
+  - platform: xiaomi_miio_raw
+    name: Any Xiaomi MiIO device
+    host: 192.168.130.73
+    token: 56197337f51f287d69a8a16cf0677379
+    sensor_property: 'unnamed6'
+    default_properties_getter: 'get_prop'
+    default_properties:
+      - 'all'
 
 switch:
   - platform: xiaomi_miio_raw
@@ -88,7 +99,7 @@ Configuration variables (switch platform):
 
 ## Debugging
 
-If the custom component doesn't work out of the box for your device please update your configuration to enable a higher log level:
+If the custom component doesn't work out of the box for your device please update your configuration to increase log level:
 
 ```yaml
 # configuration.yaml
