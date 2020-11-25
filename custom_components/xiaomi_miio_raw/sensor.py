@@ -246,31 +246,31 @@ class XiaomiMiioGenericDevice(Entity):
                 _props[:] = _props[15:]
 
             _LOGGER.debug("Response of the get properties call: %s", values)
-
-            attrs = self._properties.copy()
-            properties_count = len(self._properties)
-            values_count = len(values)
-            if properties_count != values_count:
-                if properties_count == 1 and self._properties[0] == "all":
-                    attrs = ["unnamed" + str(i) for i in range(values_count)]
-                else:
-                    _LOGGER.debug(
-                        "Count (%s) of requested properties does not match the "
-                        "count (%s) of received values.",
-                        properties_count,
-                        values_count,
-                    )
-
-            state = dict(defaultdict(lambda: None, zip(attrs, values)))
-
-            _LOGGER.info("New state: %s", state)
-
-            self._available = True
-            self._state_attrs.update(state)
-
         except DeviceException as ex:
             self._available = False
             _LOGGER.error("Got exception while fetching the state: %s", ex)
+            return
+
+        attrs = self._properties.copy()
+        properties_count = len(self._properties)
+        values_count = len(values)
+        if properties_count != values_count:
+            if properties_count == 1 and self._properties[0] == "all":
+                attrs = ["unnamed" + str(i) for i in range(values_count)]
+            else:
+                _LOGGER.debug(
+                    "Count (%s) of requested properties does not match the "
+                    "count (%s) of received values.",
+                    properties_count,
+                    values_count,
+                )
+
+        state = dict(defaultdict(lambda: None, zip(attrs, values)))
+
+        _LOGGER.info("New state: %s", state)
+
+        self._available = True
+        self._state_attrs.update(state)
 
         if self._sensor_property is not None:
             self._state = state.get(self._sensor_property)
