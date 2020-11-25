@@ -45,8 +45,19 @@ sensor:
     sensor_unit: '%'
     default_properties_getter: 'get_prop'
     default_properties:
+      - humidity
       - power
       - temperature
+
+  # If your device doesn't support multiple named properties
+  - platform: xiaomi_miio_raw
+    name: Any Xiaomi MiIO device
+    host: 192.168.130.73
+    token: 56197337f51f287d69a8a16cf0677379
+    sensor_property: 'unnamed6'
+    default_properties_getter: 'get_prop'
+    default_properties:
+      - 'all'
 
 switch:
   - platform: xiaomi_miio_raw

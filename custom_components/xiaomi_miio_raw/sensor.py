@@ -153,7 +153,9 @@ class XiaomiMiioGenericDevice(Entity):
         self._properties = config.get(CONF_DEFAULT_PROPERTIES)
         self._properties_getter = config.get(CONF_DEFAULT_PROPERTIES_GETTER)
 
-        if self._sensor_property is not None:
+        if self._sensor_property is not None and not self._sensor_property.startswith(
+            "unnamed"
+        ):
             self._properties.append(self._sensor_property)
             self._properties = list(set(self._properties))
 
@@ -243,17 +245,21 @@ class XiaomiMiioGenericDevice(Entity):
 
             _LOGGER.debug("Response of the get properties call: %s", values)
 
+            attrs = self._properties.copy()
             properties_count = len(self._properties)
             values_count = len(values)
             if properties_count != values_count:
-                _LOGGER.debug(
-                    "Count (%s) of requested properties does not match the "
-                    "count (%s) of received values.",
-                    properties_count,
-                    values_count,
-                )
+                if properties_count == 1 and self._properties[0] == "all":
+                    attrs = ["unnamed" + str(i) for i in range(values_count)]
+                else:
+                    _LOGGER.debug(
+                        "Count (%s) of requested properties does not match the "
+                        "count (%s) of received values.",
+                        properties_count,
+                        values_count,
+                    )
 
-            state = dict(defaultdict(lambda: None, zip(self._properties, values)))
+            state = dict(defaultdict(lambda: None, zip(attrs, values)))
 
             _LOGGER.info("New state: %s", state)
 
