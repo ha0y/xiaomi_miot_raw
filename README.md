@@ -41,8 +41,8 @@ sensor:
     host: 192.168.130.73
     token: 56197337f51f287d69a8a16cf0677379
     # Optional and device specific config parameters
-    property: 'humidity'
-    unit: '%'
+    sensor_property: 'humidity'
+    sensor_unit: '%'
     default_properties_getter: 'get_prop'
     default_properties:
       - power
