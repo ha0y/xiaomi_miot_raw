@@ -7,6 +7,7 @@ import voluptuous as vol
 from homeassistant.components.switch import PLATFORM_SCHEMA, SwitchDevice
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_TOKEN
 from homeassistant.exceptions import PlatformNotReady
+from miio import Device, DeviceException
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -58,7 +59,6 @@ SUCCESS = ["ok"]
 @asyncio.coroutine
 def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     """Set up the sensor from config."""
-    from miio import Device, DeviceException
 
     if DATA_KEY not in hass.data:
         hass.data[DATA_KEY] = {}
@@ -158,8 +158,6 @@ class XiaomiMiioGenericDevice(SwitchDevice):
 
     async def _try_command(self, mask_error, func, *args, **kwargs):
         """Call a device command handling error messages."""
-        from miio import DeviceException
-
         try:
             result = await self.hass.async_add_job(partial(func, *args, **kwargs))
 
@@ -198,8 +196,6 @@ class XiaomiMiioGenericDevice(SwitchDevice):
 
     async def async_update(self):
         """Fetch state from the device."""
-        from miio import DeviceException
-
         # On state change some devices doesn't provide the new state immediately.
         if self._update_instant is False and self._skip_update:
             self._skip_update = False

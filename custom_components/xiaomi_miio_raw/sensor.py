@@ -9,6 +9,10 @@ from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import ATTR_ENTITY_ID, CONF_HOST, CONF_NAME, CONF_TOKEN
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers.entity import Entity
+from miio import (  # pylint: disable=import-error
+    Device,
+    DeviceException
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -81,8 +85,6 @@ SERVICE_TO_METHOD = {
 @asyncio.coroutine
 def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     """Set up the sensor from config."""
-    from miio import Device, DeviceException
-
     if DATA_KEY not in hass.data:
         hass.data[DATA_KEY] = {}
 
@@ -216,8 +218,6 @@ class XiaomiMiioGenericDevice(Entity):
 
     async def _try_command(self, mask_error, func, *args, **kwargs):
         """Call a device command handling error messages."""
-        from miio import DeviceException
-
         try:
             result = await self.hass.async_add_job(partial(func, *args, **kwargs))
 
@@ -230,8 +230,6 @@ class XiaomiMiioGenericDevice(Entity):
 
     async def async_update(self):
         """Fetch state from the miio device."""
-        from miio import DeviceException
-
         try:
             # A single request is limited to 16 properties. Therefore the
             # properties are divided into multiple requests
