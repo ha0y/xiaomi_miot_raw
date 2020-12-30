@@ -1,4 +1,12 @@
-# Xiaomi Raw
+# Xiaomi MIoT Raw
+
+这个插件修改自 [syssi](https://github.com/syssi) 的 [xiaomi_raw](https://github.com/syssi/xiaomi_raw)，目的是支持小米新版的 MioT 协议。这样，一些功能简单的智能设备便可以快速高效地接入 HA，而不必再拘泥于设备型号、不必再等待别人去写插件适配了。
+
+插件的使用方法与原插件大同小异。有关配置文件格式，请参阅根目录下的 ``config_example.yaml`` 文件。
+
+如果对您有帮助，欢迎给个 Star🌟！
+
+## 以下是原作者的 README 内容。
 
 This is a custom component for home assistant to faciliate the reverse engeneering of Xiaomi MiIO devices.
 
