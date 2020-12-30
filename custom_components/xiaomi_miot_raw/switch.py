@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from functools import partial
-
+import json
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components.switch import PLATFORM_SCHEMA, SwitchDevice
@@ -40,7 +40,9 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_TURN_OFF_PARAMETERS, default=["off"]): vol.All(
             cv.ensure_list, [cv.string]
         ),
-        vol.Optional(CONF_STATE_PROPERTY, default="power"): cv.string,
+        vol.Optional(CONF_STATE_PROPERTY, default="power"):vol.All(
+            cv.ensure_list
+        ),
         vol.Optional(CONF_STATE_PROPERTY_GETTER, default="get_prop"): cv.string,
         vol.Optional(CONF_STATE_ON_VALUE, default="on"): cv.string,
         vol.Optional(CONF_STATE_OFF_VALUE, default="off"): cv.string,
@@ -174,7 +176,7 @@ class XiaomiMiioGenericDevice(SwitchDevice):
             "Turning the miio device on failed.",
             self._device.send,
             self._turn_on_command,
-            self._turn_on_parameters,
+            [json.loads(self._turn_on_parameters[0])],
         )
 
         if result:
@@ -187,7 +189,7 @@ class XiaomiMiioGenericDevice(SwitchDevice):
             "Turning the miio device off failed.",
             self._device.send,
             self._turn_off_command,
-            self._turn_off_parameters,
+            [json.loads(self._turn_off_parameters[0])],
         )
 
         if result:
@@ -202,10 +204,14 @@ class XiaomiMiioGenericDevice(SwitchDevice):
             return
 
         try:
+            _props = self._state_property.copy()[0]
+            # _LOGGER.error(_props)
+            # _LOGGER.error(type(_props))
+            
             state = await self.hass.async_add_job(
-                self._device.send, self._state_property_getter, [self._state_property]
+                self._device.send, self._state_property_getter, [_props]
             )
-            state = state.pop()
+            state = str(state.pop()['value'])
 
             _LOGGER.debug("Got new state: %s", state)
 
@@ -222,6 +228,8 @@ class XiaomiMiioGenericDevice(SwitchDevice):
                     self._state_on_value,
                     self._state_off_value,
                 )
+                _LOGGER.warning(type(self._state_on_value))
+                _LOGGER.warning(type(state))
                 self._state = None
 
             self._state_attrs.update({ATTR_STATE_VALUE: state})

@@ -1,0 +1,60 @@
+switch:
+  - platform: xiaomi_miot_raw
+    name: 蓝牙网关插座
+    host: 192.168.0.201
+    token: 81xxxxxxxxxxxxxxxxxxxxxxxxxxxx02
+    turn_on_command: 'set_properties'
+    turn_on_parameters: '{"did":"yourdid","siid":2,"piid":1,"value":true}'
+    turn_off_command: 'set_properties'
+    turn_off_parameters: '{"did":"yourdid","siid":2,"piid":1,"value":false}'
+    state_property: 
+      did: SwitchStatus
+      siid: 2
+      piid: 1
+    state_property_getter: 'get_properties'
+    state_on_value: True
+    state_off_value: False
+
+  - platform: xiaomi_miot_raw
+    name: 港兴达智能插座
+    host: 192.168.0.203
+    token: c0xxxxxxxxxxxxxxxxxxxxxxxxxxxxd9
+    turn_on_command: 'set_properties'
+    turn_on_parameters: '{"did":"yourdid","siid":2,"piid":1,"value":true}'
+    turn_off_command: 'set_properties'
+    turn_off_parameters: '{"did":"yourdid","siid":2,"piid":1,"value":false}'
+    state_property: 
+      did: SwitchStatus
+      siid: 2
+      piid: 1
+    state_property_getter: 'get_properties'
+    state_on_value: True
+    state_off_value: False
+
+sensor:
+  - platform: xiaomi_miot_raw
+    name: rsqplug
+    host: 192.168.0.201
+    token: 81xxxxxxxxxxxxxxxxxxxxxxxxxxxx02
+    default_properties_getter: 'get_properties'
+    default_properties: 
+      - did: onoff
+        siid: 2
+        piid: 1
+      - did: temperature
+        siid: 2
+        piid: 6
+      - did: power
+        siid: 5
+        piid: 6
+    sensor_property: power
+    sensor_unit: W
+    scan_interval: 10
+    #取到的功率没有小数点，因此做如下处理
+  - platform: template
+    sensors:
+      rsqpower:
+        friendly_name: "插座功率"
+        unit_of_measurement: 'W'
+        value_template: "{{ states('sensor.rsqplug')|float/100 }}"
+        

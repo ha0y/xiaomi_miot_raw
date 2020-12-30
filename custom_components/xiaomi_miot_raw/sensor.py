@@ -2,17 +2,21 @@ import asyncio
 import logging
 from collections import defaultdict
 from functools import partial
-
+import json
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import ATTR_ENTITY_ID, CONF_HOST, CONF_NAME, CONF_TOKEN
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers.entity import Entity
-from miio import (  # pylint: disable=import-error
-    Device,
-    DeviceException
-)
+# from miio import (  # pylint: disable=import-error
+#     Device,
+#     DeviceException
+# )
+
+from miio.device import Device
+from miio.exceptions import DeviceException
+from miio.miot_device import MiotDevice 
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,12 +35,20 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Optional(CONF_SENSOR_PROPERTY): cv.string,
+        vol.Optional(CONF_SENSOR_UNIT): cv.string,
         vol.Optional(CONF_DEFAULT_PROPERTIES_GETTER, default="get_prop"): cv.string,
         vol.Optional(CONF_DEFAULT_PROPERTIES, default=["power"]): vol.All(
-            cv.ensure_list, [cv.string]
+            cv.ensure_list
         ),
     }
 )
+
+
+_MAPPING = {
+    # Air Purifier (siid=2)
+    "power": {"siid": 2, "piid": 1},
+}
+
 
 ATTR_MODEL = "model"
 ATTR_FIRMWARE_VERSION = "firmware_version"
@@ -94,7 +106,8 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     _LOGGER.info("Initializing with host %s (token %s...)", host, token[:5])
 
     try:
-        miio_device = Device(host, token)
+        miio_device = MiotDevice(_MAPPING,host, token)
+        # miio_device2 = MiotDevice(miio_device)
         device_info = miio_device.info()
         model = device_info.model
         _LOGGER.info(
@@ -105,8 +118,11 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
         )
 
         device = XiaomiMiioGenericDevice(miio_device, config, device_info)
-    except DeviceException:
+    except DeviceException as de:
+        _LOGGER.warn(de)
+
         raise PlatformNotReady
+
 
     hass.data[DATA_KEY][host] = device
     async_add_devices([device], update_before_add=True)
@@ -156,11 +172,11 @@ class XiaomiMiioGenericDevice(Entity):
         self._properties = config.get(CONF_DEFAULT_PROPERTIES)
         self._properties_getter = config.get(CONF_DEFAULT_PROPERTIES_GETTER)
 
-        if self._sensor_property is not None and not self._sensor_property.startswith(
-            "unnamed"
-        ):
-            self._properties.append(self._sensor_property)
-            self._properties = list(set(self._properties))
+        # if self._sensor_property is not None and not self._sensor_property.startswith(
+        #     "unnamed"
+        # ):
+        #     self._properties.append(self._sensor_property)
+        #     self._properties = list(set(self._properties))
 
         self._model = device_info.model
         self._unique_id = "{}-{}".format(device_info.model, device_info.mac_address)
@@ -234,37 +250,48 @@ class XiaomiMiioGenericDevice(Entity):
             # A single request is limited to 16 properties. Therefore the
             # properties are divided into multiple requests
             _props = self._properties.copy()
-            values = []
-            while _props:
-                values.extend(
-                    await self.hass.async_add_job(
-                        self._device.send, self._properties_getter, _props[:15]
-                    )
+            values2 = []
+            # _LOGGER.error(_props)
+            
+            for ppp in _props:
+                values2.append(dict(ppp))
+            
+            response = await self.hass.async_add_job(
+                    self._device.send, self._properties_getter, values2
                 )
-                _props[:] = _props[15:]
-
-            _LOGGER.debug("Response of the get properties call: %s", values)
+            responsedict={}
+            for r in response:
+                try:
+                    responsedict[r['did']] = r['value']
+                except:
+                    pass
+                
+            
+            # _LOGGER.debug("Response of the get properties call: %s", values)
+            
+            
         except DeviceException as ex:
             self._available = False
             _LOGGER.error("Got exception while fetching the state: %s", ex)
+            # _LOGGER.error(repr(ex))
             return
-
+        
         attrs = self._properties.copy()
-        properties_count = len(self._properties)
-        values_count = len(values)
-        if properties_count != values_count:
-            if properties_count == 1 and self._properties[0] == "all":
-                attrs = ["unnamed" + str(i) for i in range(values_count)]
-            else:
-                _LOGGER.debug(
-                    "Count (%s) of requested properties does not match the "
-                    "count (%s) of received values.",
-                    properties_count,
-                    values_count,
-                )
+        # properties_count = len(self._properties)
+        # values_count = len(values)
+        # if properties_count != values_count:
+        #     if properties_count == 1 and self._properties[0] == "all":
+        #         attrs = ["unnamed" + str(i) for i in range(values_count)]
+        #     else:
+        #         _LOGGER.debug(
+        #             "Count (%s) of requested properties does not match the "
+        #             "count (%s) of received values.",
+        #             properties_count,
+        #             values_count,
+        #         )
 
-        state = dict(defaultdict(lambda: None, zip(attrs, values)))
-
+        # state = dict(defaultdict(lambda: None, zip(list(attrs), list(values))))
+        state = responsedict
         _LOGGER.info("New state: %s", state)
 
         self._available = True
@@ -272,6 +299,7 @@ class XiaomiMiioGenericDevice(Entity):
 
         if self._sensor_property is not None:
             self._state = state.get(self._sensor_property)
+            pass
         else:
             try:
                 device_info = await self.hass.async_add_job(self._device.info)
