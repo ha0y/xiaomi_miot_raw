@@ -4,110 +4,54 @@
 
 插件的使用方法与原插件大同小异。有关配置文件格式，请参阅根目录下的 ``config_example.yaml`` 文件。
 
-如果对您有帮助，欢迎给个 Star🌟！
+如果对您有帮助，欢迎给个 Star！ 🌟 
 
-## 以下是原作者的 README 内容。
+## 功能
 
-This is a custom component for home assistant to faciliate the reverse engeneering of Xiaomi MiIO devices.
+* 通过 ``switch`` 控制设备开关
+* 通过 ``sensor`` 获取设备的属性值
+* 发送原始命令 (尚未测试是否可用)
 
-Please follow the instructions on [Retrieving the Access Token](https://home-assistant.io/components/xiaomi/#retrieving-the-access-token) to get the API token to use in the configuration.yaml file.
+## 安装
 
-Credits: Thanks to [Rytilahti](https://github.com/rytilahti/python-miio) for all the work.
+* 将 custom_component 文件夹中的内容拷贝至自己的相应目录
 
-## Features
-
-* Power (on, off)
-* Sensor value (RSSI in dBm of the WiFi connection)
-* Raw command (method + params)
-* Set properties (property list)
-* Attributes (can be extended by "Set properties")
-  - model
-  - firmware_version
-  - hardware_version
-  - properties
+或者
+* 将此 repo ([https://github.com/ha0y/xiaomi_miot_raw](https://github.com/ha0y/xiaomi_miot_raw)) 添加到 [HACS](https://hacs.xyz/)，然后添加“Xiaomi MiOT Raw”
 
 
-## Install
-
-You can install this custom component by adding this repository ([https://github.com/syssi/xiaomi_raw](https://github.com/syssi/xiaomi_raw/)) to [HACS](https://hacs.xyz/) in the settings menu of HACS first. You will find the custom component in the integration menu afterwards, look for 'Xiaomi MiIO Raw'. Alternatively, you can install it manually by copying the custom_component folder to your Home Assistant configuration folder.
-
-
-## Setup
+## 配置文件
 
 ```yaml
-# configuration.yaml
-
-logger:
-  default: warn
-  logs:
-    custom_components.sensor.xiaomi_miio_raw: info
-    miio: info
-
-sensor:
-  - platform: xiaomi_miio_raw
-    name: Any Xiaomi MiIO device
-    host: 192.168.130.73
-    token: 56197337f51f287d69a8a16cf0677379
-    # Optional and device specific config parameters
-    sensor_property: 'humidity'
-    sensor_unit: '%'
-    default_properties_getter: 'get_prop'
-    default_properties:
-      - humidity
-      - power
-      - temperature
-
-  # If your device doesn't support multiple named properties
-  - platform: xiaomi_miio_raw
-    name: Any Xiaomi MiIO device
-    host: 192.168.130.73
-    token: 56197337f51f287d69a8a16cf0677379
-    sensor_property: 'unnamed6'
-    default_properties_getter: 'get_prop'
-    default_properties:
-      - 'all'
-
-switch:
-  - platform: xiaomi_miio_raw
-    name: Any Xiaomi MiIO device
-    host: 192.168.130.73
-    token: 56197337f51f287d69a8a16cf0677379
-    turn_on_command: 'set_power'
-    turn_on_parameters: 'on'
-    turn_off_command: 'set_power'
-    turn_off_parameters: 'off'
-    state_property: 'power'
-    state_property_getter: 'get_prop'
-    state_on_value: 'on'
-    state_off_value: 'off'
+请参考 config_example.yaml
 
 ```
 
-Configuration variables (sensor platform):
-- **host** (*Required*): The IP of your miio device.
-- **token** (*Required*): The API token of your miio device.
-- **name** (*Optional*): The name of your miio device.
-- **sensor_property** (*Optional*): Property used as sensor value. WiFi RSSI if unset.
-- **sensor_unit** (*Optional*): Measurement unit of the property. dBm if unset.
-- **default_properties** (*Optional*): List of requested properties. ['power'] if unset.
-- **default_properties_getter** (*Optional*): Method to requested properties. Default value: `get_prop`
+Sensor 的配置参数:
+- **host** (*Required*): 设备 IP.
+- **token** (*Required*): 设备 token.
+- **name** (*Optional*): 设备名称.
+- **default_properties** (*Required*): 要获取的属性值，以列表形式输入.
+- **default_properties_getter** (*Required*): 对于 MiOT 设备，始终为 `get_properties`.
+- **sensor_property** (*Required*): 以哪个属性作为传感器的状态. 其他属性作为 attribute.
+- **sensor_unit** (*Optional*): 传感器单位.
 
 Configuration variables (switch platform):
-- **host** (*Required*): The IP of your miio device.
-- **token** (*Required*): The API token of your miio device.
-- **name** (*Optional*): The name of your miio device.
-- **turn_on_command** (*Optional*): The miIO command to send on `switch.turn_on`. Default value: `set_power`.
-- **turn_on_parameters** (*Optional*): The miIO commands parameters. Default value: `on`.
-- **turn_off_command** (*Optional*): The miIO command to send on `switch.turn_off`. Default value: `set_power`.
-- **turn_off_parameters** (*Optional*): The miIO commands parameters. Default value: `off`.
-- **state_property** (*Optional*): The miIO property which provides the current state.
-- **state_property_getter** (*Optional*): Method to requested properties. Default value: `get_prop`
-- **state_on_value** (*Optional*): The value of the `state_property` which indicates the `is_on` state. Default value: 'on'
-- **state_off_value** (*Optional*): The value of the `state_property` which indicates the `is_off` state. Default value: 'off'
+- **host** (*Required*): 设备 IP.
+- **token** (*Required*): 设备 token.
+- **name** (*Optional*): 设备名称.
+- **turn_on_command** (*Optional*): 对于 MiOT 设备，始终为 `set_properties`.
+- **turn_on_parameters** (*Optional*): 控制设备电源开的参数，以 json 形式输入.
+- **turn_off_command** (*Optional*): 对于 MiOT 设备，始终为 `set_properties`.
+- **turn_off_parameters** (*Optional*): 控制设备电源关的参数，以 json 形式输入.
+- **state_property** (*Optional*): 获取设备电源状态的参数，以列表形式输入.
+- **state_property_getter** (*Optional*): 对于 MiOT 设备，始终为 `get_properties`.
+- **state_on_value** (*Optional*): 表示设备电源开的属性返回值，一般为 true.
+- **state_off_value** (*Optional*): 表示设备电源关的属性返回值，一般为 false.
 
-## Debugging
+## 调试
 
-If the custom component doesn't work out of the box for your device please update your configuration to increase log level:
+如果组件工作不正常，通过修改配置文件提升日志调试级别:
 
 ```yaml
 # configuration.yaml
@@ -115,8 +59,8 @@ If the custom component doesn't work out of the box for your device please updat
 logger:
   default: warn
   logs:
-    custom_components.sensor.xiaomi_miio_raw: debug
-    custom_components.switch.xiaomi_miio_raw: debug
+    custom_components.sensor.xiaomi_miot_raw: debug
+    custom_components.switch.xiaomi_miot_raw: debug
     miio: debug
 ```
 
