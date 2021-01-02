@@ -12,7 +12,7 @@ from miio import Device, DeviceException
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = "Xiaomi Miio Device"
-DATA_KEY = "switch.xiaomi_miio_raw"
+DATA_KEY = "switch.xiaomi_miot_raw"
 
 CONF_TURN_ON_COMMAND = "turn_on_command"
 CONF_TURN_ON_PARAMETERS = "turn_on_parameters"

@@ -21,8 +21,8 @@ from miio.miot_device import MiotDevice
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = "Xiaomi Miio Device"
-DATA_KEY = "sensor.xiaomi_miio_raw"
-DOMAIN = "xiaomi_miio_raw"
+DATA_KEY = "sensor.xiaomi_miot_raw"
+DOMAIN = "xiaomi_miot_raw"
 
 CONF_SENSOR_PROPERTY = "sensor_property"
 CONF_SENSOR_UNIT = "sensor_unit"
