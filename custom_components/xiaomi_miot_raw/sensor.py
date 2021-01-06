@@ -28,6 +28,7 @@ CONF_SENSOR_PROPERTY = "sensor_property"
 CONF_SENSOR_UNIT = "sensor_unit"
 CONF_DEFAULT_PROPERTIES = "default_properties"
 CONF_DEFAULT_PROPERTIES_GETTER = "default_properties_getter"
+CONF_MAPPING = 'mapping'
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -36,18 +37,20 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Optional(CONF_SENSOR_PROPERTY): cv.string,
         vol.Optional(CONF_SENSOR_UNIT): cv.string,
-        vol.Optional(CONF_DEFAULT_PROPERTIES_GETTER, default="get_prop"): cv.string,
-        vol.Optional(CONF_DEFAULT_PROPERTIES, default=["power"]): vol.All(
-            cv.ensure_list
-        ),
+        vol.Optional(CONF_MAPPING):vol.All(),
+
+        # vol.Optional(CONF_DEFAULT_PROPERTIES_GETTER, default="get_properties"): cv.string,
+        # vol.Optional(CONF_DEFAULT_PROPERTIES, default=["power"]): vol.All(
+        #     cv.ensure_list
+        # ),
     }
 )
 
 
-_MAPPING = {
-    # Air Purifier (siid=2)
-    "power": {"siid": 2, "piid": 1},
-}
+# _MAPPING = {
+#     # Air Purifier (siid=2)
+#     "power": {"siid": 2, "piid": 1},
+# }
 
 
 ATTR_MODEL = "model"
@@ -102,12 +105,12 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 
     host = config.get(CONF_HOST)
     token = config.get(CONF_TOKEN)
+    mapping = config.get(CONF_MAPPING)
 
     _LOGGER.info("Initializing with host %s (token %s...)", host, token[:5])
 
     try:
-        miio_device = MiotDevice(_MAPPING,host, token)
-        # miio_device2 = MiotDevice(miio_device)
+        miio_device = MiotDevice(ip=host, token=token, mapping=mapping)
         device_info = miio_device.info()
         model = device_info.model
         _LOGGER.info(
@@ -160,7 +163,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 
 
 class XiaomiMiioGenericDevice(Entity):
-    """Representation of a Xiaomi Air Quality Monitor."""
+    """通用 MiOT 传感器"""
 
     def __init__(self, device, config, device_info):
         """Initialize the entity."""
@@ -169,9 +172,10 @@ class XiaomiMiioGenericDevice(Entity):
         self._name = config.get(CONF_NAME)
         self._sensor_property = config.get(CONF_SENSOR_PROPERTY)
         self._unit_of_measurement = config.get(CONF_SENSOR_UNIT)
-        self._properties = config.get(CONF_DEFAULT_PROPERTIES)
-        self._properties_getter = config.get(CONF_DEFAULT_PROPERTIES_GETTER)
-
+        # self._properties = config.get(CONF_DEFAULT_PROPERTIES)
+        # self._properties_getter = config.get(CONF_DEFAULT_PROPERTIES_GETTER)
+        self._mapping = config.get(CONF_MAPPING)
+       
         # if self._sensor_property is not None and not self._sensor_property.startswith(
         #     "unnamed"
         # ):
@@ -188,7 +192,7 @@ class XiaomiMiioGenericDevice(Entity):
             ATTR_MODEL: self._model,
             ATTR_FIRMWARE_VERSION: device_info.firmware_version,
             ATTR_HARDWARE_VERSION: device_info.hardware_version,
-            ATTR_PROPERTIES: self._properties,
+            # ATTR_PROPERTIES: self._properties,
             ATTR_SENSOR_PROPERTY: self._sensor_property,
         }
 
@@ -212,10 +216,10 @@ class XiaomiMiioGenericDevice(Entity):
         """Return the unit of measurement of this entity, if any."""
         return self._unit_of_measurement
 
-    @property
-    def icon(self):
-        """Return the icon to use for device if any."""
-        return self._icon
+    # @property
+    # def icon(self):
+    #     """Return the icon to use for device if any."""
+    #     return self._icon
 
     @property
     def available(self):
@@ -239,7 +243,8 @@ class XiaomiMiioGenericDevice(Entity):
 
             _LOGGER.info("Response received from miio device: %s", result)
 
-            return result == SUCCESS
+            if result[0]['code'] == 0:
+                return True
         except DeviceException as exc:
             _LOGGER.error(mask_error, exc)
             return False
@@ -249,20 +254,16 @@ class XiaomiMiioGenericDevice(Entity):
         try:
             # A single request is limited to 16 properties. Therefore the
             # properties are divided into multiple requests
-            _props = self._properties.copy()
-            values2 = []
-            # _LOGGER.error(_props)
-            
-            for ppp in _props:
-                values2.append(dict(ppp))
-            
+            # _props = self._properties.copy()
+            # values2 = []
+            _props = [k for k in self._mapping]
             response = await self.hass.async_add_job(
-                    self._device.send, self._properties_getter, values2
+                    self._device.get_properties_for_mapping
                 )
-            responsedict={}
+            statedict={}
             for r in response:
                 try:
-                    responsedict[r['did']] = r['value']
+                    statedict[r['did']] = r['value']
                 except:
                     pass
                 
@@ -275,23 +276,8 @@ class XiaomiMiioGenericDevice(Entity):
             _LOGGER.error("Got exception while fetching the state: %s", ex)
             # _LOGGER.error(repr(ex))
             return
-        
-        attrs = self._properties.copy()
-        # properties_count = len(self._properties)
-        # values_count = len(values)
-        # if properties_count != values_count:
-        #     if properties_count == 1 and self._properties[0] == "all":
-        #         attrs = ["unnamed" + str(i) for i in range(values_count)]
-        #     else:
-        #         _LOGGER.debug(
-        #             "Count (%s) of requested properties does not match the "
-        #             "count (%s) of received values.",
-        #             properties_count,
-        #             values_count,
-        #         )
 
-        # state = dict(defaultdict(lambda: None, zip(list(attrs), list(values))))
-        state = responsedict
+        state = statedict
         _LOGGER.info("New state: %s", state)
 
         self._available = True

@@ -3,48 +3,41 @@ switch:
     name: 蓝牙网关插座
     host: 192.168.0.201
     token: 81xxxxxxxxxxxxxxxxxxxxxxxxxxxx02
-    turn_on_command: 'set_properties'
-    turn_on_parameters: '{"did":"yourdid","siid":2,"piid":1,"value":true}'
-    turn_off_command: 'set_properties'
-    turn_off_parameters: '{"did":"yourdid","siid":2,"piid":1,"value":false}'
-    state_property: 
-      did: SwitchStatus
-      siid: 2
-      piid: 1
-    state_property_getter: 'get_properties'
-    state_on_value: True
-    state_off_value: False
+    mapping:
+      switch_status:
+        siid: 2
+        piid: 1
+    params:
+      switch_status:
+        power_on: True
+        power_off: False
 
   - platform: xiaomi_miot_raw
     name: 港兴达智能插座
     host: 192.168.0.203
     token: c0xxxxxxxxxxxxxxxxxxxxxxxxxxxxd9
-    turn_on_command: 'set_properties'
-    turn_on_parameters: '{"did":"yourdid","siid":2,"piid":1,"value":true}'
-    turn_off_command: 'set_properties'
-    turn_off_parameters: '{"did":"yourdid","siid":2,"piid":1,"value":false}'
-    state_property: 
-      did: SwitchStatus
-      siid: 2
-      piid: 1
-    state_property_getter: 'get_properties'
-    state_on_value: True
-    state_off_value: False
+    mapping:
+      switch_status:
+        siid: 2
+        piid: 1
+    params:
+      switch_status:
+        power_on: True
+        power_off: False
 
 sensor:
   - platform: xiaomi_miot_raw
-    name: rsqplug
+    name: plug
     host: 192.168.0.201
     token: 81xxxxxxxxxxxxxxxxxxxxxxxxxxxx02
-    default_properties_getter: 'get_properties'
-    default_properties: 
-      - did: onoff
+    mapping:
+      onoff:
         siid: 2
         piid: 1
-      - did: temperature
+      temperature:
         siid: 2
         piid: 6
-      - did: power
+      power:
         siid: 5
         piid: 6
     sensor_property: power
@@ -56,5 +49,25 @@ sensor:
       rsqpower:
         friendly_name: "插座功率"
         unit_of_measurement: 'W'
-        value_template: "{{ states('sensor.rsqplug')|float/100 }}"
+        value_template: "{{ states('sensor.plug')|float/100 }}"
         
+cover:
+  - platform: xiaomi_miot_raw
+    name: '晾衣架'
+    host: 192.168.0.19
+    token: 1fxxxxxxxxxxxxxxxxxxxxxxxxxxxx70
+    mapping:
+      motor_control:
+        siid: 2
+        piid: 2
+      current_position:
+        siid: 2
+        piid: 11
+      target_position:
+        siid: 2
+        piid: 13
+    params:
+      motor_control:
+        open: 1
+        close: 2
+        stop: 0
