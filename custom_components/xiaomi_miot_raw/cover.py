@@ -39,30 +39,26 @@ from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
 import asyncio
 from functools import partial
-import json
 from homeassistant.components.cover import PLATFORM_SCHEMA, CoverDevice
 from homeassistant.exceptions import PlatformNotReady
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = "Xiaomi Miio Device"
+DEFAULT_NAME = "Generic MIoT cover"
 DATA_KEY = "switch.xiaomi_miot_raw"
 ATTR_MODEL = "model"
 ATTR_FIRMWARE_VERSION = "firmware_version"
 ATTR_HARDWARE_VERSION = "hardware_version"
-SUCCESS = ["ok"]
 
-CONF_MODEL = 'model'
 CONF_MAPPING = 'mapping'
 CONF_CONTROL_PARAMS = 'params'
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_NAME): cv.string,
+    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
     vol.Required(CONF_HOST): cv.string,
-    vol.Required(CONF_TOKEN): cv.string,
-    vol.Optional(CONF_MODEL): cv.string,
-    vol.Optional(CONF_MAPPING):vol.All(),
-    vol.Optional(CONF_CONTROL_PARAMS):vol.All(),
+    vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
+    vol.Required(CONF_MAPPING):vol.All(),
+    vol.Required(CONF_CONTROL_PARAMS):vol.All(),
     
 })
 
@@ -81,6 +77,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     mapping = config.get(CONF_MAPPING)
     
     _LOGGER.info("Initializing with host %s (token %s...)", host, token[:5])
+    # _LOGGER.info("正在初始化卷帘设备，位于 %s，token 开头为 %s...", host, token[:5])
 
     try:
         # miio_device = Device(host, token)
@@ -90,6 +87,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
         model = device_info.model
         _LOGGER.info(
             "%s %s %s detected",
+            # "检测到 %s，固件: %s，硬件类型: %s",
             model,
             device_info.firmware_version,
             device_info.hardware_version,
@@ -111,15 +109,6 @@ class XiaomiMiotGenericCover(CoverEntity):
         self._ctrl_params = config.get(CONF_CONTROL_PARAMS)
         self._mapping = config.get(CONF_MAPPING)
         self._name = config.get(CONF_NAME)
-        # self._turn_on_command = config.get(CONF_TURN_ON_COMMAND)
-        # self._turn_on_parameters = config.get(CONF_TURN_ON_PARAMETERS)
-        # self._turn_off_command = config.get(CONF_TURN_OFF_COMMAND)
-        # self._turn_off_parameters = config.get(CONF_TURN_OFF_PARAMETERS)
-        # self._state_property = config.get(CONF_STATE_PROPERTY)
-        # self._state_property_getter = config.get(CONF_STATE_PROPERTY_GETTER)
-        # self._state_on_value = config.get(CONF_STATE_ON_VALUE)
-        # self._state_off_value = config.get(CONF_STATE_OFF_VALUE)
-        # self._update_instant = config.get(CONF_UPDATE_INSTANT)
         self._skip_update = False
 
         self._model = device_info.model
@@ -131,8 +120,8 @@ class XiaomiMiotGenericCover(CoverEntity):
         )
         self._icon = "mdi:flask-outline"
 
-        # self._available = None
-        self._available = True
+        # self._available = None    
+        self._available = True      # 因为还没有做状态反馈，所以使其始终可用
         self._state = None
         self._state_attrs = {
             ATTR_MODEL: self._model,
@@ -204,6 +193,7 @@ class XiaomiMiotGenericCover(CoverEntity):
             result = await self.hass.async_add_job(partial(func, *args, **kwargs))
 
             _LOGGER.info("Response received from miio device: %s", result)
+            # _LOGGER.info("MiOT 卷帘设备返回信息: %s", result)
 
             if result[0]['code'] == 0:
                 return True
@@ -260,10 +250,6 @@ class XiaomiMiotGenericCover(CoverEntity):
         if result:
             # self._state = True
             self._skip_update = True
-    # @property
-    # def is_on(self):
-    #     """Return true if switch is on."""
-    #     return self._state
 
     @property
     def device_state_attributes(self):

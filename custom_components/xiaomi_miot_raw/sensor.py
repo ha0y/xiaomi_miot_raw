@@ -2,17 +2,12 @@ import asyncio
 import logging
 from collections import defaultdict
 from functools import partial
-import json
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import ATTR_ENTITY_ID, CONF_HOST, CONF_NAME, CONF_TOKEN
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers.entity import Entity
-# from miio import (  # pylint: disable=import-error
-#     Device,
-#     DeviceException
-# )
 
 from miio.device import Device
 from miio.exceptions import DeviceException
@@ -20,14 +15,13 @@ from miio.miot_device import MiotDevice
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = "Xiaomi Miio Device"
+DEFAULT_NAME = "Generic MIoT sensor"
 DATA_KEY = "sensor.xiaomi_miot_raw"
 DOMAIN = "xiaomi_miot_raw"
 
 CONF_SENSOR_PROPERTY = "sensor_property"
 CONF_SENSOR_UNIT = "sensor_unit"
 CONF_DEFAULT_PROPERTIES = "default_properties"
-CONF_DEFAULT_PROPERTIES_GETTER = "default_properties_getter"
 CONF_MAPPING = 'mapping'
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
@@ -37,21 +31,9 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Optional(CONF_SENSOR_PROPERTY): cv.string,
         vol.Optional(CONF_SENSOR_UNIT): cv.string,
-        vol.Optional(CONF_MAPPING):vol.All(),
-
-        # vol.Optional(CONF_DEFAULT_PROPERTIES_GETTER, default="get_properties"): cv.string,
-        # vol.Optional(CONF_DEFAULT_PROPERTIES, default=["power"]): vol.All(
-        #     cv.ensure_list
-        # ),
+        vol.Required(CONF_MAPPING):vol.All(),
     }
 )
-
-
-# _MAPPING = {
-#     # Air Purifier (siid=2)
-#     "power": {"siid": 2, "piid": 1},
-# }
-
 
 ATTR_MODEL = "model"
 ATTR_FIRMWARE_VERSION = "firmware_version"
@@ -60,8 +42,6 @@ ATTR_PROPERTIES = "properties"
 ATTR_SENSOR_PROPERTY = "sensor_property"
 ATTR_METHOD = "method"
 ATTR_PARAMS = "params"
-
-SUCCESS = ["ok"]
 
 SERVICE_SCHEMA = vol.Schema({vol.Optional(ATTR_ENTITY_ID): cv.entity_ids})
 
@@ -108,6 +88,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     mapping = config.get(CONF_MAPPING)
 
     _LOGGER.info("Initializing with host %s (token %s...)", host, token[:5])
+
 
     try:
         miio_device = MiotDevice(ip=host, token=token, mapping=mapping)
@@ -172,16 +153,8 @@ class XiaomiMiioGenericDevice(Entity):
         self._name = config.get(CONF_NAME)
         self._sensor_property = config.get(CONF_SENSOR_PROPERTY)
         self._unit_of_measurement = config.get(CONF_SENSOR_UNIT)
-        # self._properties = config.get(CONF_DEFAULT_PROPERTIES)
-        # self._properties_getter = config.get(CONF_DEFAULT_PROPERTIES_GETTER)
         self._mapping = config.get(CONF_MAPPING)
        
-        # if self._sensor_property is not None and not self._sensor_property.startswith(
-        #     "unnamed"
-        # ):
-        #     self._properties.append(self._sensor_property)
-        #     self._properties = list(set(self._properties))
-
         self._model = device_info.model
         self._unique_id = "{}-{}".format(device_info.model, device_info.mac_address)
         self._icon = "mdi:flask-outline"

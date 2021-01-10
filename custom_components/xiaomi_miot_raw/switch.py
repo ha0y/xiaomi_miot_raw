@@ -1,7 +1,6 @@
 import asyncio
 import logging
 from functools import partial
-import json
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components.switch import PLATFORM_SCHEMA, SwitchEntity
@@ -13,7 +12,7 @@ from miio.miot_device import MiotDevice
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = "Xiaomi Miio Device"
+DEFAULT_NAME = "Generic MIoT switch"
 DATA_KEY = "switch.xiaomi_miot_raw"
 
 CONF_UPDATE_INSTANT = "update_instant"
@@ -29,8 +28,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Optional(CONF_UPDATE_INSTANT, default=True): cv.boolean,
         
-        vol.Optional(CONF_MAPPING):vol.All(),
-        vol.Optional(CONF_CONTROL_PARAMS):vol.All(),
+        vol.Required(CONF_MAPPING):vol.All(),
+        vol.Required(CONF_CONTROL_PARAMS):vol.All(),
 
     }
 )
@@ -38,9 +37,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 ATTR_MODEL = "model"
 ATTR_FIRMWARE_VERSION = "firmware_version"
 ATTR_HARDWARE_VERSION = "hardware_version"
-
-SUCCESS = ["ok"]
-
 
 # pylint: disable=unused-argument
 @asyncio.coroutine
@@ -183,17 +179,10 @@ class XiaomiMiioGenericDevice(SwitchEntity):
             return
 
         try:
-            # _props = self._state_property.copy()[0]
             _props = [k for k in self._mapping]
-            # _LOGGER.error(_props)
-            # _LOGGER.error(type(_props))
             response = await self.hass.async_add_job(
                     self._device.get_properties_for_mapping
                 )
-            # state = await self.hass.async_add_job(
-            #     self._device.send, self._state_property_getter, [_props]
-            # )
-            # state = str(state.pop()['value'])
             statedict={}
             for r in response:
                 try:
