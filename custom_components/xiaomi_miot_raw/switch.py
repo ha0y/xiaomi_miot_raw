@@ -186,10 +186,12 @@ class XiaomiMiioGenericDevice(SwitchEntity):
             statedict={}
             for r in response:
                 try:
-                    statedict[r['did']] = r['value']
+                    statedict[r['did']] = r['value'] if r['did'] != 'power_100' else r['value'] / 100
                 except:
                     pass
             state = statedict['switch_status']
+            self._state_attrs.update(statedict)
+
             _LOGGER.debug("Got new state: %s", state)
 
             self._available = True
