@@ -187,7 +187,7 @@ class XiaomiMiioGenericDevice(SwitchEntity):
             for r in response:
                 if r['code'] == 0:
                     try:
-                        f = self._ctrl_params[r['did']]['value_factor']
+                        f = self._ctrl_params[r['did']]['value_ratio']
                         statedict[r['did']] = r['value'] * f
                     except KeyError:
                         statedict[r['did']] = r['value']

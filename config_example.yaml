@@ -18,7 +18,7 @@ switch:
         power_on: True
         power_off: False
       power:
-        value_factor: 0.01 # 对应的数值会被乘以0.01，用以适配功率显示
+        value_ratio: 0.01 # 对应的数值会被乘以0.01，用以适配功率显示
 
   - platform: xiaomi_miot_raw
     name: 港兴达智能插座
