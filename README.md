@@ -52,9 +52,12 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 如果组件工作不正常，通过修改配置文件提升日志调试级别:
 
 ## 更新日志
+### 1 月 12 日
+1. 数值修正的方法变更为 `params` 下 `value_factor` 配置项。
+
 ### 1 月 11 日
 1. 现在 switch 也可以像 sensor 一样把设备的属性值显示在 state attribute 中了。此类设备无需再配置 sensor，直接将以前 sensor 配置的 mapping 内容合并进来即可，减少一半的网络请求。
-2. 针对“小米智能插座2 蓝牙网关版”的功率没有小数点的问题，设计了一个“power_100”的 mapping 对数值进行修正。
+2. ~~针对“小米智能插座2 蓝牙网关版”的功率没有小数点的问题，设计了一个“power_100”的 mapping 对数值进行修正。~~
 
 ### 1 月 6 日
 1. 支持 cover 设备类型，现在可以接入窗帘、晾衣架等设备了
@@ -70,5 +73,6 @@ logger:
   logs:
     custom_components.sensor.xiaomi_miot_raw: debug
     custom_components.switch.xiaomi_miot_raw: debug
+    custom_components.cover.xiaomi_miot_raw: debug
     miio: debug
 ```

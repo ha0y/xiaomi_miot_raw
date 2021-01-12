@@ -10,13 +10,15 @@ switch:
       temperature:
         siid: 2
         piid: 6
-      power_100:    # 在 switch 中 power_100 的数据会被除以 100，用以适配功率显示
+      power:    
         siid: 5
         piid: 6
     params:
       switch_status:
         power_on: True
         power_off: False
+      power:
+        value_factor: 0.01 # 对应的数值会被乘以0.01，用以适配功率显示
 
   - platform: xiaomi_miot_raw
     name: 港兴达智能插座

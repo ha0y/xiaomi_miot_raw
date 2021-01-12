@@ -185,10 +185,20 @@ class XiaomiMiioGenericDevice(SwitchEntity):
                 )
             statedict={}
             for r in response:
-                try:
-                    statedict[r['did']] = r['value'] if r['did'] != 'power_100' else r['value'] / 100
-                except:
-                    pass
+                if r['code'] == 0:
+                    try:
+                        f = self._ctrl_params[r['did']]['value_factor']
+                        statedict[r['did']] = r['value'] * f
+                    except KeyError:
+                        statedict[r['did']] = r['value']
+                else:
+                    statedict[r['did']] = None
+                # try:
+            #         statedict[r['did']] = r['value'] if r['did'] != 'power_100' else r['value'] / 100
+            #         statedict[r['did']] = r['value'] * (1 if r['did'] not in self._ctrl_params[''])
+                # except:
+                    # pass
+
             state = statedict['switch_status']
             self._state_attrs.update(statedict)
 
