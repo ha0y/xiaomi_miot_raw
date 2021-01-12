@@ -41,6 +41,7 @@ import asyncio
 from functools import partial
 from homeassistant.components.cover import PLATFORM_SCHEMA, CoverDevice
 from homeassistant.exceptions import PlatformNotReady
+from . import GenericMiotDevice
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -93,81 +94,32 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
             device_info.hardware_version,
         )
 
-        device = XiaomiMiotGenericCover(miio_device, config, device_info)
+        device = MiotCover(miio_device, config, device_info)
     except DeviceException:
         raise PlatformNotReady
 
     hass.data[DATA_KEY][host] = device
     async_add_devices([device], update_before_add=True)
-
-class XiaomiMiotGenericCover(CoverEntity):
-    """Representation of a Xiaomi Miio Generic Device."""
-
+    
+class MiotCover(GenericMiotDevice, CoverEntity):
     def __init__(self, device, config, device_info):
-        """Initialize the entity."""
-        self._device = device
-        self._ctrl_params = config.get(CONF_CONTROL_PARAMS)
-        self._mapping = config.get(CONF_MAPPING)
-        self._name = config.get(CONF_NAME)
-        self._skip_update = False
-
-        self._model = device_info.model
-        # self._unique_id = "{}-{}-{}".format(
-        #     device_info.model, device_info.mac_address, self._state_property
-        # )
-        self._unique_id = "{}-{}".format(
-            device_info.model, device_info.mac_address
-        )
-        self._icon = "mdi:flask-outline"
-
-        # self._available = None    
-        self._available = True      # 因为还没有做状态反馈，所以使其始终可用
-        self._state = None
-        self._state_attrs = {
-            ATTR_MODEL: self._model,
-            ATTR_FIRMWARE_VERSION: device_info.firmware_version,
-            ATTR_HARDWARE_VERSION: device_info.hardware_version,
-            # ATTR_STATE_PROPERTY: self._state_property,
-            # "signal_strength": device_info.network_interface,
-        }
-        
-        
+        GenericMiotDevice.__init__(self, device, config, device_info)
         self._current_position = 50
         self._target_position = 0
         self._action = 0
 
-
-    # @property
-    # def should_poll(self):
-    #     """Poll the miio device."""
-    #     return True
-
-    @property
-    def unique_id(self):
-        """Return an unique ID."""
-        return self._unique_id
-
-    @property
-    def name(self):
-        """Return the name of this entity, if any."""
-        return self._name
-
-    # @property
-    # def icon(self):
-    #     """Return the icon to use for device if any."""
-    #     return self._icon
-
     @property
     def available(self):
         """Return true when state is known."""
-        return self._available
+        return True
+    
     @property
     def supported_features(self):
         if 'target_position' in self._mapping:
             return SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_STOP | SUPPORT_SET_POSITION
         else:
             return SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_STOP
-                    
+
     @property
     def current_cover_position(self):
         """Return the current position of the cover."""
@@ -186,23 +138,8 @@ class XiaomiMiotGenericCover(CoverEntity):
     @property
     def is_opening(self):
         """Return if the cover is opening or not."""
-        return False
-    async def _try_command(self, mask_error, func, *args, **kwargs):
-        """Call a device command handling error messages."""
-        try:
-            result = await self.hass.async_add_job(partial(func, *args, **kwargs))
-
-            _LOGGER.info("Response received from miio device: %s", result)
-            # _LOGGER.info("MiOT 卷帘设备返回信息: %s", result)
-
-            if result[0]['code'] == 0:
-                return True
-        except DeviceException as exc:
-            _LOGGER.error(mask_error, exc)
-            return False
-
-    # These methods allow HA to tell the actual device what to do. In this case, move
-    # the cover to the desired position, or open and close it all the way.
+        return False        
+    
     async def async_open_cover(self, **kwargs):
         """Open the cover."""
         result = await self._try_command(
@@ -212,7 +149,6 @@ class XiaomiMiotGenericCover(CoverEntity):
             self._ctrl_params['motor_control']['open'],
         )
         if result:
-            # self._state = True
             self._skip_update = True
             
     async def async_close_cover(self, **kwargs):
@@ -225,7 +161,6 @@ class XiaomiMiotGenericCover(CoverEntity):
 
         )
         if result:
-            # self._state = True
             self._skip_update = True
     async def async_stop_cover(self, **kwargs):
         """Close the cover."""
@@ -236,7 +171,6 @@ class XiaomiMiotGenericCover(CoverEntity):
             self._ctrl_params['motor_control']['stop'],
         )
         if result:
-            # self._state = True
             self._skip_update = True
 
     async def async_set_cover_position(self, **kwargs):
@@ -248,11 +182,9 @@ class XiaomiMiotGenericCover(CoverEntity):
             kwargs['position'],
         )
         if result:
-            # self._state = True
             self._skip_update = True
-
-    @property
-    def device_state_attributes(self):
-        """Return the state attributes of the device."""
-        return self._state_attrs
+            
+    async def async_update(self):
+        # TODO
+        pass
 

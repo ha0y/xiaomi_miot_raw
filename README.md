@@ -7,9 +7,12 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 * switch (通用开关，使设备的某个功能在两个指定状态之间切换，并支持读取设备正处于哪个状态，在设备状态变化时自动刷新)
 * cover (通用卷帘，用于接入晾衣架、升降帘、窗帘等具有升降或开合功能的设备，目前支持的操作有：升降停、设置指定位置，暂不支持状态反馈，后期会支持)
 
-本插件的 sensor 和 switch 部分修改自 [syssi](https://github.com/syssi) 的 [xiaomi_raw](https://github.com/syssi/xiaomi_raw)，cover 部分参考了 [Natic](https://github.com/tiandeyu) 的 [dooya_curtain](https://github.com/tiandeyu/dooya_curtain)，在此表示感谢！
-
 如果对您有帮助，欢迎给个 Star！ 🌟 
+
+***Breaking Changes -2020.1.13***
+```breaking_changes
+本次更新后，涉及本插件的部分实体会重新生成，其 ID 带有后缀 `_2`，原实体不再可用。请删除之前的实体，然后把新实体的实体 ID 修改去除 `_2` 即可，历史记录和原有功能不受影响。
+```
 
 ## 安装
 
@@ -21,10 +24,9 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 
 ## 配置文件
 
-```yaml
-请参考 config_example.yaml
 
-```
+**请参考 [config_example.yaml](https://github.com/ha0y/xiaomi_miot_raw/blob/add-miot-support/config_example.yaml)**
+
 各个设备类型公用的配置参数：
 - **host** (*Required*): 设备 IP。
 - **token** (*Required*): 设备 token。
@@ -47,11 +49,11 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 
 该设备类型要的 **params** 下也必须有一个 **motor_control**，用于指定升/降/停的状态值。
 
-## 调试
-
-如果组件工作不正常，通过修改配置文件提升日志调试级别:
-
 ## 更新日志
+### 1 月 13 日
+1. 重构代码，大幅优化代码结构，为扩展设备类型做准备。
+2. **本次更新后，涉及本插件的部分实体会重新生成，其 ID 带有后缀 `_2`，原实体不再可用。请删除之前的实体，然后把新实体的实体 ID 修改去除 `_2` 即可，历史记录和原有功能不受影响。**
+
 ### 1 月 12 日
 1. 数值修正的方法变更为 `params` 下 `value_ratio` 配置项。
 
@@ -65,6 +67,8 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 3. 优化代码结构及调用方式，响应更快了
 
 
+## 调试
+如果组件工作不正常，通过修改配置文件提升日志调试级别:
 ```yaml
 # configuration.yaml
 
