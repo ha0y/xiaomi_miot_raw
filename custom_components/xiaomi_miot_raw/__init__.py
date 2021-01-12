@@ -44,6 +44,7 @@ class GenericMiotDevice(Entity):
 
         self._available = None
         self._state = None
+        self._assumed_state = False
         self._state_attrs = {
             ATTR_MODEL: self._model,
             ATTR_FIRMWARE_VERSION: device_info.firmware_version,
@@ -108,6 +109,7 @@ class GenericMiotDevice(Entity):
             self._available = True
 
             statedict={}
+            count4004 = 0
             for r in response:
                 if r['code'] == 0:
                     try:
@@ -117,6 +119,12 @@ class GenericMiotDevice(Entity):
                         statedict[r['did']] = r['value']
                 else:
                     statedict[r['did']] = None
+                    if r['code'] == -4004:
+                        count4004 += 1
+            if count4004 == len(response):
+                self._assumed_state = True
+                # _LOGGER.warn("设备不支持状态反馈")
+                        
 
             self._state_attrs.update(statedict)
 
@@ -128,6 +136,7 @@ class GenericMiotDevice(Entity):
 class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
     def __init__(self, device, config, device_info):
         GenericMiotDevice.__init__(self, device, config, device_info)
+        
         
     async def async_turn_on(self, **kwargs):
         """Turn on."""
@@ -168,7 +177,7 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
             self._state = True
         elif state == self._ctrl_params['switch_status']['power_off']:
             self._state = False
-        else:
+        elif not self.assumed_state:
             _LOGGER.warning(
                 "New state (%s) doesn't match expected values: %s/%s",
                 state,
@@ -181,6 +190,10 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
 
         self._state_attrs.update({ATTR_STATE_VALUE: state})
 
+    @property
+    def assumed_state(self):
+        """Return true if unable to access real state of entity."""
+        return self._assumed_state
 
     @property
     def state(self):
