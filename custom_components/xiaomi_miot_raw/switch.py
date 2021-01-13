@@ -72,5 +72,4 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     async_add_devices([device], update_before_add=True)
 
 class MiotSwitch(ToggleableMiotDevice, SwitchEntity):
-    def update(self):
-        super().async_update()
+    pass

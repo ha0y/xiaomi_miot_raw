@@ -114,7 +114,7 @@ class GenericMiotDevice(Entity):
                 if r['code'] == 0:
                     try:
                         f = self._ctrl_params[r['did']]['value_ratio']
-                        statedict[r['did']] = r['value'] * f
+                        statedict[r['did']] = round(r['value'] * f , 3)
                     except KeyError:
                         statedict[r['did']] = r['value']
                 else:
@@ -167,9 +167,6 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
     async def async_update(self):
 
         await super().async_update()
-        # if self._available:
-        #     attrs = self._state_attrs
-        #     self._state = attrs.get(self._attr) == 'on'
         state = self._state_attrs['switch_status']
         _LOGGER.debug("Got new state: %s", state)
 

@@ -1,0 +1,35 @@
+switch:
+  - platform: xiaomi_miot_raw
+    name: 蓝牙网关插座
+    host: 192.168.0.201
+    token: 81xxxxxxxxxxxxxxxxxxxxxxxxxxxx02
+    mapping:
+      switch_status:
+        siid: 2
+        piid: 1
+      temperature:
+        siid: 2
+        piid: 6
+      power:    
+        siid: 5
+        piid: 6
+    params:
+      switch_status:
+        power_on: True
+        power_off: False
+      power:
+        value_ratio: 0.01 # 对应的数值会被乘以0.01，用以适配功率显示
+
+  - platform: xiaomi_miot_raw
+    name: 港兴达智能插座
+    host: 192.168.0.203
+    token: c0xxxxxxxxxxxxxxxxxxxxxxxxxxxxd9
+    mapping:
+      switch_status:
+        siid: 2
+        piid: 1
+    params:
+      switch_status:
+        power_on: True
+        power_off: False
+

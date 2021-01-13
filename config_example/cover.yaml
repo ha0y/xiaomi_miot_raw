@@ -1,0 +1,20 @@
+cover:
+  - platform: xiaomi_miot_raw
+    name: '晾衣架'
+    host: 192.168.0.19
+    token: 1fxxxxxxxxxxxxxxxxxxxxxxxxxxxx70
+    mapping:
+      motor_control:
+        siid: 2
+        piid: 2
+      current_position:
+        siid: 2
+        piid: 11
+      target_position:
+        siid: 2
+        piid: 13
+    params:
+      motor_control:
+        open: 1
+        close: 2
+        stop: 0
