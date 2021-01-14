@@ -21,7 +21,7 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 ## 配置文件
 
 
-**请参考 [config_example 文件夹](https://github.com/ha0y/xiaomi_miot_raw/config_example)** 内的相关文件
+**请参考 [config_example 文件夹](https://github.com/ha0y/xiaomi_miot_raw/tree/add-miot-support/config_example)** 内的相关文件
 
 各个设备类型公用的配置参数：
 - **host** (*Required*): 设备 IP。
@@ -57,6 +57,7 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 ## 更新日志
 ### 1 月 13 日
 1. **支持 light 设备类型，可以接入智能灯，并调光调色了！**
+2. 支持灯内置的场景色选择
 
 ### 1 月 12 日
 1. 数值修正的方法变更为 `params` 下 `value_ratio` 配置项。
@@ -85,5 +86,6 @@ logger:
     custom_components.sensor.xiaomi_miot_raw: debug
     custom_components.switch.xiaomi_miot_raw: debug
     custom_components.cover.xiaomi_miot_raw: debug
+    custom_components.light.xiaomi_miot_raw: debug
     miio: debug
 ```

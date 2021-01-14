@@ -86,6 +86,7 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
         ToggleableMiotDevice.__init__(self, device, config, device_info)
         self._brightness = None
         self._color_temp = None
+        self._effect = None
         
     @property
     def supported_features(self):
@@ -95,7 +96,7 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
             s |= SUPPORT_BRIGHTNESS
         if 'color_temperature' in self._mapping:
             s |= SUPPORT_COLOR_TEMP
-        if 'scene' in self._mapping:
+        if 'mode' in self._mapping:
             s |= SUPPORT_EFFECT
         return s
 
@@ -119,18 +120,20 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
     async def async_turn_on(self, **kwargs):
         """Turn on."""
         parameters = [{**{'did': "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping['switch_status'])}]
-        if ATTR_BRIGHTNESS in kwargs:
-            parameters.append({**{'did': "brightness", 'value': self.convert_value(kwargs[ATTR_BRIGHTNESS],"brightness")}, **(self._mapping['brightness'])})
-
-        if ATTR_COLOR_TEMP in kwargs:
-            # HA 会把色温从 K 到 mired 来回转换，转换还有可能超出原有范围，服了……
-            valuerange = self._ctrl_params['color_temperature']['value_range']
-            ct = color.color_temperature_mired_to_kelvin(kwargs[ATTR_COLOR_TEMP])
-            ct = valuerange[0] if ct < valuerange[0] else valuerange[1] if ct > valuerange[1] else ct
-            parameters.append({**{'did': "color_temperature", 'value': ct}, **(self._mapping['color_temperature'])})
-            
         if ATTR_EFFECT in kwargs:
-            _LOGGER.error(kwargs[ATTR_EFFECT]) 
+            modes = self._ctrl_params['mode']
+            parameters.append({**{'did': "mode", 'value': list(modes.keys())[list(modes.values()).index(kwargs[ATTR_EFFECT])]}, **(self._mapping['mode'])}) 
+        else:
+            if ATTR_BRIGHTNESS in kwargs:
+                self._effect = None
+                parameters.append({**{'did': "brightness", 'value': self.convert_value(kwargs[ATTR_BRIGHTNESS],"brightness")}, **(self._mapping['brightness'])})
+            if ATTR_COLOR_TEMP in kwargs:
+                self._effect = None
+                # HA 会把色温从 K 到 mired 来回转换，转换还有可能超出原有范围，服了……
+                valuerange = self._ctrl_params['color_temperature']['value_range']
+                ct = color.color_temperature_mired_to_kelvin(kwargs[ATTR_COLOR_TEMP])
+                ct = valuerange[0] if ct < valuerange[0] else valuerange[1] if ct > valuerange[1] else ct
+                parameters.append({**{'did': "color_temperature", 'value': ct}, **(self._mapping['color_temperature'])})
 
         result = await self._try_command(
             "Turning the miio device on failed.",
@@ -162,6 +165,15 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
             return color.color_temperature_kelvin_to_mired(self._ctrl_params['color_temperature']['value_range'][0])
         except KeyError:
             return None
+    @property
+    def effect_list(self):
+        """Return the list of supported effects."""
+        return list(self._ctrl_params['mode'].values()) #+ ['none']
+
+    @property
+    def effect(self):
+        """Return the current effect."""
+        return self._effect
 
     async def async_update(self):
         """Fetch state from the device."""
@@ -178,7 +190,7 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
             statedict={}
             for r in response:
                 try:
-                    statedict[r['did']] = r['value'] if r['did'] != 'power_100' else r['value'] / 100
+                    statedict[r['did']] = r['value']
                 except:
                     pass
             state = statedict['switch_status']
@@ -203,13 +215,21 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
             self._state_attrs.update({ATTR_STATE_VALUE: state})
             try:
                 self._brightness = self.convert_value(statedict['brightness'],"brightness",False)
+            except KeyError: pass
+            try:
                 self._color_temp = color.color_temperature_kelvin_to_mired(statedict['color_temperature'])
+            except KeyError: pass
+            try:
                 self._state_attrs.update({'color_temperature': statedict['color_temperature']})
-            except KeyError:
-                pass
+            except KeyError: pass
+            try:
+                self._state_attrs.update({'effect': statedict['mode']})
+            except KeyError: pass
+            try:
+                self._effect = self._ctrl_params['mode'][statedict['mode']]
+            except KeyError: 
+                self._effect = None
 
         except DeviceException as ex:
             self._available = False
             _LOGGER.error("Got exception while fetching the state: %s", ex)
-
-        
