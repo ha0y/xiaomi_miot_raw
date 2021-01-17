@@ -112,10 +112,10 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
     def convert_value(self, value, param, dir = True):
         valuerange = self._ctrl_params[param]['value_range']
         if dir:
-            return int((value-1)/254*(
-                valuerange[1]-valuerange[0])/valuerange[2])*valuerange[2]+valuerange[0]
+            slider_value = round(value/255*100)
+            return int(slider_value/100*(valuerange[1]-valuerange[0]+1)/valuerange[2])*valuerange[2]
         else:
-            return int((value-valuerange[0])/(valuerange[1]-valuerange[0])*254)+1
+            return round(value/(valuerange[1]-valuerange[0]+1)*255)
 
     async def async_turn_on(self, **kwargs):
         """Turn on."""
