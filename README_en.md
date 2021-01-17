@@ -1,7 +1,9 @@
 # Xiaomi MIoT Raw
+
+[简体中文](https://github.com/ha0y/xiaomi_miot_raw/blob/add-miot-support/README.md) | English
 > This readme is translated by Google with human corrections.
 
-This custom component implements the Xiaomi MIoT protocol with the help of python-miio, and the usage is similar to xiaomi_raw.
+This custom component implements the Xiaomi MIoT protocol with the help of [python-miio](https://github.com/rytilahti/python-miio), and the usage is similar to [xiaomi_raw](https://github.com/syssi/xiaomi_raw).
 
 Currently this custom component supports:
 * sensor (get properties from device)
@@ -22,34 +24,34 @@ or
 **Please refer to the [config_example folder](https://github.com/ha0y/xiaomi_miot_raw/tree/add-miot-support/config_example)**
 
 Configuration variables common to each device type:
--**host** (*Required*): Device IP.
--**token** (*Required*): Device token.
--**name** (*Optional*): Device name.
--**mapping** (*Required*): The mapping between the function of the device and the id(siid, piid).
--**params** (*Optional*): For devices that can be controlled, specify the mapping between their functional status (such as on/off/up/down/stop) and value.
--**scan_interval** (*Optional*): Status refresh interval.
+- **host** (*Required*): Device IP.
+- **token** (*Required*): Device token.
+- **name** (*Optional*): Device name.
+- **mapping** (*Required*): The mapping between the function of the device and the id(siid, piid).
+- **params** (*Optional*): For devices that can be controlled, specify the mapping between their functional status (such as on/off/up/down/stop) and value.
+- **scan_interval** (*Optional*): Status refresh interval.
 
 ### For sensor:
--**sensor_property** (*Required*): The property in mapping that provides the current state. The rest will be the attributes of the sensor.
--**sensor_unit** (*Optional*): The sensor unit.
+- **sensor_property** (*Required*): The property in mapping that provides the current state. The rest will be the attributes of the sensor.
+- **sensor_unit** (*Optional*): The sensor unit.
 
 ### For switch:
 Required for **mapping** and **params**:
 
--**switch_status**, to obtain and control the switch status by reading and writing this attribute. The **power_on** and **power_off** below specify the on and off state values.
+- **switch_status**, to obtain and control the switch status by reading and writing this attribute. The **power_on** and **power_off** below specify the on and off state values.
 
 ### For cover:
 Required for **mapping** and **params**:
 
--**motor_control**, to obtain and control the motor state by reading and writing this attribute. The **open**, **close** and **stop** below specify the status value of up/down/stop.
+- **motor_control**, to obtain and control the motor state by reading and writing this attribute. The **open**, **close** and **stop** below specify the status value of up/down/stop.
 
 ### For light:
 Required for **mapping** and **params**:
--**switch_status**, to obtain and control the light switch status by reading and writing this attribute. The **power_on** and **power_off** below specify the on and off state values.
+- **switch_status**, to obtain and control the light switch status by reading and writing this attribute. The **power_on** and **power_off** below specify the on and off state values.
 
 Optional:
--**brightness**: After setting this option, will support brightness adjustment.
--**color_temperature**: After setting this option, will support color temperature adjustment.
+- **brightness**: After setting this option, will support brightness adjustment.
+- **color_temperature**: After setting this option, will support color temperature adjustment.
 
 
 ## Update log

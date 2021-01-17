@@ -1,5 +1,7 @@
 # Xiaomi MIoT Raw
 
+简体中文 | [English](https://github.com/ha0y/xiaomi_miot_raw/blob/add-miot-support/README_en.md)
+
 MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议规范，此后凡是可接入米家的设备均通过此协议进行通信。此插件按照 MIoT 协议规范，通过局域网直接与设备通信，实现对设备的状态读取及控制。由于 MIoT 协议具有极强的通用性，一些功能简单的智能设备就可以通过此插件快速高效地接入 Home Assistant，而不必再拘泥于设备型号、不必再等待别人去写插件适配了。
 
 目前此插件已支持以下设备类型：
