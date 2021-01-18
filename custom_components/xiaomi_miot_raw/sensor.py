@@ -34,7 +34,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_SENSOR_PROPERTY): cv.string,
         vol.Optional(CONF_SENSOR_UNIT): cv.string,
         vol.Required(CONF_MAPPING):vol.All(),
-        vol.Optional(CONF_CONTROL_PARAMS):vol.All(),
+        vol.Optional(CONF_CONTROL_PARAMS, default={}):vol.All(),
     }
 )
 
