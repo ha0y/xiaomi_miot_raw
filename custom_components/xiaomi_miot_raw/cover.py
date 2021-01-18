@@ -77,7 +77,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     token = config.get(CONF_TOKEN)
     mapping = config.get(CONF_MAPPING)
     
-    _LOGGER.info("Initializing with host %s (token %s...)", host, token[:5])
+    _LOGGER.info("Initializing %s with host %s (token %s...)", config.get(CONF_NAME), host, token[:5])
     # _LOGGER.info("正在初始化卷帘设备，位于 %s，token 开头为 %s...", host, token[:5])
 
     try:

@@ -55,6 +55,9 @@ Optional:
 
 
 ## Update log
+### January 18
+1. Make the log more detailed.
+
 ### January 13
 1. **Support light platform, now you can connect to smart lights, and adjust the light and color! **
 
@@ -66,7 +69,7 @@ Optional:
 
 ### January 11
 1. Now the switch can also display the attribute value of the device in the state attribute just like the sensor. This type of device does not need to configure the sensor, and can directly merge the mapping content of the previous sensor configuration.
-2. ~~ For some property values does not have a decimal point, a mapping of "power_100" is designed to correct the value. ~~
+2. ~~For some property values does not have a decimal point, a mapping of "power_100" is designed to correct the value.~~
 
 ### January 6
 1. Support cover platform, now you can access curtains, drying racks and other devices
@@ -82,9 +85,6 @@ If the custom component doesn't work out of the box for your device please updat
 logger:
   default: warn
   logs:
-    custom_components.sensor.xiaomi_miot_raw: debug
-    custom_components.switch.xiaomi_miot_raw: debug
-    custom_components.cover.xiaomi_miot_raw: debug
-    custom_components.light.xiaomi_miot_raw: debug
+    custom_components.xiaomi_miot_raw: debug
     miio: debug
 ```

@@ -8,7 +8,7 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 * sensor (传感器，一次性读取设备的多个状态)
 * switch (开关，使设备的某个功能在两个指定状态之间切换，并支持读取设备正处于哪个状态，在设备状态变化时自动刷新)
 * cover (卷帘，用于接入晾衣架、升降帘、窗帘等具有升降或开合功能的设备，目前支持的操作有：升降停、设置指定位置，暂不支持状态反馈，后期会支持)
-* **light (灯，可以开关、调亮度、调色、设置灯效)**
+* light (灯，可以开关、调亮度、调色、设置灯效)
 
 如果对您有帮助，欢迎给个 Star！ 🌟 
 
@@ -57,6 +57,9 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 
 
 ## 更新日志
+### 1 月 18 日
+1. 使调试日志内容更加详细，方便排查问题。
+
 ### 1 月 13 日
 1. **支持 light 设备类型，可以接入智能灯，并调光调色了！**
 2. 支持灯内置的场景色选择
@@ -85,9 +88,6 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 logger:
   default: warn
   logs:
-    custom_components.sensor.xiaomi_miot_raw: debug
-    custom_components.switch.xiaomi_miot_raw: debug
-    custom_components.cover.xiaomi_miot_raw: debug
-    custom_components.light.xiaomi_miot_raw: debug
+    custom_components.xiaomi_miot_raw: debug
     miio: debug
 ```

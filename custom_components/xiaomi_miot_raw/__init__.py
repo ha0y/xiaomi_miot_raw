@@ -87,7 +87,7 @@ class GenericMiotDevice(Entity):
         try:
             result = await self.hass.async_add_job(partial(func, *args, **kwargs))
 
-            _LOGGER.info("Response received from miio device: %s", result)
+            _LOGGER.info("Response received from %s: %s", self._name, result)
             if result[0]['code'] == 0:
                 return True
         except DeviceException as exc:
@@ -121,17 +121,18 @@ class GenericMiotDevice(Entity):
                     statedict[r['did']] = None
                     if r['code'] == -4004:
                         count4004 += 1
+                    else:
+                        _LOGGER.error("Error getting %s 's property '%s' (code: %s)", self._name, r['did'], r['code'])
             if count4004 == len(response):
                 self._assumed_state = True
                 # _LOGGER.warn("设备不支持状态反馈")
-                        
 
             self._state_attrs.update(statedict)
 
 
         except DeviceException as ex:
             self._available = False
-            _LOGGER.error("Got exception while fetching the state: %s", ex)
+            _LOGGER.error("Got exception while fetching %s 's state: %s", self._name, ex)
 
 class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
     def __init__(self, device, config, device_info):
@@ -168,7 +169,7 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
 
         await super().async_update()
         state = self._state_attrs['switch_status']
-        _LOGGER.debug("Got new state: %s", state)
+        _LOGGER.debug("%s 's new state: %s", self._name, state)
 
         if state == self._ctrl_params['switch_status']['power_on']:
             self._state = True
@@ -176,8 +177,8 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
             self._state = False
         elif not self.assumed_state:
             _LOGGER.warning(
-                "New state (%s) doesn't match expected values: %s/%s",
-                state,
+                "New state (%s) of %s doesn't match expected values: %s/%s",
+                state, self._name,
                 self._ctrl_params['switch_status']['power_on'],
                 self._ctrl_params['switch_status']['power_off'],
             )

@@ -61,7 +61,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     token = config.get(CONF_TOKEN)
     mapping = config.get(CONF_MAPPING)
 
-    _LOGGER.info("Initializing with host %s (token %s...)", host, token[:5])
+    _LOGGER.info("Initializing %s with host %s (token %s...)", config.get(CONF_NAME), host, token[:5])
 
     try:
         miio_device = MiotDevice(ip=host, token=token, mapping=mapping)
@@ -195,7 +195,7 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
                     pass
             state = statedict['switch_status']
 
-            _LOGGER.debug("Got new state: %s", state)
+            _LOGGER.debug("%s 's new state: %s", self._name, state)
 
             self._available = True
             if state == self._ctrl_params['switch_status']['power_on']:
