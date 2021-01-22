@@ -86,6 +86,7 @@ class MiotSensor(GenericMiotDevice):
         GenericMiotDevice.__init__(self, device, config, device_info)
         self._state = None
         self._sensor_property = config.get(CONF_SENSOR_PROPERTY)
+        self._unit_of_measurement = config.get(CONF_SENSOR_UNIT)
         
     @property
     def state(self):
@@ -102,3 +103,8 @@ class MiotSensor(GenericMiotDevice):
                 self._state = state.get(self._mapping.keys()[0])
             except:
                 self._state = None
+
+    @property
+    def unit_of_measurement(self):
+        """Return the unit of measurement of this entity, if any."""
+        return self._unit_of_measurement

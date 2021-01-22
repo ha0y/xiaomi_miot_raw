@@ -1,29 +1,36 @@
 ##############################
-#    以下内容仅作示例，现在已经有 switch 的
-#    设备不再需要配置sensor了
+#    Thanks to @countrysideboy
 ##############################
 sensor:
   - platform: xiaomi_miot_raw
-    name: plug
-    host: 192.168.0.201
-    token: 81xxxxxxxxxxxxxxxxxxxxxxxxxxxx02
+    name: air_monitor
+    host: 10.0.0.42
+    token: xxxxxxx
     mapping:
-      onoff:
-        siid: 2
+      humidity:
+        siid: 3
         piid: 1
+      pm2_5:
+        siid: 3
+        piid: 4
+      pm10:
+        siid: 3
+        piid: 5
       temperature:
-        siid: 2
-        piid: 6
-      power:
-        siid: 5
-        piid: 6
-    sensor_property: power
-    sensor_unit: W
-    scan_interval: 10
-    #取到的功率没有小数点，因此做如下处理
-  - platform: template
-    sensors:
-      rsqpower:
-        friendly_name: "插座功率"
-        unit_of_measurement: 'W'
-        value_template: "{{ states('sensor.plug')|float/100 }}"
+        siid: 3
+        piid: 7
+      co2:
+        siid: 3
+        piid: 8
+      battery:
+        siid: 4
+        piid: 1
+      charging:
+        siid: 4
+        piid: 2
+      voltage:
+        siid: 4
+        piid: 3
+    sensor_property: co2
+    sensor_unit: 'ppm'
+    scan_interval: 3
