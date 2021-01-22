@@ -97,7 +97,7 @@ class GenericMiotDevice(Entity):
     async def async_update(self):
         """Fetch state from the device."""
         # On state change some devices doesn't provide the new state immediately.
-        if self._update_instant is False and self._skip_update:
+        if self._update_instant is False or self._skip_update:
             self._skip_update = False
             return
 
@@ -125,6 +125,7 @@ class GenericMiotDevice(Entity):
                         _LOGGER.error("Error getting %s 's property '%s' (code: %s)", self._name, r['did'], r['code'])
             if count4004 == len(response):
                 self._assumed_state = True
+                self._skip_update = True
                 # _LOGGER.warn("设备不支持状态反馈")
 
             self._state_attrs.update(statedict)

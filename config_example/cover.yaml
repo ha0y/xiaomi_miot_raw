@@ -7,9 +7,12 @@ cover:
       motor_control:
         siid: 2
         piid: 2
+      motor_status:
+        siid: 2
+        piid: 4
       current_position:
         siid: 2
-        piid: 11
+        piid: 10
       target_position:
         siid: 2
         piid: 13
@@ -18,3 +21,13 @@ cover:
         open: 1
         close: 2
         stop: 0
+      motor_status:
+        open: 1
+        close: 2
+        stop: 3
+    update_from_cloud:
+      signature: aaa
+      nonce: bbb
+      data: '{"params":....,"datasource":1}'
+      userId: 'ccc'
+      serviceToken: ddd
