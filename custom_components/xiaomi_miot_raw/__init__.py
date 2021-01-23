@@ -128,6 +128,10 @@ class GenericMiotDevice(Entity):
                 self._skip_update = True
                 # _LOGGER.warn("设备不支持状态反馈")
 
+            if statedict.get('brightness'):
+                statedict['brightness_'] = statedict.pop('brightness')
+            if statedict.get('speed'):
+                statedict['speed_'] = statedict.pop('speed')
             self._state_attrs.update(statedict)
 
 
@@ -150,7 +154,6 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
         )
         if result:
             self._state = True
-            self._skip_update = True
 
 
     async def async_turn_off(self, **kwargs):
@@ -164,7 +167,6 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
 
         if result:
             self._state = False
-            self._skip_update = True
 
     async def async_update(self):
 

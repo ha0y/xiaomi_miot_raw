@@ -144,7 +144,7 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
 
         if result:
             self._state = True
-            self._skip_update = True
+            # self._skip_update = True
             
     @property
     def color_temp(self):
@@ -174,62 +174,24 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
     def effect(self):
         """Return the current effect."""
         return self._effect
-
+    
     async def async_update(self):
         """Fetch state from the device."""
         # On state change some devices doesn't provide the new state immediately.
-        if self._update_instant is False and self._skip_update:
-            self._skip_update = False
-            return
-
+        await super().async_update()
         try:
-            _props = [k for k in self._mapping]
-            response = await self.hass.async_add_job(
-                    self._device.get_properties_for_mapping
-                )
-            statedict={}
-            for r in response:
-                try:
-                    statedict[r['did']] = r['value']
-                except:
-                    pass
-            state = statedict['switch_status']
-
-            _LOGGER.debug("%s 's new state: %s", self._name, state)
-
-            self._available = True
-            if state == self._ctrl_params['switch_status']['power_on']:
-                self._state = True
-            elif state == self._ctrl_params['switch_status']['power_off']:
-                self._state = False
-            else:
-                _LOGGER.warning(
-                    "New state (%s) doesn't match expected values: %s/%s",
-                    state,
-                    self._ctrl_params['switch_status']['power_on'],
-                    self._ctrl_params['switch_status']['power_off'],
-                )
-                _LOGGER.warning(type(self._ctrl_params['switch_status']['power_on']))
-                _LOGGER.warning(type(state))
-                self._state = None
-            self._state_attrs.update({ATTR_STATE_VALUE: state})
-            try:
-                self._brightness = self.convert_value(statedict['brightness'],"brightness",False)
-            except KeyError: pass
-            try:
-                self._color_temp = color.color_temperature_kelvin_to_mired(statedict['color_temperature'])
-            except KeyError: pass
-            try:
-                self._state_attrs.update({'color_temperature': statedict['color_temperature']})
-            except KeyError: pass
-            try:
-                self._state_attrs.update({'effect': statedict['mode']})
-            except KeyError: pass
-            try:
-                self._effect = self._ctrl_params['mode'][statedict['mode']]
-            except KeyError: 
-                self._effect = None
-
-        except DeviceException as ex:
-            self._available = False
-            _LOGGER.error("Got exception while fetching the state: %s", ex)
+            self._brightness = self.convert_value(self._state_attrs['brightness_'],"brightness",False)
+        except KeyError: pass
+        try:
+            self._color_temp = color.color_temperature_kelvin_to_mired(self._state_attrs['color_temperature'])
+        except KeyError: pass
+        try:
+            self._state_attrs.update({'color_temperature': self._state_attrs['color_temperature']})
+        except KeyError: pass
+        try:
+            self._state_attrs.update({'effect': self._state_attrs['mode']})
+        except KeyError: pass
+        try:
+            self._effect = self._ctrl_params['mode'][self._state_attrs['mode']]
+        except KeyError: 
+            self._effect = None

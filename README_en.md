@@ -9,7 +9,8 @@ Currently this custom component supports:
 * sensor (get properties from device)
 * switch (set binary properties to device)
 * cover (supports open/close/set position, get position is not supported yet)
-* **light (turn on/off, adjust brightness and color temprature)**
+* light (turn on/off, adjust brightness and color temprature)
+* fan (turn on/off, set oscillation and speed)
 
 ## Install
 
@@ -53,8 +54,19 @@ Optional:
 - **brightness**: After setting this option, will support brightness adjustment.
 - **color_temperature**: After setting this option, will support color temperature adjustment.
 
+### For fan:
+Required for **mapping** and **params**:
+- **switch_status**, to obtain and control the fan switch status by reading and writing this attribute. The **power_on** and **power_off** below specify the on and off state values.
+
+Optional:
+- **oscillate**: After setting this option, will support oscillation adjustment.
+- **speed**: After setting this option, will support speed adjustment.
 
 ## Update log
+### January 23
+1. Support updating states from Mi Home cloud server for alternative. (Only Mainland China server is tested)
+2. Support fan platform.
+
 ### January 18
 1. Make the log more detailed.
 

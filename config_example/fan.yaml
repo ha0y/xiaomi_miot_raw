@@ -1,0 +1,28 @@
+fan:
+  - platform: xiaomi_miot_raw
+    name: testfan
+    host: 192.168.0.2
+    token: 07xxxxxxxxxxxxxxxxxxxxxxxxxxxx92
+    mapping:
+      switch_status:
+        siid: 3
+        piid: 1
+      # oscillate:  #不支持摇头，注释掉即可
+      #   siid: 2
+      #   piid: 1
+      speed:
+        siid: 3
+        piid: 2
+    params:
+      switch_status:
+        power_on: True
+        power_off: False
+      # oscillate:
+      #   on: True
+      #   off: False
+      speed:
+        0: 'off'    #HA要求有一个off，否则会有warning
+        1: 低
+        2: 中
+        3: 高
+    scan_interval: 10

@@ -8,7 +8,7 @@ def deviceinfo(j):
     print(f"设备描述：{j['description']}")
     print("设备属性：")
     for s in j['services']:
-        print(f"siid {s['iid']}: {s['description']}")
+        print(f"\nsiid {s['iid']}: {s['description']}\n")
         for p in s['properties']:
             print(f"   piid {p['iid']}: {p['description']}", end=' ')
             if 'read' in p['access']:
@@ -21,7 +21,10 @@ def deviceinfo(j):
 
             if 'value-range' in p:
                 print(f"      取值范围：{p['value-range']}")
-
+            if 'value-list' in p:
+                print(f"      取值范围：")
+                for item in p['value-list']:
+                    print(f"         {item['value']}: {item['description']}")
 
 if __name__ == '__main__':
     print("正在加载设备列表...")
@@ -50,9 +53,11 @@ if __name__ == '__main__':
 
         params = {'type': urn}
         r = requests.get(url_spec, params=params).json()
-        print(r)
+        # print(r)
 
         deviceinfo(r)
 
     else:
         print("未找到相关设备")
+
+input("按任意键退出...")
