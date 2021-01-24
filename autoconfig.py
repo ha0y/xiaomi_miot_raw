@@ -9,7 +9,7 @@ def deviceinfo(j):
     print("设备属性：")
     for s in j['services']:
         print(f"\nsiid {s['iid']}: {s['description']}\n")
-        for p in s['properties']:
+        for p in s.get('properties', []):
             print(f"   piid {p['iid']}: {p['description']}", end=' ')
             if 'read' in p['access']:
                 print("可读取", end=' ')
@@ -25,6 +25,10 @@ def deviceinfo(j):
                 print(f"      取值范围：")
                 for item in p['value-list']:
                     print(f"         {item['value']}: {item['description']}")
+        for a in s.get('actions', []):
+            print(f"   aiid {a['iid']}: {a['description']}", end=' ')
+            print()
+        print()
 
 if __name__ == '__main__':
     print("正在加载设备列表...")
