@@ -1,6 +1,6 @@
 light:
   - platform: xiaomi_miot_raw
-    name: 客厅里灯
+    name: 客厅灯
     host: 192.168.0.11
     token: c5xxxxxxxxxxxxxxxxxxxxxxxxxxxxa7
     mapping:
@@ -13,6 +13,9 @@ light:
       color_temperature:
         siid: 2
         piid: 3
+      # color:    #支持调色灯
+      #   siid: 2
+      #   piid: 3
     params:
       switch_status:
         power_on: True

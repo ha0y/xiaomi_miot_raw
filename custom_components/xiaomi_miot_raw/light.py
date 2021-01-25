@@ -13,8 +13,10 @@ from miio.miot_device import MiotDevice
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS, 
     ATTR_COLOR_TEMP, 
+    ATTR_HS_COLOR,
     ATTR_EFFECT, 
     SUPPORT_BRIGHTNESS, 
+    SUPPORT_COLOR,
     SUPPORT_COLOR_TEMP, 
     SUPPORT_EFFECT, 
     PLATFORM_SCHEMA, 
@@ -85,6 +87,7 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
     def __init__(self, device, config, device_info):
         ToggleableMiotDevice.__init__(self, device, config, device_info)
         self._brightness = None
+        self._color = None
         self._color_temp = None
         self._effect = None
         
@@ -98,6 +101,8 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
             s |= SUPPORT_COLOR_TEMP
         if 'mode' in self._mapping:
             s |= SUPPORT_EFFECT
+        if 'color' in self._mapping:
+            s |= SUPPORT_COLOR
         return s
 
     @property
@@ -110,12 +115,22 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
         return self._brightness
 
     def convert_value(self, value, param, dir = True):
-        valuerange = self._ctrl_params[param]['value_range']
-        if dir:
-            slider_value = round(value/255*100)
-            return int(slider_value/100*(valuerange[1]-valuerange[0]+1)/valuerange[2])*valuerange[2]
+        if param == 'color':
+            if dir:
+                rgb = color.color_hs_to_RGB(*value)
+                int_ = rgb[0] | rgb[1] << 8 | rgb[2] << 16
+                return int_
+            else:
+                rgb = [0xFF & value, (0xFF00 & value) >> 8, (0xFF0000 & value) >> 16]
+                hs = color.color_RGB_to_hs(*rgb)
+                return hs
         else:
-            return round(value/(valuerange[1]-valuerange[0]+1)*255)
+            valuerange = self._ctrl_params[param]['value_range']
+            if dir:
+                slider_value = round(value/255*100)
+                return int(slider_value/100*(valuerange[1]-valuerange[0]+1)/valuerange[2])*valuerange[2]
+            else:
+                return round(value/(valuerange[1]-valuerange[0]+1)*255)
 
     async def async_turn_on(self, **kwargs):
         """Turn on."""
@@ -134,6 +149,11 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
                 ct = color.color_temperature_mired_to_kelvin(kwargs[ATTR_COLOR_TEMP])
                 ct = valuerange[0] if ct < valuerange[0] else valuerange[1] if ct > valuerange[1] else ct
                 parameters.append({**{'did': "color_temperature", 'value': ct}, **(self._mapping['color_temperature'])})
+            if ATTR_HS_COLOR in kwargs:
+                self._effect = None
+                intcolor = self.convert_value(kwargs[ATTR_HS_COLOR],'color')
+                parameters.append({**{'did': "color", 'value': intcolor}, **(self._mapping['color'])})
+                
 
         result = await self._try_command(
             "Turning the miio device on failed.",
@@ -175,12 +195,20 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
         """Return the current effect."""
         return self._effect
     
+    @property
+    def hs_color(self):
+        """Return the hs color value."""
+        return self._color
+    
     async def async_update(self):
         """Fetch state from the device."""
         # On state change some devices doesn't provide the new state immediately.
         await super().async_update()
         try:
             self._brightness = self.convert_value(self._state_attrs['brightness_'],"brightness",False)
+        except KeyError: pass
+        try:
+            self._color = self.convert_value(self._state_attrs['color'],"color",False)
         except KeyError: pass
         try:
             self._color_temp = color.color_temperature_kelvin_to_mired(self._state_attrs['color_temperature'])

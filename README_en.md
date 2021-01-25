@@ -63,6 +63,9 @@ Optional:
 - **speed**: After setting this option, will support speed adjustment.
 
 ## Update log
+### January 26
+1. Support RGB light.
+
 ### January 23
 1. Support updating states from Mi Home cloud server for alternative. (Only Mainland China server is tested)
 2. Support fan platform.
