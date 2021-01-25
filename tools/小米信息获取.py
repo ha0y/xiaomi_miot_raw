@@ -10,8 +10,11 @@ async def login(username: str, password: str):
     async with aiohttp.ClientSession() as cs:
         mc = MiCloud(cs)
         if await mc.login(username, password):
-            print("以下是登录信息，请保存下来")
-            print (mc.auth)
+            print("以下是登录信息，请保存下来\n注意！拥有此信息即拥有小米账号的所有权限，请勿泄露！")
+            # print (mc.auth)
+            print(f"userId: '{mc.auth['user_id']}'")
+            print(f"ssecurity: '{mc.auth['ssecurity']}'")
+            print(f"serviceToken: '{mc.auth['service_token']}'")
             input("按回车键读取名下所有设备")
             devices_list = await mc.get_devices("cn")
             # print(devices_list)
