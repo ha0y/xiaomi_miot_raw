@@ -26,8 +26,7 @@ cover:
         close: 2
         stop: 3
     update_from_cloud:
-      signature: aaa
-      nonce: bbb
-      data: '{"params":....,"datasource":1}'
-      userId: 'ccc'
-      serviceToken: ddd
+      userId: '12345678'
+      serviceToken: 'abCdeF/gHij='
+      ssecurity: 'abcDef123=='
+      did: '87654321'

@@ -45,6 +45,8 @@ from . import GenericMiotDevice
 from aiohttp import ClientSession
 import async_timeout
 from homeassistant.helpers import aiohttp_client
+from .deps.xiaomi_cloud import *
+import json
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -216,34 +218,36 @@ class MiotCover(GenericMiotDevice, CoverEntity):
             with async_timeout.timeout(10):
                 a = await self.async_update_from_mijia(
                     aiohttp_client.async_get_clientsession(self._hass),
-                    self._cloud.get("signature"),
-                    self._cloud.get("nonce"),
-                    self._cloud.get("data"),
                     self._cloud.get("userId"),
                     self._cloud.get("serviceToken"),
+                    self._cloud.get("ssecurity"),
+                    self._cloud.get("did"),
                 )
             dict1 = {}
             statedict = {}
-            for item in a['result']:
-                if dict1.get(item['siid']):
-                    dict1[item['siid']][item['piid']] = item.get('value')
-                else:
-                    dict1[item['siid']] = {}
-                    dict1[item['siid']][item['piid']] = item.get('value')
+            if a:
+                for item in a['result']:
+                    if dict1.get(item['siid']):
+                        dict1[item['siid']][item['piid']] = item.get('value')
+                    else:
+                        dict1[item['siid']] = {}
+                        dict1[item['siid']][item['piid']] = item.get('value')
 
-            for key, value in self._mapping.items():
-                try:
-                    statedict[key] = dict1[value['siid']][value['piid']]
-                except KeyError:
-                    statedict[key] = None
-                    
-            self._current_position = statedict['current_position']
-            self._action = statedict.get('motor_status')
-            if self.is_closing or self.is_opening:
-                self.async_update = self._throttle1
+                for key, value in self._mapping.items():
+                    try:
+                        statedict[key] = dict1[value['siid']][value['piid']]
+                    except KeyError:
+                        statedict[key] = None
+                        
+                self._current_position = statedict['current_position']
+                self._action = statedict.get('motor_status')
+                if self.is_closing or self.is_opening:
+                    self.async_update = self._throttle1
+                else:
+                    self.async_update = self._throttle10
+                # self._state_attrs.update(statedict)
             else:
-                self.async_update = self._throttle10
-            # self._state_attrs.update(statedict)
+                pass
             
         else:
             await super().async_update()
@@ -254,15 +258,25 @@ class MiotCover(GenericMiotDevice, CoverEntity):
             else:
                 self.async_update = self._throttle10
                 
-    async def async_update_from_mijia(self, session: ClientSession, signature: str, nonce: str, data: str, userId: str, serviceToken: str):
-        url = "https://api.io.mi.com/app/miotspec/prop/get"
+    async def async_update_from_mijia(self, session: ClientSession, userId: str, serviceToken: str, ssecurity: str, did: str):
+        api_base = "https://api.io.mi.com/app"
+        url = "/miotspec/prop/get"
 
+        data1 = {}
+        data1['datasource'] = 1
+        data1['params'] = []
+        for value in self._mapping.values():
+            data1['params'].append({**{'did':did},**value})
+        data2 = json.dumps(data1,separators=(',', ':'))
+        
+        nonce = gen_nonce()
+        signed_nonce = gen_signed_nonce(ssecurity, nonce)
+        signature = gen_signature(url, signed_nonce, nonce, data2)
         payload = {
-            'signature':signature,
-            '_nonce':nonce,
-            'data':data
+            'signature': signature,
+            '_nonce': nonce,
+            'data': data2
         }
-
         headers = {
             'content-type': "application/x-www-form-urlencoded",
             'x-xiaomi-protocal-flag-cli': "PROTOCAL-HTTP2",
@@ -270,10 +284,15 @@ class MiotCover(GenericMiotDevice, CoverEntity):
             'accept-encoding': "gzip",
             'cache-control': "no-cache",
             'cookie': f'userId={userId};serviceToken={serviceToken}'
-            }
-
-        resp = await session.post(url, data=payload, headers=headers)
+        }
+        resp = await session.post(api_base+url, data=payload, headers=headers)
         data = await resp.json(content_type=None)
-        # print(response.text)
-        return data
-        
+        _LOGGER.info("Response of %s from cloud: %s", self._name, data)
+        if data['code'] == 0:
+            return data
+        else:
+            if data['message'] == "auth err":
+                _LOGGER.error(f"{self._name} 的小米账号登录态失效，请重新登录")
+            else:
+                _LOGGER.error(f"Failed updating states from Mijia, code: {data['code']}, message: {data['message']}")
+            return None
