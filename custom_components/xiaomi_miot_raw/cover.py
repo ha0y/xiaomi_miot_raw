@@ -139,10 +139,10 @@ class MiotCover(GenericMiotDevice, CoverEntity):
     @property
     def is_closed(self):
         """Return if the cover is closed, same as position 0."""
-        try:
-            return int(self._current_position) <= 3
-        except ValueError:
-            return None
+        # try:
+        return self._current_position == 0
+        # except (ValueError, TypeError):
+            # return None
     @property
     def is_closing(self):
         """Return if the cover is closing or not."""
