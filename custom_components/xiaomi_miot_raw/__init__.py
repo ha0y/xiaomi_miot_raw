@@ -12,11 +12,19 @@ from homeassistant.exceptions import PlatformNotReady
 from miio.device import Device
 from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
+
+from aiohttp import ClientSession
+import async_timeout
+from homeassistant.helpers import aiohttp_client
+from .deps.xiaomi_cloud import *
+import json
+
 _LOGGER = logging.getLogger(__name__)
 
 CONF_UPDATE_INSTANT = "update_instant"
 CONF_MAPPING = 'mapping'
 CONF_CONTROL_PARAMS = 'params'
+CONF_CLOUD = 'update_from_cloud'
 
 ATTR_STATE_VALUE = "state_value"
 ATTR_MODEL = "model"
@@ -26,7 +34,7 @@ ATTR_HARDWARE_VERSION = "hardware_version"
 class GenericMiotDevice(Entity):
     """通用 MiOT 设备"""
 
-    def __init__(self, device, config, device_info):
+    def __init__(self, device, config, device_info, hass = None):
         """Initialize the entity."""
         self._device = device
         self._mapping = config.get(CONF_MAPPING)
@@ -41,6 +49,9 @@ class GenericMiotDevice(Entity):
             device_info.model, device_info.mac_address, self._name
         )
         # self._icon = "mdi:flask-outline"
+        
+        self._hass = hass
+        self._cloud = config.get(CONF_CLOUD)
 
         self._available = None
         self._state = None
@@ -102,32 +113,60 @@ class GenericMiotDevice(Entity):
             return
 
         try:
-            _props = [k for k in self._mapping]
-            response = await self.hass.async_add_job(
-                    self._device.get_properties_for_mapping
-                )
-            self._available = True
+            if not self._cloud:
+                response = await self.hass.async_add_job(
+                        self._device.get_properties_for_mapping
+                    )
+                self._available = True
 
-            statedict={}
-            count4004 = 0
-            for r in response:
-                if r['code'] == 0:
-                    try:
-                        f = self._ctrl_params[r['did']]['value_ratio']
-                        statedict[r['did']] = round(r['value'] * f , 3)
-                    except KeyError:
-                        statedict[r['did']] = r['value']
-                else:
-                    statedict[r['did']] = None
-                    if r['code'] == -4004:
-                        count4004 += 1
+                statedict={}
+                count4004 = 0
+                for r in response:
+                    if r['code'] == 0:
+                        try:
+                            f = self._ctrl_params[r['did']]['value_ratio']
+                            statedict[r['did']] = round(r['value'] * f , 3)
+                        except KeyError:
+                            statedict[r['did']] = r['value']
                     else:
-                        _LOGGER.error("Error getting %s 's property '%s' (code: %s)", self._name, r['did'], r['code'])
-            if count4004 == len(response):
-                self._assumed_state = True
-                self._skip_update = True
-                # _LOGGER.warn("设备不支持状态反馈")
+                        statedict[r['did']] = None
+                        if r['code'] == -4004:
+                            count4004 += 1
+                        else:
+                            _LOGGER.error("Error getting %s 's property '%s' (code: %s)", self._name, r['did'], r['code'])
+                if count4004 == len(response):
+                    self._assumed_state = True
+                    self._skip_update = True
+                    # _LOGGER.warn("设备不支持状态反馈")
 
+            else:
+                with async_timeout.timeout(10):
+                    a = await self.async_update_from_mijia(
+                        aiohttp_client.async_get_clientsession(self._hass),
+                        self._cloud.get("userId"),
+                        self._cloud.get("serviceToken"),
+                        self._cloud.get("ssecurity"),
+                        self._cloud.get("did"),
+                    )
+                dict1 = {}
+                statedict = {}
+                if a:
+                    for item in a['result']:
+                        if dict1.get(item['siid']):
+                            dict1[item['siid']][item['piid']] = item.get('value')
+                        else:
+                            dict1[item['siid']] = {}
+                            dict1[item['siid']][item['piid']] = item.get('value')
+
+                    for key, value in self._mapping.items():
+                        try:
+                            statedict[key] = dict1[value['siid']][value['piid']]
+                        except KeyError:
+                            statedict[key] = None
+                            
+                else:
+                    pass
+                
             if statedict.get('brightness'):
                 statedict['brightness_'] = statedict.pop('brightness')
             if statedict.get('speed'):
@@ -138,10 +177,52 @@ class GenericMiotDevice(Entity):
         except DeviceException as ex:
             self._available = False
             _LOGGER.error("Got exception while fetching %s 's state: %s", self._name, ex)
+    
+    async def async_update_from_mijia(self, session: ClientSession, userId: str, serviceToken: str, ssecurity: str, did: str):
+        api_base = "https://api.io.mi.com/app"
+        url = "/miotspec/prop/get"
+
+        data1 = {}
+        data1['datasource'] = 1
+        data1['params'] = []
+        for value in self._mapping.values():
+            data1['params'].append({**{'did':did},**value})
+        data2 = json.dumps(data1,separators=(',', ':'))
+        
+        nonce = gen_nonce()
+        signed_nonce = gen_signed_nonce(ssecurity, nonce)
+        signature = gen_signature(url, signed_nonce, nonce, data2)
+        payload = {
+            'signature': signature,
+            '_nonce': nonce,
+            'data': data2
+        }
+        headers = {
+            'content-type': "application/x-www-form-urlencoded",
+            'x-xiaomi-protocal-flag-cli': "PROTOCAL-HTTP2",
+            'connection': "Keep-Alive",
+            'accept-encoding': "gzip",
+            'cache-control': "no-cache",
+            'cookie': f'userId={userId};serviceToken={serviceToken}'
+        }
+        resp = await session.post(api_base+url, data=payload, headers=headers)
+        data = await resp.json(content_type=None)
+        _LOGGER.info("Response of %s from cloud: %s", self._name, data)
+        if data['code'] == 0:
+            self._available = True
+            return data
+        else:
+            if data['message'] == "auth err":
+                _LOGGER.error(f"{self._name} 的小米账号登录态失效，请重新登录")
+            else:
+                _LOGGER.error(f"Failed updating states from Mijia, code: {data['code']}, message: {data['message']}")
+            self._available = False
+            return None
+
 
 class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
-    def __init__(self, device, config, device_info):
-        GenericMiotDevice.__init__(self, device, config, device_info)
+    def __init__(self, device, config, device_info, hass = None):
+        GenericMiotDevice.__init__(self, device, config, device_info, hass)
         
         
     async def async_turn_on(self, **kwargs):

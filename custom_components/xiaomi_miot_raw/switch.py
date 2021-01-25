@@ -19,6 +19,7 @@ DATA_KEY = "switch.xiaomi_miot_raw"
 CONF_UPDATE_INSTANT = "update_instant"
 CONF_MAPPING = 'mapping'
 CONF_CONTROL_PARAMS = 'params'
+CONF_CLOUD = 'update_from_cloud'
 
 ATTR_STATE_VALUE = "state_value"
 
@@ -28,6 +29,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Optional(CONF_UPDATE_INSTANT, default=True): cv.boolean,
+        vol.Optional(CONF_CLOUD): vol.All(),
         
         vol.Required(CONF_MAPPING):vol.All(),
         vol.Required(CONF_CONTROL_PARAMS):vol.All(),
@@ -64,7 +66,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
             device_info.hardware_version,
         )
 
-        device = MiotSwitch(miio_device, config, device_info)
+        device = MiotSwitch(miio_device, config, device_info, hass)
     except DeviceException:
         raise PlatformNotReady
 

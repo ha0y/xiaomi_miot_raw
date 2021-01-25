@@ -5,6 +5,7 @@ try:
     from xiaomi_cloud import *
 except ImportError:
     print("需要“xiaomi_cloud.py”文件，请确保文件夹内容完整！")
+    input("按回车键退出...")
     
 async def login(username: str, password: str):
     async with aiohttp.ClientSession() as cs:
