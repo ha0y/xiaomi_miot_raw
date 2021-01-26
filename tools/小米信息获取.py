@@ -1,11 +1,13 @@
-import aiohttp
+try:
+    import aiohttp
+except ModuleNotFoundError:
+    input("需要安装 aiohttp，请运行: pip install aiohttp")
 from aiohttp import ClientSession
 import getpass
 try:
     from xiaomi_cloud import *
 except ImportError:
-    print("需要“xiaomi_cloud.py”文件，请确保文件夹内容完整！")
-    input("按回车键退出...")
+    input("需要“xiaomi_cloud.py”文件，请确保文件夹内容完整！")
     
 async def login(username: str, password: str):
     async with aiohttp.ClientSession() as cs:
