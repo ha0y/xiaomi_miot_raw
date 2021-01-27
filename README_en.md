@@ -63,6 +63,9 @@ Optional:
 - **speed**: After setting this option, will support speed adjustment.
 
 ## Update log
+### January 28
+1. Support UI configuration.
+
 ### January 26
 1. Support RGB light.
 

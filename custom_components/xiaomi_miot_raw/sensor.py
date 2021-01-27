@@ -2,31 +2,40 @@ import asyncio
 import logging
 from collections import defaultdict
 from functools import partial
+
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components.sensor import PLATFORM_SCHEMA
-from homeassistant.const import ATTR_ENTITY_ID, CONF_HOST, CONF_NAME, CONF_TOKEN
+from homeassistant.const import (ATTR_ENTITY_ID, CONF_HOST, CONF_NAME,
+                                 CONF_TOKEN)
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers.entity import Entity
-
 from miio.device import Device
 from miio.exceptions import DeviceException
-from miio.miot_device import MiotDevice 
+from miio.miot_device import MiotDevice
+
 from . import GenericMiotDevice
+from .deps.const import (
+    DOMAIN,
+    CONF_UPDATE_INSTANT,
+    CONF_MAPPING,
+    CONF_CONTROL_PARAMS,
+    CONF_CLOUD,
+    CONF_MODEL,
+    ATTR_STATE_VALUE,
+    ATTR_MODEL,
+    ATTR_FIRMWARE_VERSION,
+    ATTR_HARDWARE_VERSION,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = "Generic MIoT sensor"
-DATA_KEY = "sensor.xiaomi_miot_raw"
-DOMAIN = "xiaomi_miot_raw"
+DATA_KEY = "sensor." + DOMAIN
 
 CONF_SENSOR_PROPERTY = "sensor_property"
 CONF_SENSOR_UNIT = "sensor_unit"
 CONF_DEFAULT_PROPERTIES = "default_properties"
-CONF_MAPPING = 'mapping'
-CONF_CONTROL_PARAMS = 'params'
-CONF_CLOUD = 'update_from_cloud'
-
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_HOST): cv.string,
@@ -36,17 +45,11 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_SENSOR_UNIT): cv.string,
         vol.Required(CONF_MAPPING):vol.All(),
         vol.Optional(CONF_CONTROL_PARAMS, default={}):vol.All(),
-        vol.Optional(CONF_CLOUD): vol.All(),
     }
 )
 
-ATTR_MODEL = "model"
-ATTR_FIRMWARE_VERSION = "firmware_version"
-ATTR_HARDWARE_VERSION = "hardware_version"
 ATTR_PROPERTIES = "properties"
 ATTR_SENSOR_PROPERTY = "sensor_property"
-ATTR_METHOD = "method"
-ATTR_PARAMS = "params"
 
 # pylint: disable=unused-argument
 @asyncio.coroutine
@@ -73,7 +76,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
             device_info.hardware_version,
         )
 
-        device = MiotSensor(miio_device, config, device_info, hass)
+        device = MiotSensor(miio_device, config, device_info)
     except DeviceException as de:
         _LOGGER.warn(de)
 
@@ -83,9 +86,13 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     hass.data[DATA_KEY][host] = device
     async_add_devices([device], update_before_add=True)
 
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    config = hass.data[DOMAIN]['configs'].get(config_entry.entry_id, dict(config_entry.data))
+    await async_setup_platform(hass, config, async_add_entities)
+
 class MiotSensor(GenericMiotDevice):
-    def __init__(self, device, config, device_info, hass):
-        GenericMiotDevice.__init__(self, device, config, device_info, hass)
+    def __init__(self, device, config, device_info):
+        GenericMiotDevice.__init__(self, device, config, device_info)
         self._state = None
         self._sensor_property = config.get(CONF_SENSOR_PROPERTY)
         self._unit_of_measurement = config.get(CONF_SENSOR_UNIT)

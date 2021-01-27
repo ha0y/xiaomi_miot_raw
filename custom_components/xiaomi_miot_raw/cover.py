@@ -1,64 +1,56 @@
+import asyncio
+import json
+import logging
+from datetime import timedelta
+from functools import partial
+from typing import Optional
+
+import async_timeout
+import homeassistant.helpers.config_validation as cv
+import voluptuous as vol
+from aiohttp import ClientSession
 from homeassistant.components.cover import (
-    DOMAIN,
-    ENTITY_ID_FORMAT,
-    PLATFORM_SCHEMA,
-    SUPPORT_CLOSE,
-    SUPPORT_OPEN,
-    SUPPORT_STOP,
-    SUPPORT_SET_POSITION,
-    CoverEntity,
-    DEVICE_CLASS_CURTAIN,
-)
+    DEVICE_CLASS_CURTAIN, DOMAIN,
+    ENTITY_ID_FORMAT, PLATFORM_SCHEMA,
+    SUPPORT_CLOSE, SUPPORT_OPEN,
+    SUPPORT_SET_POSITION, SUPPORT_STOP,
+    CoverDevice, CoverEntity)
 from homeassistant.const import (
-    CONF_NAME,
-    CONF_HOST,
-    CONF_TOKEN,
-    SERVICE_CLOSE_COVER,
-    SERVICE_CLOSE_COVER_TILT,
-    SERVICE_OPEN_COVER,
-    SERVICE_OPEN_COVER_TILT,
+    CONF_HOST, CONF_NAME, CONF_TOKEN,
+    SERVICE_CLOSE_COVER, SERVICE_CLOSE_COVER_TILT,
+    SERVICE_OPEN_COVER, SERVICE_OPEN_COVER_TILT,
     SERVICE_SET_COVER_POSITION,
     SERVICE_SET_COVER_TILT_POSITION,
-    SERVICE_STOP_COVER,
-    SERVICE_STOP_COVER_TILT,
-    SERVICE_TOGGLE,
-    SERVICE_TOGGLE_COVER_TILT,
-    STATE_CLOSED,
-    STATE_CLOSING,
-    STATE_OPEN,
-    STATE_OPENING,
-)
-import homeassistant.helpers.config_validation as cv
+    SERVICE_STOP_COVER, SERVICE_STOP_COVER_TILT,
+    SERVICE_TOGGLE, SERVICE_TOGGLE_COVER_TILT,
+    STATE_CLOSED, STATE_CLOSING, STATE_OPEN,
+    STATE_OPENING)
+from homeassistant.exceptions import PlatformNotReady
+from homeassistant.helpers import aiohttp_client
 from homeassistant.util import Throttle
-import voluptuous as vol
-import logging
-from typing import Optional
-from datetime import timedelta
 from miio.device import Device
 from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
-import asyncio
-from functools import partial
-from homeassistant.components.cover import PLATFORM_SCHEMA, CoverDevice
-from homeassistant.exceptions import PlatformNotReady
+
 from . import GenericMiotDevice
-from aiohttp import ClientSession
-import async_timeout
-from homeassistant.helpers import aiohttp_client
+from .deps.const import (
+    DOMAIN,
+    CONF_UPDATE_INSTANT,
+    CONF_MAPPING,
+    CONF_CONTROL_PARAMS,
+    CONF_CLOUD,
+    CONF_MODEL,
+    ATTR_STATE_VALUE,
+    ATTR_MODEL,
+    ATTR_FIRMWARE_VERSION,
+    ATTR_HARDWARE_VERSION,
+)
 from .deps.xiaomi_cloud import *
-import json
 
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = "Generic MIoT cover"
-DATA_KEY = "switch.xiaomi_miot_raw"
-ATTR_MODEL = "model"
-ATTR_FIRMWARE_VERSION = "firmware_version"
-ATTR_HARDWARE_VERSION = "hardware_version"
-
-CONF_MAPPING = 'mapping'
-CONF_CONTROL_PARAMS = 'params'
-CONF_CLOUD = 'update_from_cloud'
+DATA_KEY = "cover." + DOMAIN
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
@@ -84,7 +76,6 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     mapping = config.get(CONF_MAPPING)
     
     _LOGGER.info("Initializing %s with host %s (token %s...)", config.get(CONF_NAME), host, token[:5])
-    # _LOGGER.info("正在初始化卷帘设备，位于 %s，token 开头为 %s...", host, token[:5])
 
     try:
         # miio_device = Device(host, token)
@@ -94,7 +85,6 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
         model = device_info.model
         _LOGGER.info(
             "%s %s %s detected",
-            # "检测到 %s，固件: %s，硬件类型: %s",
             model,
             device_info.firmware_version,
             device_info.hardware_version,
@@ -106,7 +96,11 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 
     hass.data[DATA_KEY][host] = device
     async_add_devices([device], update_before_add=True)
-    
+   
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    config = hass.data[DOMAIN]['configs'].get(config_entry.entry_id, dict(config_entry.data))
+    await async_setup_platform(hass, config, async_add_entities)
+ 
 class MiotCover(GenericMiotDevice, CoverEntity):
     def __init__(self, device, config, device_info, hass):
         GenericMiotDevice.__init__(self, device, config, device_info, hass)

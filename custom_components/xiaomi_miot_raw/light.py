@@ -2,37 +2,41 @@
 import asyncio
 import logging
 from functools import partial
+
 import homeassistant.helpers.config_validation as cv
-from homeassistant.util import color
 import voluptuous as vol
+from homeassistant.components.light import (
+    ATTR_BRIGHTNESS, ATTR_COLOR_TEMP,
+    ATTR_EFFECT, ATTR_HS_COLOR,
+    PLATFORM_SCHEMA,
+    SUPPORT_BRIGHTNESS, SUPPORT_COLOR,
+    SUPPORT_COLOR_TEMP, SUPPORT_EFFECT,
+    LightEntity)
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_TOKEN
 from homeassistant.exceptions import PlatformNotReady
+from homeassistant.util import color
 from miio.device import Device
 from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
-from homeassistant.components.light import (
-    ATTR_BRIGHTNESS, 
-    ATTR_COLOR_TEMP, 
-    ATTR_HS_COLOR,
-    ATTR_EFFECT, 
-    SUPPORT_BRIGHTNESS, 
-    SUPPORT_COLOR,
-    SUPPORT_COLOR_TEMP, 
-    SUPPORT_EFFECT, 
-    PLATFORM_SCHEMA, 
-    LightEntity)
-from . import ToggleableMiotDevice, GenericMiotDevice
+
+from . import GenericMiotDevice, ToggleableMiotDevice
+from .deps.const import (
+    DOMAIN,
+    CONF_UPDATE_INSTANT,
+    CONF_MAPPING,
+    CONF_CONTROL_PARAMS,
+    CONF_CLOUD,
+    CONF_MODEL,
+    ATTR_STATE_VALUE,
+    ATTR_MODEL,
+    ATTR_FIRMWARE_VERSION,
+    ATTR_HARDWARE_VERSION,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = "Generic MIoT light"
-DATA_KEY = "light.xiaomi_miot_raw"
-
-CONF_UPDATE_INSTANT = "update_instant"
-CONF_MAPPING = 'mapping'
-CONF_CONTROL_PARAMS = 'params'
-
-ATTR_STATE_VALUE = "state_value"
+DATA_KEY = "light." + DOMAIN
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -46,10 +50,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 
     }
 )
-
-ATTR_MODEL = "model"
-ATTR_FIRMWARE_VERSION = "firmware_version"
-ATTR_HARDWARE_VERSION = "hardware_version"
 
 # pylint: disable=unused-argument
 @asyncio.coroutine
@@ -82,7 +82,12 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 
     hass.data[DATA_KEY][host] = device
     async_add_devices([device], update_before_add=True)
-        
+
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    config = hass.data[DOMAIN]['configs'].get(config_entry.entry_id, dict(config_entry.data))
+    await async_setup_platform(hass, config, async_add_entities)
+
+      
 class MiotLight(ToggleableMiotDevice, LightEntity):
     def __init__(self, device, config, device_info):
         ToggleableMiotDevice.__init__(self, device, config, device_info)
@@ -144,7 +149,6 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
                 parameters.append({**{'did': "brightness", 'value': self.convert_value(kwargs[ATTR_BRIGHTNESS],"brightness")}, **(self._mapping['brightness'])})
             if ATTR_COLOR_TEMP in kwargs:
                 self._effect = None
-                # HA 会把色温从 K 到 mired 来回转换，转换还有可能超出原有范围，服了……
                 valuerange = self._ctrl_params['color_temperature']['value_range']
                 ct = color.color_temperature_mired_to_kelvin(kwargs[ATTR_COLOR_TEMP])
                 ct = valuerange[0] if ct < valuerange[0] else valuerange[1] if ct > valuerange[1] else ct

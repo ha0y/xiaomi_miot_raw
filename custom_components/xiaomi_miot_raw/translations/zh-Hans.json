@@ -1,0 +1,33 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "已经配置过这个设备了"
+        },
+        "create_entry": {
+            "default": "Create Entry Default."
+        },
+        "error": {
+            "unexpected_error": "发生错误，请查看日志"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "host": "IP",
+                    "token": "token",
+                    "mapping": "mapping",
+                    "params": "配置参数"
+                },
+                "description": "本地通信需要获取以下信息",
+                "title": "配置"
+            },
+            "devinfo": {
+                "title": "设备信息",
+                "data": {
+                    "devtype": "请选择设备类型"
+                },
+                "description": "{device_info}"
+            }
+        },
+        "title": "MIoT"
+    }
+}

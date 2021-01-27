@@ -2,38 +2,45 @@
 import asyncio
 import logging
 from functools import partial
+
 import homeassistant.helpers.config_validation as cv
-from homeassistant.util import color
 import voluptuous as vol
+from homeassistant.components import fan
+from homeassistant.components.fan import (
+    ATTR_SPEED, 
+    PLATFORM_SCHEMA,
+    SPEED_HIGH, 
+    SPEED_LOW, 
+    SPEED_MEDIUM,
+    SPEED_OFF, 
+    SUPPORT_OSCILLATE,
+    SUPPORT_SET_SPEED, 
+    FanEntity)
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_TOKEN
 from homeassistant.exceptions import PlatformNotReady
+from homeassistant.util import color
 from miio.device import Device
 from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
-from homeassistant.components import fan
-from homeassistant.components.fan import (
-    ATTR_SPEED,
-    SPEED_HIGH,
-    SPEED_LOW,
-    SPEED_MEDIUM,
-    SPEED_OFF,
-    SUPPORT_OSCILLATE,
-    SUPPORT_SET_SPEED,
-    PLATFORM_SCHEMA,
-    FanEntity,
+
+from . import GenericMiotDevice, ToggleableMiotDevice
+from .deps.const import (
+    DOMAIN,
+    CONF_UPDATE_INSTANT,
+    CONF_MAPPING,
+    CONF_CONTROL_PARAMS,
+    CONF_CLOUD,
+    CONF_MODEL,
+    ATTR_STATE_VALUE,
+    ATTR_MODEL,
+    ATTR_FIRMWARE_VERSION,
+    ATTR_HARDWARE_VERSION,
 )
-from . import ToggleableMiotDevice, GenericMiotDevice
 
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = "Generic MIoT fan"
-DATA_KEY = "fan.xiaomi_miot_raw"
-
-CONF_UPDATE_INSTANT = "update_instant"
-CONF_MAPPING = 'mapping'
-CONF_CONTROL_PARAMS = 'params'
-
-ATTR_STATE_VALUE = "state_value"
+DATA_KEY = "fan." + DOMAIN
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -47,10 +54,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 
     }
 )
-
-ATTR_MODEL = "model"
-ATTR_FIRMWARE_VERSION = "firmware_version"
-ATTR_HARDWARE_VERSION = "hardware_version"
 
 # pylint: disable=unused-argument
 @asyncio.coroutine
@@ -84,6 +87,10 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     hass.data[DATA_KEY][host] = device
     async_add_devices([device], update_before_add=True)
         
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    config = hass.data[DOMAIN]['configs'].get(config_entry.entry_id, dict(config_entry.data))
+    await async_setup_platform(hass, config, async_add_entities)
+
 class MiotFan(ToggleableMiotDevice, FanEntity):
     def __init__(self, device, config, device_info):
         ToggleableMiotDevice.__init__(self, device, config, device_info)

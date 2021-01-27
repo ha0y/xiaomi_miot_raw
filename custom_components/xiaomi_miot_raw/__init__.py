@@ -1,36 +1,96 @@
 import asyncio
+import json
 import logging
+from datetime import timedelta
 from functools import partial
+
+import async_timeout
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-from homeassistant.helpers.entity import (
-    Entity,
-    ToggleEntity,
-)
+from aiohttp import ClientSession
 from homeassistant.const import *
+from homeassistant.core import callback
 from homeassistant.exceptions import PlatformNotReady
+from homeassistant.helpers import aiohttp_client, discovery
+from homeassistant.helpers.entity import Entity, ToggleEntity
+from homeassistant.helpers.entity_component import EntityComponent
 from miio.device import Device
 from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
 
-from aiohttp import ClientSession
-import async_timeout
-from homeassistant.helpers import aiohttp_client
+from .deps.const import (
+    DOMAIN,
+    CONF_UPDATE_INSTANT,
+    CONF_MAPPING,
+    CONF_CONTROL_PARAMS,
+    CONF_CLOUD,
+    CONF_MODEL,
+    ATTR_STATE_VALUE,
+    ATTR_MODEL,
+    ATTR_FIRMWARE_VERSION,
+    ATTR_HARDWARE_VERSION,
+    SUPPORTED_DOMAINS,
+)
 from .deps.xiaomi_cloud import *
-import json
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_UPDATE_INSTANT = "update_instant"
-CONF_MAPPING = 'mapping'
-CONF_CONTROL_PARAMS = 'params'
-CONF_CLOUD = 'update_from_cloud'
+SCAN_INTERVAL = timedelta(seconds=60)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                vol.Required(CONF_NAME): cv.string,
+                vol.Required(CONF_HOST): cv.string,
+                vol.Required(CONF_TOKEN): cv.string,
+                vol.Required(CONF_MAPPING): vol.All(),
+                vol.Required(CONF_CONTROL_PARAMS): vol.All(),
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
+async def async_setup(hass, hassconfig):
+    """Setup Component."""
+    hass.data.setdefault(DOMAIN, {})
 
-ATTR_STATE_VALUE = "state_value"
-ATTR_MODEL = "model"
-ATTR_FIRMWARE_VERSION = "firmware_version"
-ATTR_HARDWARE_VERSION = "hardware_version"
+    config = hassconfig.get(DOMAIN) or {}
+    hass.data[DOMAIN]['config'] = config           
+    hass.data[DOMAIN].setdefault('entities', {})   
+    hass.data[DOMAIN].setdefault('configs', {})    
 
+    component = EntityComponent(_LOGGER, DOMAIN, hass, SCAN_INTERVAL)
+    hass.data[DOMAIN]['component'] = component
+
+    await component.async_setup(config)
+    return True
+
+async def async_setup_entry(hass, entry):
+    """Set up shopping list from config flow."""
+    hass.data.setdefault(DOMAIN, {})
+    
+    config = {}
+    for item in [CONF_NAME,
+                 CONF_HOST,
+                 CONF_TOKEN,
+                 ]:
+        config[item] = entry.data.get(item)
+    for item in [CONF_MAPPING,
+                 CONF_CONTROL_PARAMS,
+                 ]:
+        config[item] = json.loads(entry.data.get(item))
+    
+    config['config_entry'] = entry
+    entry_id = entry.entry_id
+    unique_id = entry.unique_id
+    hass.data[DOMAIN]['configs'][entry_id] = config
+    hass.data[DOMAIN]['configs'][unique_id] = config
+    
+    hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, entry.data.get('devtype')))
+    
+    
+    return True
+    
 class GenericMiotDevice(Entity):
     """通用 MiOT 设备"""
 
@@ -38,8 +98,13 @@ class GenericMiotDevice(Entity):
         """Initialize the entity."""
         self._device = device
         self._mapping = config.get(CONF_MAPPING)
+        if type(self._mapping) == str:
+            self._mapping = json.loads(self._mapping)
+            
         self._ctrl_params = config.get(CONF_CONTROL_PARAMS)
-
+        if type(self._ctrl_params) == str:
+            self._mapping = json.loads(self._ctrl_params)
+        
         self._name = config.get(CONF_NAME)
         self._update_instant = config.get(CONF_UPDATE_INSTANT)
         self._skip_update = False
@@ -92,7 +157,17 @@ class GenericMiotDevice(Entity):
     def device_state_attributes(self):
         """Return the state attributes of the device."""
         return self._state_attrs
-
+    
+    @property
+    def device_info(self):
+        return {
+            'identifiers': {(DOMAIN, self._unique_id)},
+            'name': self._name,
+            'model': self._model,
+            'manufacturer': (self._model or 'Xiaomi').split('.', 1)[0],
+            'sw_version': self._state_attrs.get(ATTR_FIRMWARE_VERSION),
+        }
+        
     async def _try_command(self, mask_error, func, *args, **kwargs):
         """Call a device command handling error messages."""
         try:

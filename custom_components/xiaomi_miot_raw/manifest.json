@@ -1,7 +1,7 @@
 {
   "domain": "xiaomi_miot_raw",
-  "name": "Custom component for Home Assistant to faciliate the reverse engeneering of Xiaomi MiOT devices",
-  "config_flow": false,
+  "name": "Xiaomi MIoT",
+  "config_flow": true,
   "documentation": "https://github.com/ha0y/xiaomi_miot_raw",
   "issue_tracker": "https://github.com/ha0y/xiaomi_miot_raw/issues",
   "requirements": [
@@ -10,7 +10,6 @@
   ],
   "dependencies": [],
   "codeowners": [
-    "@syssi",
     "@ha0y"
   ]
 }
