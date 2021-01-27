@@ -25,6 +25,7 @@ CONF_SENSOR_UNIT = "sensor_unit"
 CONF_DEFAULT_PROPERTIES = "default_properties"
 CONF_MAPPING = 'mapping'
 CONF_CONTROL_PARAMS = 'params'
+CONF_CLOUD = 'update_from_cloud'
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -35,6 +36,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_SENSOR_UNIT): cv.string,
         vol.Required(CONF_MAPPING):vol.All(),
         vol.Optional(CONF_CONTROL_PARAMS, default={}):vol.All(),
+        vol.Optional(CONF_CLOUD): vol.All(),
     }
 )
 
@@ -71,7 +73,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
             device_info.hardware_version,
         )
 
-        device = MiotSensor(miio_device, config, device_info)
+        device = MiotSensor(miio_device, config, device_info, hass)
     except DeviceException as de:
         _LOGGER.warn(de)
 
@@ -82,8 +84,8 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     async_add_devices([device], update_before_add=True)
 
 class MiotSensor(GenericMiotDevice):
-    def __init__(self, device, config, device_info):
-        GenericMiotDevice.__init__(self, device, config, device_info)
+    def __init__(self, device, config, device_info, hass):
+        GenericMiotDevice.__init__(self, device, config, device_info, hass)
         self._state = None
         self._sensor_property = config.get(CONF_SENSOR_PROPERTY)
         self._unit_of_measurement = config.get(CONF_SENSOR_UNIT)
