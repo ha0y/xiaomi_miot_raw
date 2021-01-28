@@ -12,10 +12,9 @@
         "step": {
             "user": {
                 "data": {
+                    "name": "名称",
                     "host": "IP",
-                    "token": "token",
-                    "mapping": "mapping",
-                    "params": "配置参数"
+                    "token": "token"
                 },
                 "description": "本地通信需要获取以下信息",
                 "title": "配置"
@@ -23,7 +22,10 @@
             "devinfo": {
                 "title": "设备信息",
                 "data": {
-                    "devtype": "请选择设备类型"
+                    "devtype": "请选择设备类型",
+                    "mapping": "mapping",
+                    "params": "配置参数"
+
                 },
                 "description": "{device_info}"
             }

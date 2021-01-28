@@ -12,10 +12,9 @@
         "step": {
             "user": {
                 "data": {
+                    "name": "Name",
                     "host": "IP",
-                    "token": "token",
-                    "mapping": "mapping",
-                    "params": "params"
+                    "token": "token"
                 },
                 "description": "Please fill in the information below",
                 "title": "Configuration"
@@ -23,7 +22,10 @@
             "devinfo": {
                 "title": "Device information",
                 "data": {
-                    "devtype": "Device Type"
+                    "devtype": "Device Type",
+                    "mapping": "mapping",
+                    "params": "params"
+
                 },
                 "description": "{device_info}"
             }

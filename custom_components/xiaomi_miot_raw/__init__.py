@@ -10,6 +10,7 @@ import voluptuous as vol
 from aiohttp import ClientSession
 from homeassistant.const import *
 from homeassistant.core import callback
+from homeassistant.components import persistent_notification
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers import aiohttp_client, discovery
 from homeassistant.helpers.entity import Entity, ToggleEntity
@@ -88,7 +89,6 @@ async def async_setup_entry(hass, entry):
     
     hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, entry.data.get('devtype')))
     
-    
     return True
     
 class GenericMiotDevice(Entity):
@@ -127,6 +127,7 @@ class GenericMiotDevice(Entity):
             ATTR_HARDWARE_VERSION: device_info.hardware_version,
             # ATTR_STATE_PROPERTY: self._state_property,
         }
+        self._notified = False
 
     @property
     def should_poll(self):
@@ -196,6 +197,7 @@ class GenericMiotDevice(Entity):
 
                 statedict={}
                 count4004 = 0
+                count9999 = 0
                 for r in response:
                     if r['code'] == 0:
                         try:
@@ -207,12 +209,36 @@ class GenericMiotDevice(Entity):
                         statedict[r['did']] = None
                         if r['code'] == -4004:
                             count4004 += 1
+                        elif r['code'] == -9999:
+                            count9999 += 1
                         else:
                             _LOGGER.error("Error getting %s 's property '%s' (code: %s)", self._name, r['did'], r['code'])
                 if count4004 == len(response):
                     self._assumed_state = True
                     self._skip_update = True
                     # _LOGGER.warn("设备不支持状态反馈")
+                    if not self._notified:
+                        persistent_notification.async_create(
+                            self._hass,
+                            f"您添加的设备: **{self._name}** ，\n"
+                            f"在获取 {count4004} 个状态时，\n"
+                            f"全部返回 **-4004** 错误。\n"
+                            "请考虑通过云端接入此设备来解决此问题。",
+                            "设备可能不受支持")
+                        self._notified = True
+                if count9999 == len(response):
+                    self._assumed_state = True
+                    self._skip_update = True
+                    # _LOGGER.warn("设备不支持状态反馈")
+                    if not self._notified:
+                        persistent_notification.async_create(
+                            self._hass,
+                            f"您添加的设备: **{self._name}** ，\n"
+                            f"在获取 {count9999} 个状态时，\n"
+                            f"全部返回 **-9999** 错误。\n"
+                            "请考虑通过云端接入此设备来解决此问题。",
+                            "设备可能不受支持")
+                        self._notified = True
 
             else:
                 with async_timeout.timeout(10):
