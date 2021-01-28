@@ -33,8 +33,16 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 * 将此 repo ([https://github.com/ha0y/xiaomi_miot_raw](https://github.com/ha0y/xiaomi_miot_raw)) 添加到 [HACS](https://hacs.xyz/)，然后添加“Xiaomi MiOT Raw”
 
 
-## 配置文件
+## 配置
 
+### UI 配置法
+![1](images/flow/1.png)
+
+![2](images/flow/2.png)
+
+![3](images/flow/3.png)
+
+### 文件配置法
 
 **请参考 [config_example 文件夹](https://github.com/ha0y/xiaomi_miot_raw/tree/add-miot-support/config_example)** 内的相关文件
 
