@@ -28,10 +28,21 @@
                     "devtype": "请选择设备类型",
                     "mapping": "mapping",
                     "params": "配置参数",
-                    "cloud_read": "从云端获取设备状态"
+                    "cloud_read": "从云端获取设备状态",
+                    "cloud_write": "通过云端控制设备"
 
                 },
                 "description": "{device_info}"
+            },
+            "cloudinfo": {
+                "title": "账号信息",
+                "data": {
+                    "did": "did",
+                    "userId": "userId",
+                    "serviceToken": "serviceToken",
+                    "ssecurity": "ssecurity"
+                },
+                "description": "云端通信需要获取以下信息"
             }
         },
         "title": "MIoT"

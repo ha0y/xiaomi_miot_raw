@@ -157,12 +157,7 @@ class MiotCover(GenericMiotDevice, CoverEntity):
 
     async def async_open_cover(self, **kwargs):
         """Open the cover."""
-        result = await self._try_command(
-            "Turning the miio device on failed.",
-            self._device.set_property,
-            "motor_control",
-            self._ctrl_params['motor_control']['open'],
-        )
+        result = await self.set_property_new("motor_control",self._ctrl_params['motor_control']['open'])
         if result:
             # self._skip_update = True
             try:
@@ -174,13 +169,7 @@ class MiotCover(GenericMiotDevice, CoverEntity):
             
     async def async_close_cover(self, **kwargs):
         """Close the cover."""
-        result = await self._try_command(
-            "Turning the miio device on failed.",
-            self._device.set_property,
-            "motor_control",
-            self._ctrl_params['motor_control']['close'],
-
-        )
+        result = await self.set_property_new("motor_control",self._ctrl_params['motor_control']['close'])
         if result:
             try:
                 self._action = self._ctrl_params['motor_status']['close']
@@ -191,24 +180,15 @@ class MiotCover(GenericMiotDevice, CoverEntity):
 
     async def async_stop_cover(self, **kwargs):
         """Close the cover."""
-        result = await self._try_command(
-            "Turning the miio device on failed.",
-            self._device.set_property,
-            "motor_control",
-            self._ctrl_params['motor_control']['stop'],
-        )
+        result = await self.set_property_new("motor_control",self._ctrl_params['motor_control']['stop'])
         if result:
             # self._skip_update = True
             pass
 
     async def async_set_cover_position(self, **kwargs):
         """Set the cover."""
-        result = await self._try_command(
-            "Turning the miio device on failed.",
-            self._device.set_property,
-            "target_position",
-            kwargs['position'],
-        )
+        result = await self.set_property_new("target_position",kwargs['position'])
+        
         if result:
             self._skip_update = True
             

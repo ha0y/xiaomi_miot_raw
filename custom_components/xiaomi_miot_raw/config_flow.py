@@ -29,17 +29,6 @@ from aiohttp import ClientSession
 from homeassistant.helpers import aiohttp_client, discovery
 import requests
 
-TEST = """[
- {
-   "device_model": "chuangmi.plug.212a01",
-   "device_type": "switch",
-   "mapping": "{\\"switch_status\\":{\\"siid\\":2,\\"piid\\":1}}",
-   "params": "{\\"switch_status\\":{\\"power_on\\":true,\\"power_off\\":false}}",
-   "cloud_read": false,
-   "cloud_write": false
- }
-]"""
-
 VALIDATE = {'fan': [{"switch_status", "speed"}, {"switch_status", "speed"}],
             'switch': [{"switch_status"}, {"switch_status"}],
             'light': [{"switch_status"}, {"switch_status"}],
@@ -165,7 +154,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         vol.Required('devtype', default=devtype_default): vol.In(SUPPORTED_DOMAINS),
                         vol.Required(CONF_MAPPING, default=mapping_default): str,
                         vol.Required(CONF_CONTROL_PARAMS, default=params_default): str,
-                        vol.Required('cloud_read'): bool,
+                        vol.Optional('cloud_read'): bool,
+                        vol.Optional('cloud_write'): bool,
                         }),
                     description_placeholders={"device_info": device_info},
                     errors=errors,
@@ -194,7 +184,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._input2['devtype'] = self._devtype
             self._input2[CONF_MAPPING] = user_input[CONF_MAPPING]
             self._input2[CONF_CONTROL_PARAMS] = user_input[CONF_CONTROL_PARAMS]
-            self._input2['cloud_read'] = user_input['cloud_read']
+            # self._input2['cloud_read'] = user_input['cloud_read']
+            self._input2['cloud_write'] = user_input.get('cloud_write')
             
             v = await validate_devinfo(self.hass, self._input2)
             if v == [[],[]] :
@@ -203,7 +194,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     device = MiotDevice(ip=self._input2[CONF_HOST], token=self._input2[CONF_TOKEN], mapping=json.loads(self._input2[CONF_MAPPING]))
                     result = device.get_properties_for_mapping()
                     # print(result)
-                    if not user_input['cloud_read']:
+                    if not user_input.get('cloud_read') and not user_input.get('cloud_write'):
                         return self.async_create_entry(
                             title=self._input2[CONF_NAME],
                             data=self._input2,
@@ -244,7 +235,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required('devtype', default=user_input['devtype']): vol.In(SUPPORTED_DOMAINS),
                 vol.Required(CONF_MAPPING, default=user_input[CONF_MAPPING]): str,
                 vol.Required(CONF_CONTROL_PARAMS, default=user_input[CONF_CONTROL_PARAMS]): str,
-                vol.Required('cloud_read'): bool,
+                vol.Optional('cloud_read'): bool,
+                vol.Optional('cloud_write'): bool,
                 }),
             description_placeholders={"device_info": hint},
             errors=errors,

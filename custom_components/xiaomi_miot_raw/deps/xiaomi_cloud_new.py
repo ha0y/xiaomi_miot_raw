@@ -163,7 +163,7 @@ class MiCloud:
     
     async def request_miot_api(self, api, params = None):
         api_base = "https://api.io.mi.com/app"
-        url2 = "/miotspec/prop/"
+        url2 = "/miotspec/"
         url = api_base+url2+api
         
         nonce = gen_nonce()
@@ -189,7 +189,6 @@ class MiCloud:
                 'data': params
             }, timeout=10)
 
-            _LOGGER.error(params)
             resp = await r.json(content_type=None)
             if resp.get('message') == 'auth err':
                 _LOGGER.error("小米账号登录信息失效")
@@ -198,7 +197,7 @@ class MiCloud:
                 _LOGGER.error(f"Response from cloud: {resp}")
                 return resp
             else:
-                _LOGGER.info(f"Response from cloud: {resp}")
+                _LOGGER.info(f"Response of {api} from cloud: {resp}")
                 return resp
 
         except asyncio.TimeoutError:
@@ -207,10 +206,14 @@ class MiCloud:
             _LOGGER.exception(f"Can't load devices list")
 
     async def get_props(self, params: str = ""):
-        return await self.request_miot_api('get', params)
+        return await self.request_miot_api('prop/get', params)
     
     async def set_props(self, params: str = ""):
-        return await self.request_miot_api('set', params)
+        return await self.request_miot_api('prop/set', params)
+    
+    async def do_action(self, params: str = ""):
+        return await self.request_miot_api('action', params)
+        
 
 def get_random_string(length: int):
     seq = string.ascii_uppercase + string.digits
