@@ -48,6 +48,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Optional(CONF_UPDATE_INSTANT, default=True): cv.boolean,
+        vol.Optional(CONF_CLOUD): vol.All(),
         
         vol.Required(CONF_MAPPING):vol.All(),
         vol.Required(CONF_CONTROL_PARAMS):vol.All(),
@@ -80,7 +81,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
             device_info.hardware_version,
         )
 
-        device = MiotFan(miio_device, config, device_info)
+        device = MiotFan(miio_device, config, device_info, hass)
     except DeviceException:
         raise PlatformNotReady
 
@@ -92,8 +93,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     await async_setup_platform(hass, config, async_add_entities)
 
 class MiotFan(ToggleableMiotDevice, FanEntity):
-    def __init__(self, device, config, device_info):
-        ToggleableMiotDevice.__init__(self, device, config, device_info)
+    def __init__(self, device, config, device_info, hass):
+        ToggleableMiotDevice.__init__(self, device, config, device_info, hass)
         self._speed = None
         self._oscillation = None
         

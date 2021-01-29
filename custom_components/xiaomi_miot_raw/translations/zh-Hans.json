@@ -7,7 +7,10 @@
             "default": "Create Entry Default."
         },
         "error": {
-            "unexpected_error": "发生错误，请查看日志"
+            "unexpected_error": "发生错误，请查看日志",
+            "cannot_connect": "无法连接",
+            "value_error": "输入错误",
+            "bad_params": "参数有误"
         },
         "step": {
             "user": {
@@ -24,7 +27,8 @@
                 "data": {
                     "devtype": "请选择设备类型",
                     "mapping": "mapping",
-                    "params": "配置参数"
+                    "params": "配置参数",
+                    "cloud_read": "从云端获取设备状态"
 
                 },
                 "description": "{device_info}"

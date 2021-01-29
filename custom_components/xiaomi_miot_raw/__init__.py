@@ -74,6 +74,7 @@ async def async_setup_entry(hass, entry):
     for item in [CONF_NAME,
                  CONF_HOST,
                  CONF_TOKEN,
+                 CONF_CLOUD
                  ]:
         config[item] = entry.data.get(item)
     for item in [CONF_MAPPING,
@@ -241,6 +242,7 @@ class GenericMiotDevice(Entity):
                         self._notified = True
 
             else:
+                _LOGGER.info(f"{self._name} is updating from cloud.")
                 with async_timeout.timeout(10):
                     a = await self.async_update_from_mijia(
                         aiohttp_client.async_get_clientsession(self._hass),
