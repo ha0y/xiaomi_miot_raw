@@ -223,6 +223,8 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
         try:
             self._color_temp = color.color_temperature_kelvin_to_mired(self._state_attrs['color_temperature'])
         except KeyError: pass
+        except ZeroDivisionError:
+            self._color_temp = color.color_temperature_kelvin_to_mired(1)
         try:
             self._state_attrs.update({'color_temperature': self._state_attrs['color_temperature']})
         except KeyError: pass

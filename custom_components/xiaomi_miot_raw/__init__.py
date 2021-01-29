@@ -231,13 +231,24 @@ class GenericMiotDevice(Entity):
                         return True
             else:
                 _LOGGER.info(f"Control {self._name} by cloud.")
-                did = self._cloud.get("did")
-                spiid = self._mapping.get(field) or {}
-                p = {**{'did': did, 'value': params},**spiid}
-                p = {'params': [p]}
-                pp = json.dumps(p,separators=(',', ':'))
-                results = await self._cloud_instance.set_props(pp)
-                return True
+                if not multiparams:
+                    did = self._cloud.get("did")
+                    spiid = self._mapping.get(field) or {}
+                    p = {**{'did': did, 'value': params},**spiid}
+                    p = {'params': [p]}
+                    pp = json.dumps(p,separators=(',', ':'))
+                    results = await self._cloud_instance.set_props(pp)
+                    return True
+                else:
+                    did = self._cloud.get("did")
+                    p = multiparams
+                    for item in p:
+                        item['did'] = did
+                    pp = {'params': p}
+                    ppp = json.dumps(pp,separators=(',', ':'))
+                    results = await self._cloud_instance.set_props(ppp)
+                    return True
+                    
             
         except DeviceException as ex:
             _LOGGER.error('Set miot property to %s: %s(%s) failed: %s', self._name, field, params, ex)
