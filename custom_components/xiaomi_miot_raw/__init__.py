@@ -33,6 +33,7 @@ from .deps.const import (
     SUPPORTED_DOMAINS,
 )
 from .deps.xiaomi_cloud import *
+from asyncio.exceptions import CancelledError
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -308,7 +309,12 @@ class GenericMiotDevice(Entity):
             'cache-control': "no-cache",
             'cookie': f'userId={userId};serviceToken={serviceToken}'
         }
-        resp = await session.post(api_base+url, data=payload, headers=headers)
+        try:
+            resp = await session.post(api_base+url, data=payload, headers=headers)
+        except CancelledError:
+            _LOGGER.error(f"Error updating {self._name} from cloud: Timeout")
+            return None
+        
         data = await resp.json(content_type=None)
         _LOGGER.info("Response of %s from cloud: %s", self._name, data)
         if data['code'] == 0:
