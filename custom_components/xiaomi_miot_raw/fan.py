@@ -43,17 +43,18 @@ DEFAULT_NAME = "Generic MIoT fan"
 DATA_KEY = "fan." + DOMAIN
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
-    {
-        vol.Required(CONF_HOST): cv.string,
-        vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
-        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-        vol.Optional(CONF_UPDATE_INSTANT, default=True): cv.boolean,
-        vol.Optional(CONF_CLOUD): vol.All(),
+    # {
+    #     vol.Required(CONF_HOST): cv.string,
+    #     vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
+    #     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+    #     vol.Optional(CONF_UPDATE_INSTANT, default=True): cv.boolean,
+    #     vol.Optional(CONF_CLOUD): vol.All(),
         
-        vol.Required(CONF_MAPPING):vol.All(),
-        vol.Required(CONF_CONTROL_PARAMS):vol.All(),
+    #     vol.Required(CONF_MAPPING):vol.All(),
+    #     vol.Required(CONF_CONTROL_PARAMS):vol.All(),
 
-    }
+    # }
+    SCHEMA
 )
 
 # pylint: disable=unused-argument

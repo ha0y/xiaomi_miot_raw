@@ -51,14 +51,16 @@ _LOGGER = logging.getLogger(__name__)
 DEFAULT_NAME = "Generic MIoT cover"
 DATA_KEY = "cover." + DOMAIN
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Required(CONF_HOST): cv.string,
-    vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
-    vol.Required(CONF_MAPPING):vol.All(),
-    vol.Required(CONF_CONTROL_PARAMS):vol.All(),
-    vol.Optional(CONF_CLOUD): vol.All(),
-})
+# PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
+#     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+#     vol.Required(CONF_HOST): cv.string,
+#     vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
+#     vol.Required(CONF_MAPPING):vol.All(),
+#     vol.Required(CONF_CONTROL_PARAMS):vol.All(),
+#     vol.Optional(CONF_CLOUD): vol.All(),
+# }
+    SCHEMA
+)
 
 SCAN_INTERVAL = timedelta(seconds=2)
 # pylint: disable=unused-argument

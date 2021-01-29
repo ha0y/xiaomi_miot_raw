@@ -39,17 +39,18 @@ DEFAULT_NAME = "Generic MIoT light"
 DATA_KEY = "light." + DOMAIN
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
-    {
-        vol.Required(CONF_HOST): cv.string,
-        vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
-        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-        vol.Optional(CONF_UPDATE_INSTANT, default=True): cv.boolean,
-        vol.Optional(CONF_CLOUD): vol.All(),
+    # {
+    #     vol.Required(CONF_HOST): cv.string,
+    #     vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
+    #     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+    #     vol.Optional(CONF_UPDATE_INSTANT, default=True): cv.boolean,
+    #     vol.Optional(CONF_CLOUD): vol.All(),
         
-        vol.Required(CONF_MAPPING):vol.All(),
-        vol.Required(CONF_CONTROL_PARAMS):vol.All(),
+    #     vol.Required(CONF_MAPPING):vol.All(),
+    #     vol.Required(CONF_CONTROL_PARAMS):vol.All(),
 
-    }
+    # }
+    SCHEMA
 )
 
 # pylint: disable=unused-argument
@@ -184,6 +185,8 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
             return color.color_temperature_kelvin_to_mired(self._ctrl_params['color_temperature']['value_range'][1])
         except KeyError:
             return None
+        except ZeroDivisionError:
+            return color.color_temperature_kelvin_to_mired(1)
     @property
     def max_mireds(self):
         """Return the warmest color_temp that this light supports."""

@@ -221,8 +221,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             errors=errors,
                         )
                 except DeviceException:
-                    errors["base"] = "cannot_connect"
-                    hint = "请检查 mapping 中的各项 iid 是否正确。如果进行到此步才出现错误，有可能是它们导致的。"
+                    # errors["base"] = "cannot_connect"
+                    # hint = "请检查 mapping 中的各项 iid 是否正确。如果进行到此步才出现错误，有可能是它们导致的。"
+                    pass
             else:
                 errors["base"] = "bad_params"
                 
