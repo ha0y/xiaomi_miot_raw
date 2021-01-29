@@ -43,6 +43,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         
         vol.Required(CONF_MAPPING):vol.All(),
         vol.Required(CONF_CONTROL_PARAMS):vol.All(),
+        vol.Optional('cloud_write'):vol.All(),
 
     }
 )

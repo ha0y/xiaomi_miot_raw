@@ -45,7 +45,6 @@ from .deps.const import (
     ATTR_FIRMWARE_VERSION,
     ATTR_HARDWARE_VERSION,
 )
-from .deps.xiaomi_cloud import *
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -61,7 +60,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_CLOUD): vol.All(),
 })
 
-SCAN_INTERVAL = timedelta(seconds=1)
+SCAN_INTERVAL = timedelta(seconds=2)
 # pylint: disable=unused-argument
 
 @asyncio.coroutine
@@ -212,7 +211,7 @@ class MiotCover(GenericMiotDevice, CoverEntity):
             
     async def _async_update(self):
         await super().async_update()
-        self._current_position = self._state_attrs['current_position']
+        self._current_position = self._state_attrs.get('current_position')
         self._action = self._state_attrs.get('motor_status')
         if self.is_closing or self.is_opening:
             self.async_update = self._throttle1

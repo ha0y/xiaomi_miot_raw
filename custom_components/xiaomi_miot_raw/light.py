@@ -160,12 +160,13 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
                 parameters.append({**{'did': "color", 'value': intcolor}, **(self._mapping['color'])})
                 
 
-        result = await self._try_command(
-            "Turning the miio device on failed.",
-            self._device.send,
-            "set_properties",
-            parameters,
-        )
+        # result = await self._try_command(
+        #     "Turning the miio device on failed.",
+        #     self._device.send,
+        #     "set_properties",
+        #     parameters,
+        # )
+        result = await self.set_property_new(multiparams = parameters)
 
         if result:
             self._state = True

@@ -32,7 +32,12 @@ from .deps.const import (
     ATTR_HARDWARE_VERSION,
     SUPPORTED_DOMAINS,
 )
-from .deps.xiaomi_cloud import *
+# from .deps.xiaomi_cloud import *
+# from .deps.xiaomi_cloud_alone import (
+#     MiotCloud,
+#     MiCloudException,
+# )
+from .deps.xiaomi_cloud_new import *
 from asyncio.exceptions import CancelledError
 
 _LOGGER = logging.getLogger(__name__)
@@ -119,7 +124,21 @@ class GenericMiotDevice(Entity):
         
         self._hass = hass
         self._cloud = config.get(CONF_CLOUD)
-
+        self._cloud_write = config.get('cloud_write')
+        self._cloud_instance = None
+        if self._cloud:
+            _LOGGER.info(f"Setting up xiaomi account for {self._name}...")
+            mc = MiCloud(
+                aiohttp_client.async_get_clientsession(self._hass)
+            )
+            mc.login_by_credientals(
+                self._cloud.get('userId'),
+                self._cloud.get('serviceToken'),
+                self._cloud.get('ssecurity')
+            )
+            self._cloud_instance = mc
+                
+        
         self._available = None
         self._state = None
         self._assumed_state = False
@@ -140,7 +159,13 @@ class GenericMiotDevice(Entity):
     def unique_id(self):
         """Return an unique ID."""
         return self._unique_id
-
+    
+    # @property
+    # def miot_cloud(self):
+    #     if self._cloud:
+    #         return self.hass.data[DOMAIN].get('xiaomi_cloud')
+    #     return None
+    
     @property
     def name(self):
         """Return the name of this entity, if any."""
@@ -183,6 +208,43 @@ class GenericMiotDevice(Entity):
             _LOGGER.error(mask_error, exc)
             return False
 
+    async def set_property_new(self, field = "", params = "", multiparams:list = []):
+        try:
+            if not self._cloud_write:
+                if not multiparams:
+                    result = await self._try_command(
+                        f"Setting property for {self._name} failed.",
+                        self._device.set_property,
+                        field,
+                        params,
+                    )
+                    if result:
+                        return True
+                else:
+                    result = await self._try_command(
+                        f"Setting property for {self._name} failed.",
+                        self._device.send,
+                        "set_properties",
+                        multiparams,
+                    )
+                    if result:
+                        return True
+            else:
+                _LOGGER.info(f"Control {self._name} by cloud.")
+                did = self._cloud.get("did")
+                spiid = self._mapping.get(field) or {}
+                p = {**{'did': did, 'value': params},**spiid}
+                p = {'params': [p]}
+                pp = json.dumps(p,separators=(',', ':'))
+                results = await self._cloud_instance.set_props(pp)
+                return True
+            
+        except DeviceException as ex:
+            _LOGGER.error('Set miot property to %s: %s(%s) failed: %s', self._name, field, params, ex)
+            return False
+            
+            
+    
     async def async_update(self):
         """Fetch state from the device."""
         # On state change some devices doesn't provide the new state immediately.
@@ -244,17 +306,27 @@ class GenericMiotDevice(Entity):
 
             else:
                 _LOGGER.info(f"{self._name} is updating from cloud.")
-                with async_timeout.timeout(10):
-                    a = await self.async_update_from_mijia(
-                        aiohttp_client.async_get_clientsession(self._hass),
-                        self._cloud.get("userId"),
-                        self._cloud.get("serviceToken"),
-                        self._cloud.get("ssecurity"),
-                        self._cloud.get("did"),
-                    )
+                # with async_timeout.timeout(10):
+                #     a = await self.async_update_from_mijia(
+                #         aiohttp_client.async_get_clientsession(self._hass),
+                #         # self._cloud.get("userId"),
+                #         # self._cloud.get("serviceToken"),
+                #         # self._cloud.get("ssecurity"),
+                #         # self._cloud.get("did"),
+                #     )
+                data1 = {}
+                data1['datasource'] = 1
+                data1['params'] = []
+                for value in self._mapping.values():
+                    data1['params'].append({**{'did':self._cloud.get("did")},**value})
+                data2 = json.dumps(data1,separators=(',', ':'))
+                
+                a = await self._cloud_instance.get_props(data2)
+                
                 dict1 = {}
                 statedict = {}
                 if a:
+                    self._available = True
                     for item in a['result']:
                         if dict1.get(item['siid']):
                             dict1[item['siid']][item['piid']] = item.get('value')
@@ -282,52 +354,61 @@ class GenericMiotDevice(Entity):
             self._available = False
             _LOGGER.error("Got exception while fetching %s 's state: %s", self._name, ex)
     
-    async def async_update_from_mijia(self, session: ClientSession, userId: str, serviceToken: str, ssecurity: str, did: str):
-        api_base = "https://api.io.mi.com/app"
-        url = "/miotspec/prop/get"
+    # # async def async_update_from_mijia(self, session: ClientSession, userId: str, serviceToken: str, ssecurity: str, did: str):
+    # async def async_update_from_mijia(self, session: ClientSession):
+    #     api_base = "https://api.io.mi.com/app"
+    #     url = "/miotspec/prop/get"
 
-        data1 = {}
-        data1['datasource'] = 1
-        data1['params'] = []
-        for value in self._mapping.values():
-            data1['params'].append({**{'did':did},**value})
-        data2 = json.dumps(data1,separators=(',', ':'))
+    #     userId = self._cloud.get("userId")
+    #     serviceToken = self._cloud.get("serviceToken")
+    #     ssecurity = self._cloud.get("ssecurity")
+    #     did = self._cloud.get("did")
         
-        nonce = gen_nonce()
-        signed_nonce = gen_signed_nonce(ssecurity, nonce)
-        signature = gen_signature(url, signed_nonce, nonce, data2)
-        payload = {
-            'signature': signature,
-            '_nonce': nonce,
-            'data': data2
-        }
-        headers = {
-            'content-type': "application/x-www-form-urlencoded",
-            'x-xiaomi-protocal-flag-cli': "PROTOCAL-HTTP2",
-            'connection': "Keep-Alive",
-            'accept-encoding': "gzip",
-            'cache-control': "no-cache",
-            'cookie': f'userId={userId};serviceToken={serviceToken}'
-        }
-        try:
-            resp = await session.post(api_base+url, data=payload, headers=headers)
-        except CancelledError:
-            _LOGGER.error(f"Error updating {self._name} from cloud: Timeout")
-            return None
         
-        data = await resp.json(content_type=None)
-        _LOGGER.info("Response of %s from cloud: %s", self._name, data)
-        if data['code'] == 0:
-            self._available = True
-            return data
-        else:
-            if data['message'] == "auth err":
-                _LOGGER.error(f"{self._name} 的小米账号登录态失效，请重新登录")
-            else:
-                _LOGGER.error(f"Failed updating states from Mijia, code: {data['code']}, message: {data['message']}")
-            self._available = False
-            return None
+    #     data1 = {}
+    #     data1['datasource'] = 1
+    #     data1['params'] = []
+    #     for value in self._mapping.values():
+    #         data1['params'].append({**{'did':did},**value})
+    #     data2 = json.dumps(data1,separators=(',', ':'))
+        
+    #     nonce = gen_nonce()
+    #     signed_nonce = gen_signed_nonce(ssecurity, nonce)
+    #     signature = gen_signature(url, signed_nonce, nonce, data2)
+    #     payload = {
+    #         'signature': signature,
+    #         '_nonce': nonce,
+    #         'data': data2
+    #     }
+    #     headers = {
+    #         'content-type': "application/x-www-form-urlencoded",
+    #         'x-xiaomi-protocal-flag-cli': "PROTOCAL-HTTP2",
+    #         'connection': "Keep-Alive",
+    #         'accept-encoding': "gzip",
+    #         'cache-control': "no-cache",
+    #         'cookie': f'userId={userId};serviceToken={serviceToken}'
+    #     }
+    #     try:
+    #         resp = await session.post(api_base+url, data=payload, headers=headers)
+    #     except CancelledError:
+    #         _LOGGER.error(f"Error updating {self._name} from cloud: Timeout")
+    #         return None
+        
+    #     data = await resp.json(content_type=None)
+    #     _LOGGER.info("Response of %s from cloud: %s", self._name, data)
+    #     if data['code'] == 0:
+    #         self._available = True
+    #         return data
+    #     else:
+    #         if data['message'] == "auth err":
+    #             _LOGGER.error(f"{self._name} 的小米账号登录态失效，请重新登录")
+    #         else:
+    #             _LOGGER.error(f"Failed updating states from Mijia, code: {data['code']}, message: {data['message']}")
+    #         self._available = False
+    #         return None
 
+    # async def async_control_by_mijia(self, session: ClientSession ):
+    #     pass
 
 class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
     def __init__(self, device, config, device_info, hass = None):
@@ -336,32 +417,22 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
         
     async def async_turn_on(self, **kwargs):
         """Turn on."""
-        result = await self._try_command(
-            "Turning the miio device on failed.",
-            self._device.set_property,
-            "switch_status",
-            self._ctrl_params['switch_status']['power_on'],
-        )
+        result = await self.set_property_new("switch_status",self._ctrl_params['switch_status']['power_on'])
+        
         if result:
             self._state = True
 
-
     async def async_turn_off(self, **kwargs):
         """Turn off."""
-        result = await self._try_command(
-            "Turning the miio device off failed.",
-            self._device.set_property,
-            "switch_status",
-            self._ctrl_params['switch_status']['power_off'],
-        )
-
+        result = await self.set_property_new("switch_status",self._ctrl_params['switch_status']['power_off'])
+        
         if result:
             self._state = False
 
     async def async_update(self):
 
         await super().async_update()
-        state = self._state_attrs['switch_status']
+        state = self._state_attrs.get('switch_status')
         _LOGGER.debug("%s 's new state: %s", self._name, state)
 
         if state == self._ctrl_params['switch_status']['power_on']:

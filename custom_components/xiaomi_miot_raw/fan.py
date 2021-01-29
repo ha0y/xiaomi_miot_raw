@@ -144,12 +144,13 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
         if speed:
             parameters.append({**{'did': "speed", 'value': list(self._ctrl_params['speed'].keys())[list(self._ctrl_params['speed'].values()).index(speed)]}, **(self._mapping['speed'])}) 
 
-        result = await self._try_command(
-            "Turning the miio device on failed.",
-            self._device.send,
-            "set_properties",
-            parameters,
-        )
+        # result = await self._try_command(
+        #     "Turning the miio device on failed.",
+        #     self._device.send,
+        #     "set_properties",
+        #     parameters,
+        # )
+        result = await self.set_property_new(multiparams = parameters)
         if result:
             self._state = True
             self._skip_update = True
