@@ -44,6 +44,7 @@ from .deps.const import (
     ATTR_MODEL,
     ATTR_FIRMWARE_VERSION,
     ATTR_HARDWARE_VERSION,
+    SCHEMA,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -51,7 +52,7 @@ _LOGGER = logging.getLogger(__name__)
 DEFAULT_NAME = "Generic MIoT cover"
 DATA_KEY = "cover." + DOMAIN
 
-# PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 #     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
 #     vol.Required(CONF_HOST): cv.string,
 #     vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),

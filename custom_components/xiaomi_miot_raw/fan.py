@@ -35,6 +35,7 @@ from .deps.const import (
     ATTR_MODEL,
     ATTR_FIRMWARE_VERSION,
     ATTR_HARDWARE_VERSION,
+    SCHEMA,
 )
 
 _LOGGER = logging.getLogger(__name__)

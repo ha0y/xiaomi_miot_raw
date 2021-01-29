@@ -7,6 +7,9 @@ CONF_MAPPING = 'mapping'
 CONF_CONTROL_PARAMS = 'params'
 CONF_CLOUD = 'update_from_cloud'
 CONF_MODEL = 'model'
+CONF_SENSOR_PROPERTY = "sensor_property"
+CONF_SENSOR_UNIT = "sensor_unit"
+CONF_DEFAULT_PROPERTIES = "default_properties"
 
 ATTR_STATE_VALUE = "state_value"
 ATTR_MODEL = "model"
@@ -21,7 +24,7 @@ SUPPORTED_DOMAINS = [
     "fan",
     "cover",
 ]
-
+DEFAULT_NAME = "Xiaomi MIoT Device"
 SCHEMA = {
         vol.Required(CONF_HOST): cv.string,
         vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),

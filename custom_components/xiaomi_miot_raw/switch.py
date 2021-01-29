@@ -24,6 +24,7 @@ from .deps.const import (
     ATTR_MODEL,
     ATTR_FIRMWARE_VERSION,
     ATTR_HARDWARE_VERSION,
+    SCHEMA,
 )
 
 DOMAIN = 'xiaomi_miot_raw'
