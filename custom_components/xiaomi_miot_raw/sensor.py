@@ -38,15 +38,6 @@ CONF_SENSOR_PROPERTY = "sensor_property"
 CONF_SENSOR_UNIT = "sensor_unit"
 CONF_DEFAULT_PROPERTIES = "default_properties"
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
-    # {
-    #     vol.Required(CONF_HOST): cv.string,
-    #     vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
-    #     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    #     vol.Optional(CONF_SENSOR_PROPERTY): cv.string,
-    #     vol.Optional(CONF_SENSOR_UNIT): cv.string,
-    #     vol.Required(CONF_MAPPING):vol.All(),
-    #     vol.Optional(CONF_CONTROL_PARAMS, default={}):vol.All(),
-    # }
     SCHEMA
 )
 
@@ -79,6 +70,9 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
         )
 
         device = MiotSensor(miio_device, config, device_info)
+        devices = [device]
+        for item in config['mapping']:
+            devices.append(MiotSubSensor(device, item))
     except DeviceException as de:
         _LOGGER.warn(de)
 
@@ -86,7 +80,8 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 
 
     hass.data[DATA_KEY][host] = device
-    async_add_devices([device], update_before_add=True)
+    # async_add_devices([device], update_before_add=True)
+    async_add_devices(devices, update_before_add=True)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     config = hass.data[DOMAIN]['configs'].get(config_entry.entry_id, dict(config_entry.data))
@@ -96,7 +91,8 @@ class MiotSensor(GenericMiotDevice):
     def __init__(self, device, config, device_info):
         GenericMiotDevice.__init__(self, device, config, device_info)
         self._state = None
-        self._sensor_property = config.get(CONF_SENSOR_PROPERTY)
+        self._sensor_property = config.get(CONF_SENSOR_PROPERTY) or \
+            list(config['mapping'].keys())[0]
         self._unit_of_measurement = config.get(CONF_SENSOR_UNIT)
         
     @property
@@ -119,3 +115,36 @@ class MiotSensor(GenericMiotDevice):
     def unit_of_measurement(self):
         """Return the unit of measurement of this entity, if any."""
         return self._unit_of_measurement
+
+class MiotSubSensor(Entity):
+    def __init__(self, parent_sensor, sensor_property):
+        self._parent = parent_sensor
+        self._sensor_property = sensor_property
+    
+    @property
+    def state(self):
+        """Return the state of the device."""
+        _LOGGER.error(self._parent.device_state_attributes)
+        try:
+            return self._parent.device_state_attributes[self._sensor_property]
+        except:
+            return None
+    
+    @property
+    def device_info(self):
+        return {
+            'identifiers': {(DOMAIN, self._parent.unique_id)},
+            # 'name': self._name,
+            # 'model': self._model,
+            # 'manufacturer': (self._model or 'Xiaomi').split('.', 1)[0],
+            # 'sw_version': self._state_attrs.get(ATTR_FIRMWARE_VERSION),
+        }
+    @property
+    def unique_id(self):
+        """Return an unique ID."""
+        return f"{self._parent.unique_id}-{self._sensor_property}"
+
+    @property
+    def name(self):
+        """Return the name of this entity, if any."""
+        return f"{self._parent.name} {self._sensor_property.capitalize()}"
