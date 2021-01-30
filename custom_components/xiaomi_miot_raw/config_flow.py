@@ -52,18 +52,22 @@ async def validate_devinfo(hass, data):
                 ret[1].append(item)
         return ret
 
-def get_mp_from_net(hass, model):
-    # cs = aiohttp_client.async_get_clientsession(hass),
+async def async_get_mp_from_net(hass, model):
+    cs = aiohttp_client.async_get_clientsession(hass)
     url = "https://raw.githubusercontent.com/ha0y/miot-params/master/main.json"
-    # with async_timeout.timeout(10):
-    #     a = await cs.get(url)
-    # data = await a.json(content_type=None)
-    # print(data)
-    data = requests.get(url).json()
-    print(data)
-    for item in data:
-        if item['device_model'] == model:
-            return item
+    with async_timeout.timeout(10):
+        try:
+            a = await cs.get(url)
+        except Exception:
+            a = None
+    if a:
+        data = await a.json(content_type=None)
+        # print(data)
+        # data = requests.get(url).json()
+        print(data)
+        for item in data:
+            if item['device_model'] == model:
+                return item
     return None
 
 async def guess_mp_from_model(hass,model):
@@ -134,7 +138,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             
                 # self._info = self.get_devconfg_by_model(self._model)
                 
-                self._info = get_mp_from_net(self.hass, self._model)
+                self._info = await async_get_mp_from_net(self.hass, self._model)
                 
                 if self._info:
                     device_info += "\n已经自动发现配置参数。\n如无特殊需要，无需修改下列内容。\n"
