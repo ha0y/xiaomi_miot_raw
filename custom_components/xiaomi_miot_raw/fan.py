@@ -113,7 +113,7 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
     @property
     def speed_list(self) -> list:
         """Get the list of available speeds."""
-        return list(self._ctrl_params['speed'].values())
+        return list(self._ctrl_params['speed'].keys())
     
     @property
     def speed(self):
@@ -138,7 +138,7 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
         parameters = [{**{'did': "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping['switch_status'])}]
         
         if speed:
-            parameters.append({**{'did': "speed", 'value': list(self._ctrl_params['speed'].keys())[list(self._ctrl_params['speed'].values()).index(speed)]}, **(self._mapping['speed'])}) 
+            parameters.append({**{'did': "speed", 'value': self._ctrl_params['speed'][speed]}, **(self._mapping['speed'])}) 
 
         # result = await self._try_command(
         #     "Turning the miio device on failed.",
@@ -153,5 +153,9 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
             
     async def async_update(self):
         await super().async_update()
-        self._speed = self._ctrl_params['speed'].get(self._state_attrs.get('speed_'))
+        # self._speed = self._ctrl_params['speed'].get(self._state_attrs.get('speed_'))
+        try:
+            self._speed = self.get_key_by_value(self._ctrl_params['speed'],self._state_attrs.get('speed_'))
+        except KeyError:
+            pass
         self._oscillation = self._state_attrs.get('oscillate')

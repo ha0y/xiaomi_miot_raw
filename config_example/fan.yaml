@@ -21,8 +21,8 @@ fan:
       #   on: True
       #   off: False
       speed:
-        0: 'off'    #HA要求有一个off，否则会有warning
-        1: 低
-        2: 中
-        3: 高
+        'off': 0   #HA要求有一个off，否则会有warning
+        低: 1 
+        中: 2 
+        高: 3 
     scan_interval: 10

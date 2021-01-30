@@ -28,6 +28,7 @@ import async_timeout
 from aiohttp import ClientSession
 from homeassistant.helpers import aiohttp_client, discovery
 import requests
+from .deps.miot_device_adapter import MiotAdapter
 
 VALIDATE = {'fan': [{"switch_status", "speed"}, {"switch_status", "speed"}],
             'switch': [{"switch_status"}, {"switch_status"}],
@@ -71,16 +72,39 @@ async def async_get_mp_from_net(hass, model):
     return None
 
 async def guess_mp_from_model(hass,model):
+    cs = aiohttp_client.async_get_clientsession(hass)
     url_all = 'http://miot-spec.org/miot-spec-v2/instances?status=all'
     url_spec = 'http://miot-spec.org/miot-spec-v2/instance'
     dev_list = requests.get(url_all).json().get('instances')
+    with async_timeout.timeout(10):
+        try:
+            dev_list = await cs.get(url_all).json().get('instances')
+        except Exception:
+            dev_list = None
     result = None
-    for item in dev_list:
-        if model == item['model']:
-            resulta = (item)
-    urn = result['type']
-    params = {'type': urn}
-    r = requests.get(url_spec, params=params).json()
+    if dev_list:
+        for item in dev_list:
+            if model == item['model']:
+                result = item
+        urn = result['type']
+        params = {'type': urn}
+        with async_timeout.timeout(10):
+            try:
+                spec = await cs.get(url_spec, params=params).json()
+            except Exception:
+                spec = None
+        if r:
+            ad = MiotAdapter(spec)
+            dt = ad.devtype
+            mp = ad.get_mapping_by_snewid(dt)
+            prm = ad.get_params_by_snewid(dt)
+            return {
+                'device_type': dt,
+                'mapping': mp,
+                'params': prm
+            }
+    else:
+        return None
     # TODO
     
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -138,7 +162,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             
                 # self._info = self.get_devconfg_by_model(self._model)
                 
-                self._info = await async_get_mp_from_net(self.hass, self._model)
+                self._info = await async_get_mp_from_net(self.hass, self._model) \
+                    or await guess_mp_from_model(self.hass, self._model)
                 
                 if self._info:
                     device_info += "\n已经自动发现配置参数。\n如无特殊需要，无需修改下列内容。\n"

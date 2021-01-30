@@ -394,6 +394,13 @@ class GenericMiotDevice(Entity):
             self._available = False
             _LOGGER.error("Got exception while fetching %s 's state: %s", self._name, ex)
     
+    def get_key_by_value(self, d:dict, value):
+        try:
+            return [k for k,v in d.items() if v == value][0]
+        except (KeyError, ValueError):
+            _LOGGER.warning(f"get_key_by_value: {value} is not in dict{json.dumps (d)}!")
+            return None
+
 class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
     def __init__(self, device, config, device_info, hass = None):
         GenericMiotDevice.__init__(self, device, config, device_info, hass)
