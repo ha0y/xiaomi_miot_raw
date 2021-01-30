@@ -55,6 +55,7 @@ def get_type_by_mitype(mitype:str):
         "cover": [
             "curtain",
             "airer",
+            "dehumidifier",
         ]
     }
     for k,v in map.items():

@@ -97,7 +97,7 @@ async def guess_mp_from_model(hass,model):
             mp = ad.get_mapping_by_snewid(mt) or ad.get_mapping_by_snewid(dt)
             prm = ad.get_params_by_snewid(mt) or ad.get_params_by_snewid(dt)
             return {
-                'device_type': dt,
+                'device_type': dt or 'switch',
                 'mapping': mp,
                 'params': prm
             }
