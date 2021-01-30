@@ -30,7 +30,7 @@ from homeassistant.helpers import aiohttp_client, discovery
 import requests
 from .deps.miot_device_adapter import MiotAdapter
 
-VALIDATE = {'fan': [{"switch_status", "speed"}, {"switch_status", "speed"}],
+VALIDATE = {'fan': [{"switch_status"}, {"switch_status"}],
             'switch': [{"switch_status"}, {"switch_status"}],
             'light': [{"switch_status"}, {"switch_status"}],
             'cover': [{"motor_control"}, {"motor_control"}]
