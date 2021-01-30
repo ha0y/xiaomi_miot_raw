@@ -63,9 +63,6 @@ async def async_get_mp_from_net(hass, model):
             a = None
     if a:
         data = await a.json(content_type=None)
-        # print(data)
-        # data = requests.get(url).json()
-        print(data)
         for item in data:
             if item['device_model'] == model:
                 return item
@@ -93,11 +90,12 @@ async def guess_mp_from_model(hass,model):
                 spec = await cs.get(url_spec, params=params).json()
             except Exception:
                 spec = None
-        if r:
+        if spec:
             ad = MiotAdapter(spec)
+            mt = ad.mitype
             dt = ad.devtype
-            mp = ad.get_mapping_by_snewid(dt)
-            prm = ad.get_params_by_snewid(dt)
+            mp = ad.get_mapping_by_snewid(mt) or ad.get_mapping_by_snewid(dt)
+            prm = ad.get_params_by_snewid(mt) or ad.get_params_by_snewid(dt)
             return {
                 'device_type': dt,
                 'mapping': mp,

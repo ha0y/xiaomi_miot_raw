@@ -1,6 +1,9 @@
 import json
 import re
 from dataclasses import dataclass
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 @dataclass
 class Property:
@@ -80,6 +83,10 @@ class MiotAdapter:
         return self.services
     
     @property
+    def mitype(self):
+        return name_by_type(self.spec.get('type'))
+
+    @property
     def devtype(self):
         return get_type_by_mitype(name_by_type(self.spec.get('type')))
 
@@ -106,86 +113,129 @@ class MiotAdapter:
         return props
 
     def get_mapping(self, propdict: dict = {}):
-        # ret = []
-        ret = {}
-        for p in propdict.values():
-            did = translate.get(p.newid) or p.newid
-            ret[did] = {
-                "siid": p.siid,
-                "piid": p.piid
-            }
-        return ret
+        try:
+            # ret = []
+            ret = {}
+            for p in propdict.values():
+                did = translate.get(p.newid) or p.newid
+                ret[did] = {
+                    "siid": p.siid,
+                    "piid": p.piid
+                }
+            return ret
+        except:
+            return {}
     
     def get_mapping_by_siid(self, siid: int):
-        return self.get_mapping(self.get_prop_by_siid(siid=siid))
+        try:
+            return self.get_mapping(self.get_prop_by_siid(siid=siid))
+        except:
+            return None
 
     def get_mapping_by_snewid(self, newid: str):
-        return self.get_mapping(self.services[newid].properties)
+        try:
+            return self.get_mapping(self.services.get(newid).properties)
+        except AttributeError:
+            return None
 
     def get_params(self, propdict: dict = {}):
-        ret = {}
-        
-        if p := propdict.get('on'):
-            if p.format_ == 'bool':
-                ret['switch_status'] = {
-                    'power_on': True,
-                    'power_off': False
-                }
-            else:
-                # TODO: will this happen?
-                ret['switch_status'] = {
-                    'power_on': True,
-                    'power_off': False
-                }
-        if p := propdict.get('fan_level'):
-            if vl := p.vlist:
-                lst = {item['description']: item['value'] for item in vl}
-                ret['speed'] = lst
-            elif vr := p.vrange:
-                lst = {
-                    str(i):i for i in range(vr[0],vr[1]+1,vr[2])
-                }
-                ret['speed'] = lst
-            else:    
-                # TODO: will this happen?
-                pass
-        if p := propdict.get('brightness'):
-            if vr := p.vrange:
-                ret['brightness'] = {
-                    'value_range': vr
-                }
-            else:
-                # TODO: will this happen?
-                pass
-        if p := propdict.get('color_temperature'):
-            if vr := p.vrange:
-                ret['color_temperature'] = {
-                    'value_range': vr
-                }
-            else:
-                # TODO: will this happen?
-                pass
-        
-        return ret
+        try:
+            ret = {}
+            
+            if p := propdict.get('on'):
+                if p.format_ == 'bool':
+                    ret['switch_status'] = {
+                        'power_on': True,
+                        'power_off': False
+                    }
+                else:
+                    # TODO: will this happen?
+                    ret['switch_status'] = {
+                        'power_on': True,
+                        'power_off': False
+                    }
+            if p := propdict.get('fan_level'):
+                if vl := p.vlist:
+                    lst = {item['description']: item['value'] for item in vl}
+                    ret['speed'] = lst
+                elif vr := p.vrange:
+                    lst = {
+                        str(i):i for i in range(vr[0],vr[1]+1,vr[2])
+                    }
+                    ret['speed'] = lst
+                else:    
+                    # TODO: will this happen?
+                    pass
+            if p := propdict.get('brightness'):
+                if vr := p.vrange:
+                    ret['brightness'] = {
+                        'value_range': vr
+                    }
+                else:
+                    # TODO: will this happen?
+                    pass
+            if p := propdict.get('color_temperature'):
+                if vr := p.vrange:
+                    ret['color_temperature'] = {
+                        'value_range': vr
+                    }
+                else:
+                    # TODO: will this happen?
+                    pass
+            if p := propdict.get('motor_control'):
+                dct = {}
+                if vl := p.vlist:
+                    for item in vl:
+                        if 'pause' in item['description'].lower() or \
+                            'stop' in item['description'].lower() or \
+                                '停' in item['description']:
+                                    dct['stop'] = item['value']
+                        if 'up' in item['description'].lower() or \
+                            '升' in item['description']:
+                                dct['open'] = item['value']
+                        if 'down' in item['description'].lower() or \
+                            '降' in item['description']:
+                                dct['close'] = item['value']
+                    ret['motor_control'] = dct
+                    for item in ['open','close','stop']:
+                        if item not in dct:
+                            _LOGGER.error(f"No {item} was found in motor_control.")
+            if p := propdict.get('current_position'):
+                if vr := p.vrange:
+                    ret['current_position'] = {
+                        'value_range': vr
+                    }
+            if p := propdict.get('target_position'):
+                if vr := p.vrange:
+                    ret['target_position'] = {
+                        'value_range': vr
+                    }
+            return ret
+        except:
+            return {}
 
     def get_params_by_siid(self, siid: int):
         return self.get_params(self.get_prop_by_siid(siid=siid))
 
     def get_params_by_snewid(self, newid: str):
-        return self.get_params(self.services[newid].properties)
+        try:
+            return self.get_params(self.services.get(newid).properties)
+        except AttributeError:
+            return None
 
 if __name__ == '__main__':
-    j = '''{ "type": "urn:miot-spec-v2:device:light:0000A001:leshi-wyfan:1", "description": "Light", "services": [ { "iid": 1, "type": "urn:miot-spec-v2:service:device-information:00007801:leshi-wyfan:1", "description": "Device Information", "properties": [ { "iid": 1, "type": "urn:miot-spec-v2:property:manufacturer:00000001:leshi-wyfan:1", "description": "Device Manufacturer", "format": "string", "access": [ "read" ] }, { "iid": 2, "type": "urn:miot-spec-v2:property:model:00000002:leshi-wyfan:1", "description": "Device Model", "format": "string", "access": [ "read" ] }, { "iid": 3, "type": "urn:miot-spec-v2:property:serial-number:00000003:leshi-wyfan:1", "description": "Device Serial Number", "format": "string", "access": [ "read" ] }, { "iid": 4, "type": "urn:miot-spec-v2:property:firmware-revision:00000005:leshi-wyfan:1", "description": "Current Firmware Version", "format": "string", "access": [ "read" ] } ] }, { "iid": 2, "type": "urn:miot-spec-v2:service:light:00007802:leshi-wyfan:1", "description": "Light", "properties": [ { "iid": 1, "type": "urn:miot-spec-v2:property:on:00000006:leshi-wyfan:1", "description": "Switch Status", "format": "bool", "access": [ "read", "write", "notify" ] }, { "iid": 2, "type": "urn:miot-spec-v2:property:brightness:0000000D:leshi-wyfan:1", "description": "Brightness", "format": "uint8", "access": [ "read", "write", "notify" ], "unit": "percentage", "value-range": [ 1, 100, 1 ] }, { "iid": 3, "type": "urn:miot-spec-v2:property:color-temperature:0000000F:leshi-wyfan:1", "description": "Color Temperature", "format": "uint32", "access": [ "read", "write", "notify" ], "unit": "kelvin", "value-range": [ 3000, 6400, 1 ] } ] }, { "iid": 3, "type": "urn:miot-spec-v2:service:fan:00007808:leshi-wyfan:1", "description": "Fan", "properties": [ { "iid": 1, "type": "urn:miot-spec-v2:property:on:00000006:leshi-wyfan:1", "description": "Switch Status", "format": "bool", "access": [ "read", "write", "notify" ] }, { "iid": 2, "type": "urn:miot-spec-v2:property:fan-level:00000016:leshi-wyfan:1", "description": "Fan Level", "format": "uint8", "access": [ "read", "write", "notify" ], "unit": "none", "value-list": [ { "value": 1, "description": "Low" }, { "value": 2, "description": "Medium" }, { "value": 3, "description": "High" } ] }, { "iid": 3, "type": "urn:miot-spec-v2:property:motor-reverse:00000072:leshi-wyfan:1", "description": "Motor Reverse", "format": "bool", "access": [ "read", "write", "notify" ], "unit": "none" } ] } ] }'''
+    j = ''''''
 
     jj = json.loads(j)
 
     
     adapter = MiotAdapter(jj)
     dt = adapter.devtype
+    mt = adapter.mitype
     
-    p = adapter.get_mapping_by_snewid(dt)
+    p = adapter.get_mapping_by_snewid(dt) or adapter.get_mapping_by_snewid(mt)
     # p = adapter.get_mapping_by_siid(2)
-    pp = adapter.get_params_by_snewid(dt)
+    pp = adapter.get_params_by_snewid(dt) or adapter.get_params_by_snewid(mt)
     print(p)
     print(pp)
     print(adapter.devtype)
