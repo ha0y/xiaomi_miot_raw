@@ -55,8 +55,12 @@ def get_type_by_mitype(mitype:str):
         "cover": [
             "curtain",
             "airer",
+            
+        ],
+        "humidifier": [
+            "humidifier",
             "dehumidifier",
-        ]
+        ],
     }
     for k,v in map.items():
         if mitype in v:
@@ -167,6 +171,10 @@ class MiotAdapter:
                 else:    
                     # TODO: will this happen?
                     pass
+            if p := propdict.get('mode'):
+                if vl := p.vlist:
+                    lst = {item['description']: item['value'] for item in vl}
+                    ret['mode'] = lst
             if p := propdict.get('brightness'):
                 if vr := p.vrange:
                     ret['brightness'] = {
@@ -209,6 +217,11 @@ class MiotAdapter:
             if p := propdict.get('target_position'):
                 if vr := p.vrange:
                     ret['target_position'] = {
+                        'value_range': vr
+                    }
+            if p := propdict.get('target_humidity'):
+                if vr := p.vrange:
+                    ret['target_humidity'] = {
                         'value_range': vr
                     }
             return ret

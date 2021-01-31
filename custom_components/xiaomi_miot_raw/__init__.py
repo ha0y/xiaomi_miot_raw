@@ -301,7 +301,6 @@ class GenericMiotDevice(Entity):
 
                 statedict={}
                 count4004 = 0
-                count9999 = 0
                 for r in response:
                     if r['code'] == 0:
                         try:
@@ -309,12 +308,18 @@ class GenericMiotDevice(Entity):
                             statedict[r['did']] = round(r['value'] * f , 3)
                         except (KeyError, TypeError):
                             statedict[r['did']] = r['value']
+                    elif r['code'] == 9999:
+                        persistent_notification.async_create(
+                            self._hass,
+                            f"您添加的设备: **{self._name}** ，\n"
+                            f"在获取个状态时，\n"
+                            f"返回 **-9999** 错误。\n"
+                            "请考虑通过云端接入此设备来解决此问题。",
+                            "设备不支持本地接入")
                     else:
                         statedict[r['did']] = None
                         if r['code'] == -4004:
                             count4004 += 1
-                        elif r['code'] == -9999:
-                            count9999 += 1
                         else:
                             _LOGGER.error("Error getting %s 's property '%s' (code: %s)", self._name, r['did'], r['code'])
                 if count4004 == len(response):
@@ -327,19 +332,6 @@ class GenericMiotDevice(Entity):
                             f"您添加的设备: **{self._name}** ，\n"
                             f"在获取 {count4004} 个状态时，\n"
                             f"全部返回 **-4004** 错误。\n"
-                            "请考虑通过云端接入此设备来解决此问题。",
-                            "设备可能不受支持")
-                        self._notified = True
-                if count9999 == len(response):
-                    self._assumed_state = True
-                    self._skip_update = True
-                    # _LOGGER.warn("设备不支持状态反馈")
-                    if not self._notified:
-                        persistent_notification.async_create(
-                            self._hass,
-                            f"您添加的设备: **{self._name}** ，\n"
-                            f"在获取 {count9999} 个状态时，\n"
-                            f"全部返回 **-9999** 错误。\n"
                             "请考虑通过云端接入此设备来解决此问题。",
                             "设备可能不受支持")
                         self._notified = True
@@ -387,8 +379,9 @@ class GenericMiotDevice(Entity):
                 statedict['brightness_'] = statedict.pop('brightness')
             if statedict.get('speed'):
                 statedict['speed_'] = statedict.pop('speed')
+            if statedict.get('mode'):
+                statedict['mode_'] = statedict.pop('mode')
             self._state_attrs.update(statedict)
-
 
         except DeviceException as ex:
             self._available = False
@@ -397,9 +390,35 @@ class GenericMiotDevice(Entity):
     def get_key_by_value(self, d:dict, value):
         try:
             return [k for k,v in d.items() if v == value][0]
-        except (KeyError, ValueError):
-            _LOGGER.warning(f"get_key_by_value: {value} is not in dict{json.dumps (d)}!")
+        except (KeyError, ValueError, IndexError):
+            _LOGGER.info(f"get_key_by_value: {value} is not in dict{json.dumps (d)}!")
             return None
+
+    def convert_value(self, value, param, dir = True):
+        if param == 'color':
+            if dir:
+                rgb = color.color_hs_to_RGB(*value)
+                int_ = rgb[0] | rgb[1] << 8 | rgb[2] << 16
+                return int_
+            else:
+                rgb = [0xFF & value, (0xFF00 & value) >> 8, (0xFF0000 & value) >> 16]
+                hs = color.color_RGB_to_hs(*rgb)
+                return hs
+        elif param == 'brightness':
+            valuerange = self._ctrl_params[param]['value_range']
+            if dir:
+                slider_value = round(value/255*100)
+                return int(slider_value/100*(valuerange[1]-valuerange[0]+1)/valuerange[2])*valuerange[2]
+            else:
+                return round(value/(valuerange[1]-valuerange[0]+1)*255)
+        elif param == 'target_humidity':
+            valuerange = self._ctrl_params[param]['value_range']
+            if value < valuerange[0]:
+                return valuerange[0]
+            elif value > valuerange[1]:
+                return valuerange[1]
+            else:
+                return round((value - valuerange[0])/valuerange[2])*valuerange[2]+valuerange[0]
 
 class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
     def __init__(self, device, config, device_info, hass = None):
@@ -437,8 +456,6 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
                 self._ctrl_params['switch_status']['power_on'],
                 self._ctrl_params['switch_status']['power_off'],
             )
-            _LOGGER.warning(type(self._ctrl_params['switch_status']['power_on']))
-            _LOGGER.warning(type(state))
             self._state = None
 
         self._state_attrs.update({ATTR_STATE_VALUE: state})

@@ -23,6 +23,7 @@ SUPPORTED_DOMAINS = [
     "light",
     "fan",
     "cover",
+    "humidifier",
 ]
 DEFAULT_NAME = "Xiaomi MIoT Device"
 SCHEMA = {

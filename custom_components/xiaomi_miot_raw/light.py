@@ -122,30 +122,12 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
         """
         return self._brightness
 
-    def convert_value(self, value, param, dir = True):
-        if param == 'color':
-            if dir:
-                rgb = color.color_hs_to_RGB(*value)
-                int_ = rgb[0] | rgb[1] << 8 | rgb[2] << 16
-                return int_
-            else:
-                rgb = [0xFF & value, (0xFF00 & value) >> 8, (0xFF0000 & value) >> 16]
-                hs = color.color_RGB_to_hs(*rgb)
-                return hs
-        else:
-            valuerange = self._ctrl_params[param]['value_range']
-            if dir:
-                slider_value = round(value/255*100)
-                return int(slider_value/100*(valuerange[1]-valuerange[0]+1)/valuerange[2])*valuerange[2]
-            else:
-                return round(value/(valuerange[1]-valuerange[0]+1)*255)
-
     async def async_turn_on(self, **kwargs):
         """Turn on."""
         parameters = [{**{'did': "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping['switch_status'])}]
         if ATTR_EFFECT in kwargs:
             modes = self._ctrl_params['mode']
-            parameters.append({**{'did': "mode", 'value': list(modes.keys())[list(modes.values()).index(kwargs[ATTR_EFFECT])]}, **(self._mapping['mode'])}) 
+            parameters.append({**{'did': "mode", 'value': self._ctrl_params['mode'].get(kwargs[ATTR_EFFECT])}, **(self._mapping['mode'])}) 
         else:
             if ATTR_BRIGHTNESS in kwargs:
                 self._effect = None
@@ -198,7 +180,7 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
     @property
     def effect_list(self):
         """Return the list of supported effects."""
-        return list(self._ctrl_params['mode'].values()) #+ ['none']
+        return list(self._ctrl_params['mode'].keys()) #+ ['none']
 
     @property
     def effect(self):
@@ -229,9 +211,9 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
             self._state_attrs.update({'color_temperature': self._state_attrs['color_temperature']})
         except KeyError: pass
         try:
-            self._state_attrs.update({'effect': self._state_attrs['mode']})
+            self._state_attrs.update({'mode': self._state_attrs['mode']})
         except KeyError: pass
         try:
-            self._effect = self._ctrl_params['mode'][self._state_attrs['mode']]
+            self._effect = self.get_key_by_value(self._ctrl_params['mode'],self._state_attrs['mode'])
         except KeyError: 
             self._effect = None

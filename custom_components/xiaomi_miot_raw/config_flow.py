@@ -29,11 +29,13 @@ from aiohttp import ClientSession
 from homeassistant.helpers import aiohttp_client, discovery
 import requests
 from .deps.miot_device_adapter import MiotAdapter
+from homeassistant.components import persistent_notification
 
 VALIDATE = {'fan': [{"switch_status"}, {"switch_status"}],
             'switch': [{"switch_status"}, {"switch_status"}],
             'light': [{"switch_status"}, {"switch_status"}],
-            'cover': [{"motor_control"}, {"motor_control"}]
+            'cover': [{"motor_control"}, {"motor_control"}],
+            'humidifier': [{"switch_status","target_humidity"}, {"switch_status","target_humidity"}]
             }
 
 async def validate_devinfo(hass, data):
@@ -72,12 +74,17 @@ async def guess_mp_from_model(hass,model):
     cs = aiohttp_client.async_get_clientsession(hass)
     url_all = 'http://miot-spec.org/miot-spec-v2/instances?status=all'
     url_spec = 'http://miot-spec.org/miot-spec-v2/instance'
-    dev_list = requests.get(url_all).json().get('instances')
     with async_timeout.timeout(10):
         try:
-            dev_list = await cs.get(url_all).json().get('instances')
+            a = await cs.get(url_all)
+        
         except Exception:
-            dev_list = None
+            a = None
+    if a:
+        dev_list = await a.json(content_type=None)
+        dev_list = dev_list.get('instances')
+    else:
+        dev_list = None
     result = None
     if dev_list:
         for item in dev_list:
@@ -87,10 +94,11 @@ async def guess_mp_from_model(hass,model):
         params = {'type': urn}
         with async_timeout.timeout(10):
             try:
-                spec = await cs.get(url_spec, params=params).json()
+                s = await cs.get(url_spec, params=params)
             except Exception:
-                spec = None
-        if spec:
+                s = None
+        if s:
+            spec = await s.json()
             ad = MiotAdapter(spec)
             mt = ad.mitype
             dt = ad.devtype
@@ -98,8 +106,8 @@ async def guess_mp_from_model(hass,model):
             prm = ad.get_params_by_snewid(mt) or ad.get_params_by_snewid(dt)
             return {
                 'device_type': dt or 'switch',
-                'mapping': mp,
-                'params': prm
+                'mapping': json.dumps(mp,separators=(',', ':')),
+                'params': json.dumps(prm,separators=(',', ':'))
             }
     else:
         return None
@@ -148,7 +156,17 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 
             if self._info is not None:
                 unique_id = format_mac(self._info.mac_address)
-                await self.async_set_unique_id(unique_id)
+                # await self.async_set_unique_id(unique_id)
+                for entry in self._async_current_entries():
+                    if entry.unique_id == unique_id:
+                        persistent_notification.async_create(
+                            self.hass,
+                            f"您新添加的设备: **{self._name}** ，\n"
+                            f"其 MAC 地址与现有的某个设备相同。\n"
+                            f"只是通知，不会造成任何影响。",
+                            "设备可能重复")
+                        break
+
                 self._abort_if_unique_id_configured()
                 d = self._info.raw
                 self._model = d['model']
