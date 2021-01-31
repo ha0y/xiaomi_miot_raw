@@ -11,5 +11,6 @@
   "dependencies": [],
   "codeowners": [
     "@ha0y"
-  ]
+  ],
+  "version": "v2.0"
 }
