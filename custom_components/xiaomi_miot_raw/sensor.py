@@ -71,8 +71,8 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 
         device = MiotSensor(miio_device, config, device_info)
         devices = [device]
-        for item in config['mapping']:
-            devices.append(MiotSubSensor(device, item))
+        # for item in config['mapping']:
+        #     devices.append(MiotSubSensor(device, item))
     except DeviceException as de:
         _LOGGER.warn(de)
 
