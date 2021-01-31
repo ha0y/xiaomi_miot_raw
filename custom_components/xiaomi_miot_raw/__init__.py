@@ -307,7 +307,7 @@ class GenericMiotDevice(Entity):
                         try:
                             f = self._ctrl_params[r['did']]['value_ratio']
                             statedict[r['did']] = round(r['value'] * f , 3)
-                        except KeyError:
+                        except (KeyError, TypeError):
                             statedict[r['did']] = r['value']
                     else:
                         statedict[r['did']] = None
