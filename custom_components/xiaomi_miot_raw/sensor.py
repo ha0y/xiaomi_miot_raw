@@ -28,11 +28,12 @@ from .deps.const import (
     ATTR_HARDWARE_VERSION,
     SCHEMA,
 )
+TYPE = 'sensor'
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = "Generic MIoT sensor"
-DATA_KEY = "sensor." + DOMAIN
+DEFAULT_NAME = "Generic MIoT " + TYPE
+DATA_KEY = TYPE + '.' + DOMAIN
 
 CONF_SENSOR_PROPERTY = "sensor_property"
 CONF_SENSOR_UNIT = "sensor_unit"

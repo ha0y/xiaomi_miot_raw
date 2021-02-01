@@ -3,6 +3,7 @@ import json
 import logging
 from functools import partial
 
+import json
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components.switch import PLATFORM_SCHEMA, SwitchEntity
@@ -26,27 +27,16 @@ from .deps.const import (
     ATTR_HARDWARE_VERSION,
     SCHEMA,
 )
+import copy
 
-DOMAIN = 'xiaomi_miot_raw'
+TYPE = 'switch'
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = "Generic MIoT switch"
-DATA_KEY = "switch." + DOMAIN
+DEFAULT_NAME = "Generic MIoT " + TYPE
+DATA_KEY = TYPE + '.' + DOMAIN
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
-    # {
-    #     vol.Required(CONF_HOST): cv.string,
-    #     vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
-    #     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    #     vol.Optional(CONF_UPDATE_INSTANT, default=True): cv.boolean,
-    #     vol.Optional(CONF_CLOUD): vol.All(),
-        
-    #     vol.Required(CONF_MAPPING):vol.All(),
-    #     vol.Required(CONF_CONTROL_PARAMS):vol.All(),
-    #     vol.Optional('cloud_write'):vol.All(),
-
-    # }
     SCHEMA
 )
 
@@ -54,7 +44,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 @asyncio.coroutine
 def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the sensor from config."""
-
     if DATA_KEY not in hass.data:
         hass.data[DATA_KEY] = {}
 
@@ -83,8 +72,11 @@ def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     async_add_entities([device], update_before_add=True)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    config = hass.data[DOMAIN]['configs'].get(config_entry.entry_id, dict(config_entry.data))
+    config = copy.copy(hass.data[DOMAIN]['configs'].get(config_entry.entry_id, dict(config_entry.data)))
+    config[CONF_MAPPING] = config[CONF_MAPPING][TYPE]
+    config[CONF_CONTROL_PARAMS] = config[CONF_CONTROL_PARAMS][TYPE]
     await async_setup_platform(hass, config, async_add_entities)
 
 class MiotSwitch(ToggleableMiotDevice, SwitchEntity):
-    pass
+    def __init__(self, device, config, device_info, hass):
+        ToggleableMiotDevice.__init__(self, device, config, device_info, hass)

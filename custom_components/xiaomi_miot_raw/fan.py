@@ -7,14 +7,14 @@ import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components import fan
 from homeassistant.components.fan import (
-    ATTR_SPEED, 
+    ATTR_SPEED,
     PLATFORM_SCHEMA,
-    SPEED_HIGH, 
-    SPEED_LOW, 
+    SPEED_HIGH,
+    SPEED_LOW,
     SPEED_MEDIUM,
-    SPEED_OFF, 
+    SPEED_OFF,
     SUPPORT_OSCILLATE,
-    SUPPORT_SET_SPEED, 
+    SUPPORT_SET_SPEED,
     FanEntity)
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_TOKEN
 from homeassistant.exceptions import PlatformNotReady
@@ -37,24 +37,15 @@ from .deps.const import (
     ATTR_HARDWARE_VERSION,
     SCHEMA,
 )
+import copy
 
+TYPE = 'fan'
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = "Generic MIoT fan"
-DATA_KEY = "fan." + DOMAIN
+DEFAULT_NAME = "Generic MIoT " + TYPE
+DATA_KEY = TYPE + '.' + DOMAIN
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
-    # {
-    #     vol.Required(CONF_HOST): cv.string,
-    #     vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
-    #     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    #     vol.Optional(CONF_UPDATE_INSTANT, default=True): cv.boolean,
-    #     vol.Optional(CONF_CLOUD): vol.All(),
-        
-    #     vol.Required(CONF_MAPPING):vol.All(),
-    #     vol.Required(CONF_CONTROL_PARAMS):vol.All(),
-
-    # }
     SCHEMA
 )
 
@@ -89,9 +80,11 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 
     hass.data[DATA_KEY][host] = device
     async_add_devices([device], update_before_add=True)
-        
+
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    config = hass.data[DOMAIN]['configs'].get(config_entry.entry_id, dict(config_entry.data))
+    config = copy.copy(hass.data[DOMAIN]['configs'].get(config_entry.entry_id, dict(config_entry.data)))
+    config[CONF_MAPPING] = config[CONF_MAPPING][TYPE]
+    config[CONF_CONTROL_PARAMS] = config[CONF_CONTROL_PARAMS][TYPE]
     await async_setup_platform(hass, config, async_add_entities)
 
 class MiotFan(ToggleableMiotDevice, FanEntity):
@@ -99,7 +92,7 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
         ToggleableMiotDevice.__init__(self, device, config, device_info, hass)
         self._speed = None
         self._oscillation = None
-        
+
     @property
     def supported_features(self):
         """Return the supported features."""
@@ -114,12 +107,12 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
     def speed_list(self) -> list:
         """Get the list of available speeds."""
         return list(self._ctrl_params['speed'].keys())
-    
+
     @property
     def speed(self):
         """Return the current speed."""
         return self._speed
-    
+
     @property
     def oscillating(self):
         """Return the oscillation state."""
@@ -132,13 +125,13 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
         if result:
             self._oscillation = True
             self._skip_update = True
-    
+
     async def async_turn_on(self, speed: str = None, **kwargs) -> None:
         """Turn on the entity."""
         parameters = [{**{'did': "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping['switch_status'])}]
-        
+
         if speed:
-            parameters.append({**{'did': "speed", 'value': self._ctrl_params['speed'][speed]}, **(self._mapping['speed'])}) 
+            parameters.append({**{'did': "speed", 'value': self._ctrl_params['speed'][speed]}, **(self._mapping['speed'])})
 
         # result = await self._try_command(
         #     "Turning the miio device on failed.",
@@ -150,7 +143,7 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
         if result:
             self._state = True
             self._skip_update = True
-            
+
     async def async_update(self):
         await super().async_update()
         # self._speed = self._ctrl_params['speed'].get(self._state_attrs.get('speed_'))

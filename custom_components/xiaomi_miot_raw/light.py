@@ -3,6 +3,7 @@ import asyncio
 import logging
 from functools import partial
 
+import json
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components.light import (
@@ -33,24 +34,16 @@ from .deps.const import (
     ATTR_HARDWARE_VERSION,
     SCHEMA,
 )
+import copy
+
+TYPE = 'light'
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = "Generic MIoT light"
-DATA_KEY = "light." + DOMAIN
+DEFAULT_NAME = "Generic MIoT " + TYPE
+DATA_KEY = TYPE + '.' + DOMAIN
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
-    # {
-    #     vol.Required(CONF_HOST): cv.string,
-    #     vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
-    #     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    #     vol.Optional(CONF_UPDATE_INSTANT, default=True): cv.boolean,
-    #     vol.Optional(CONF_CLOUD): vol.All(),
-        
-    #     vol.Required(CONF_MAPPING):vol.All(),
-    #     vol.Required(CONF_CONTROL_PARAMS):vol.All(),
-
-    # }
     SCHEMA
 )
 
@@ -58,7 +51,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 @asyncio.coroutine
 def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     """Set up the light from config."""
-
     if DATA_KEY not in hass.data:
         hass.data[DATA_KEY] = {}
 
@@ -87,10 +79,12 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     async_add_devices([device], update_before_add=True)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    config = hass.data[DOMAIN]['configs'].get(config_entry.entry_id, dict(config_entry.data))
+    config = copy.copy(hass.data[DOMAIN]['configs'].get(config_entry.entry_id, dict(config_entry.data)))
+    config[CONF_MAPPING] = config[CONF_MAPPING][TYPE]
+    config[CONF_CONTROL_PARAMS] = config[CONF_CONTROL_PARAMS][TYPE]
     await async_setup_platform(hass, config, async_add_entities)
 
-      
+
 class MiotLight(ToggleableMiotDevice, LightEntity):
     def __init__(self, device, config, device_info, hass):
         ToggleableMiotDevice.__init__(self, device, config, device_info, hass)
@@ -98,7 +92,7 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
         self._color = None
         self._color_temp = None
         self._effect = None
-        
+
     @property
     def supported_features(self):
         """Return the supported features."""
@@ -127,7 +121,7 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
         parameters = [{**{'did': "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping['switch_status'])}]
         if ATTR_EFFECT in kwargs:
             modes = self._ctrl_params['mode']
-            parameters.append({**{'did': "mode", 'value': self._ctrl_params['mode'].get(kwargs[ATTR_EFFECT])}, **(self._mapping['mode'])}) 
+            parameters.append({**{'did': "mode", 'value': self._ctrl_params['mode'].get(kwargs[ATTR_EFFECT])}, **(self._mapping['mode'])})
         else:
             if ATTR_BRIGHTNESS in kwargs:
                 self._effect = None
@@ -142,7 +136,7 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
                 self._effect = None
                 intcolor = self.convert_value(kwargs[ATTR_HS_COLOR],'color')
                 parameters.append({**{'did': "color", 'value': intcolor}, **(self._mapping['color'])})
-                
+
 
         # result = await self._try_command(
         #     "Turning the miio device on failed.",
@@ -155,7 +149,7 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
         if result:
             self._state = True
             # self._skip_update = True
-            
+
     @property
     def color_temp(self):
         """Return the color temperature in mired."""
@@ -186,12 +180,12 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
     def effect(self):
         """Return the current effect."""
         return self._effect
-    
+
     @property
     def hs_color(self):
         """Return the hs color value."""
         return self._color
-    
+
     async def async_update(self):
         """Fetch state from the device."""
         # On state change some devices doesn't provide the new state immediately.
@@ -215,5 +209,5 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
         except KeyError: pass
         try:
             self._effect = self.get_key_by_value(self._ctrl_params['mode'],self._state_attrs['mode'])
-        except KeyError: 
+        except KeyError:
             self._effect = None

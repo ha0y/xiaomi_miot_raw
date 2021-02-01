@@ -54,6 +54,7 @@ async def validate_devinfo(hass, data):
             if item not in json.loads(data[CONF_CONTROL_PARAMS]):
                 ret[1].append(item)
         return ret
+    # TODO mapping和params多了一级dict，相关validate和生成逻辑都需要改，现在只能保证添加**正确**的配置后能生成**一个**设备
 
 async def async_get_mp_from_net(hass, model):
     cs = aiohttp_client.async_get_clientsession(hass)
@@ -77,7 +78,7 @@ async def guess_mp_from_model(hass,model):
     with async_timeout.timeout(10):
         try:
             a = await cs.get(url_all)
-        
+
         except Exception:
             a = None
     if a:
@@ -112,11 +113,11 @@ async def guess_mp_from_model(hass,model):
     else:
         return None
     # TODO
-    
+
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
-    
+
     def __init__(self):
         """Initialize flow"""
         self._name = vol.UNDEFINED
@@ -131,19 +132,19 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input=None):
         """Handle a flow initialized by the user."""
         errors = {}
-        
+
         # Check if already configured
         # await self.async_set_unique_id(DOMAIN)
         # self._abort_if_unique_id_configured()
 
         if user_input is not None:
-            
+
             self._name = user_input[CONF_NAME]
             self._host = user_input[CONF_HOST]
             self._token = user_input[CONF_TOKEN]
             # self._mapping = user_input[CONF_MAPPING]
             # self._params = user_input[CONF_CONTROL_PARAMS]
-            
+
             device = MiioDevice(self._host, self._token)
             try:
                 self._info = device.info()
@@ -152,8 +153,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors['base'] = 'cannot_connect'
             # except ValueError:
             #     errors['base'] = 'value_error'
-                
-                
+
+
             if self._info is not None:
                 unique_id = format_mac(self._info.mac_address)
                 # await self.async_set_unique_id(unique_id)
@@ -175,20 +176,23 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     f"Firmware: {d['fw_ver']}\n"
                     f"MAC: {d['mac']}\n"
                 )
-            
+
                 # self._info = self.get_devconfg_by_model(self._model)
-                
+
                 self._info = await async_get_mp_from_net(self.hass, self._model) \
                     or await guess_mp_from_model(self.hass, self._model)
-                
+
                 if self._info:
                     device_info += "\n已经自动发现配置参数。\n如无特殊需要，无需修改下列内容。\n"
-                    devtype_default = self._info.get('device_type')
-                    mapping_default = self._info.get('mapping')
-                    params_default = self._info.get('params')
+                    devtype_default = [self._info.get('device_type')]
+
+                    mp = f'''{{"{self._info.get('device_type')}":{self._info.get('mapping')}}}'''
+                    prm = f'''{{"{self._info.get('device_type')}":{self._info.get('params')}}}'''
+                    mapping_default = mp
+                    params_default = prm
                 else:
                     device_info += "请手动进行配置。\n"
-                    devtype_default = ''
+                    devtype_default = []
                     mapping_default = '{"switch_status":{"siid":2,"piid":1}}'
                     params_default = '{"switch_status":{"power_on":true,"power_off":false}}'
 
@@ -196,7 +200,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 return self.async_show_form(
                     step_id="devinfo",
                     data_schema=vol.Schema({
-                        vol.Required('devtype', default=devtype_default): vol.In(SUPPORTED_DOMAINS),
+                        # vol.Required('devtype', default=devtype_default): vol.In(SUPPORTED_DOMAINS),
+                        vol.Required('devtype', default=devtype_default): cv.multi_select(SUPPORTED_DOMAINS),
                         vol.Required(CONF_MAPPING, default=mapping_default): str,
                         vol.Required(CONF_CONTROL_PARAMS, default=params_default): str,
                         vol.Optional('cloud_read'): bool,
@@ -220,7 +225,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             # description_placeholders={"device_info": "device_info"},
             errors=errors,
         )
-    
+
     async def async_step_devinfo(self, user_input=None):
         errors = {}
         hint = ""
@@ -231,14 +236,15 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._input2[CONF_CONTROL_PARAMS] = user_input[CONF_CONTROL_PARAMS]
             # self._input2['cloud_read'] = user_input['cloud_read']
             self._input2['cloud_write'] = user_input.get('cloud_write')
-            
-            v = await validate_devinfo(self.hass, self._input2)
+
+            # v = await validate_devinfo(self.hass, self._input2)
+            v= [[],[]]
             if v == [[],[]] :
-            
+
                 try:
                     # print(result)
                     if not user_input.get('cloud_read') and not user_input.get('cloud_write'):
-                        device = MiotDevice(ip=self._input2[CONF_HOST], token=self._input2[CONF_TOKEN], mapping=json.loads(self._input2[CONF_MAPPING]))
+                        device = MiotDevice(ip=self._input2[CONF_HOST], token=self._input2[CONF_TOKEN], mapping=list(json.loads(self._input2[CONF_MAPPING]).values())[0])
                         result = device.get_properties_for_mapping()
                         return self.async_create_entry(
                             title=self._input2[CONF_NAME],
@@ -259,11 +265,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 except DeviceException as ex:
                     errors["base"] = "no_local_access"
                     hint = f"错误信息: {ex}"
-                except Exception as exe:
-                    hint = f"错误信息: {exe}"
             else:
                 errors["base"] = "bad_params"
-                
+
                 hint = ""
                 if v[0]:
                     hint += "\nmapping 缺少必须配置的项目："
@@ -273,7 +277,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     hint += "\nparams 缺少必须配置的项目："
                     for item in v[1]:
                         hint += (item + ', ')
-            
+
             # if info:
         return self.async_show_form(
             step_id="devinfo",
@@ -287,7 +291,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders={"device_info": hint},
             errors=errors,
         )
-    
+
     async def async_step_cloudinfo(self, user_input=None):
         errors = {}
         if user_input is not None:
@@ -296,19 +300,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._input2['update_from_cloud']['userId'] = user_input['userId']
             self._input2['update_from_cloud']['serviceToken'] = user_input['serviceToken']
             self._input2['update_from_cloud']['ssecurity'] = user_input['ssecurity']
-            
+
             return self.async_create_entry(
                 title=self._input2[CONF_NAME],
                 data=self._input2,
             )
-    # def get_devconfg_by_model(self, model):
-    #     print(model)
-    #     dev = json.loads(TEST)
-    #     for item in dev:
-    #         if item['device_model'] == model:
-    #             return item
-    #     return None
-    
+
     async def async_step_import(self, user_input):
         """Import a config flow from configuration."""
         return True
