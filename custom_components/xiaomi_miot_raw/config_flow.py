@@ -236,10 +236,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if v == [[],[]] :
             
                 try:
-                    device = MiotDevice(ip=self._input2[CONF_HOST], token=self._input2[CONF_TOKEN], mapping=json.loads(self._input2[CONF_MAPPING]))
-                    result = device.get_properties_for_mapping()
                     # print(result)
                     if not user_input.get('cloud_read') and not user_input.get('cloud_write'):
+                        device = MiotDevice(ip=self._input2[CONF_HOST], token=self._input2[CONF_TOKEN], mapping=json.loads(self._input2[CONF_MAPPING]))
+                        result = device.get_properties_for_mapping()
                         return self.async_create_entry(
                             title=self._input2[CONF_NAME],
                             data=self._input2,
@@ -256,10 +256,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             # description_placeholders={"device_info": hint},
                             errors=errors,
                         )
-                except DeviceException:
-                    # errors["base"] = "cannot_connect"
-                    # hint = "请检查 mapping 中的各项 iid 是否正确。如果进行到此步才出现错误，有可能是它们导致的。"
-                    pass
+                except DeviceException as ex:
+                    errors["base"] = "no_local_access"
+                    hint = f"错误信息: {ex}"
+                except Exception as exe:
+                    hint = f"错误信息: {exe}"
             else:
                 errors["base"] = "bad_params"
                 
