@@ -33,6 +33,7 @@ from .deps.const import (
     ATTR_FIRMWARE_VERSION,
     ATTR_HARDWARE_VERSION,
     SCHEMA,
+    MAP,
 )
 TYPE = 'humidifier'
 
@@ -58,39 +59,61 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     host = config.get(CONF_HOST)
     token = config.get(CONF_TOKEN)
     mapping = config.get(CONF_MAPPING)
+    params = config.get(CONF_CONTROL_PARAMS)
 
-    _LOGGER.info("Initializing %s with host %s (token %s...)", config.get(CONF_NAME), host, token[:5])
+    mappingnew = {}
 
-    try:
-        # miio_device = Device(host, token)
-        miio_device = MiotDevice(ip=host, token=token, mapping=mapping)
+    main_mi_type = None
+    this_mi_type = []
 
-        device_info = miio_device.info()
-        model = device_info.model
-        _LOGGER.info(
-            "%s %s %s detected",
-            model,
-            device_info.firmware_version,
-            device_info.hardware_version,
-        )
+    for t in MAP[TYPE]:
+        if params.get(t):
+            this_mi_type.append(t)
+        if 'main' in (params.get(t) or ""):
+            main_mi_type = t
 
-        device = MiotHumidifier(miio_device, config, device_info, hass)
-    except DeviceException:
-        raise PlatformNotReady
+    if main_mi_type:
+        for k,v in mapping.items():
+            for kk,vv in v.items():
+                mappingnew[f"{k[:10]}_{kk}"] = vv
 
-    hass.data[DATA_KEY][host] = device
-    async_add_devices([device], update_before_add=True)
+        _LOGGER.info("Initializing %s with host %s (token %s...)", config.get(CONF_NAME), host, token[:5])
+
+        try:
+            # miio_device = Device(host, token)
+            miio_device = MiotDevice(ip=host, token=token, mapping=mapping)
+
+            device_info = miio_device.info()
+            model = device_info.model
+            _LOGGER.info(
+                "%s %s %s detected",
+                model,
+                device_info.firmware_version,
+                device_info.hardware_version,
+            )
+
+            device = MiotHumidifier(miio_device, config, device_info, hass, main_mi_type)
+        except DeviceException as de:
+            _LOGGER.warn(de)
+            raise PlatformNotReady
+
+        _LOGGER.error(f"{main_mi_type} is the main device of {host}.")
+        hass.data[DOMAIN]['miot_main_entity'][host] = device
+        hass.data[DOMAIN]['entities'][device.unique_id] = device
+        async_add_devices([device], update_before_add=True)
+    else:
+        _LOGGER.error(f"加湿器只能作为主设备！请检查{config.get(CONF_NAME)}配置")
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     config = copy.copy(hass.data[DOMAIN]['configs'].get(config_entry.entry_id, dict(config_entry.data)))
-    config[CONF_MAPPING] = config[CONF_MAPPING][TYPE]
-    config[CONF_CONTROL_PARAMS] = config[CONF_CONTROL_PARAMS][TYPE]
+    # config[CONF_MAPPING] = config[CONF_MAPPING][TYPE]
+    # config[CONF_CONTROL_PARAMS] = config[CONF_CONTROL_PARAMS][TYPE]
     await async_setup_platform(hass, config, async_add_entities)
 
 class MiotHumidifier(ToggleableMiotDevice, HumidifierEntity):
     """Representation of a humidifier device."""
-    def __init__(self, device, config, device_info, hass):
-        ToggleableMiotDevice.__init__(self, device, config, device_info, hass)
+    def __init__(self, device, config, device_info, hass, main_mi_type):
+        ToggleableMiotDevice.__init__(self, device, config, device_info, hass, main_mi_type)
         self._target_humidity = None
         self._mode = None
         self._available_modes = None
@@ -100,7 +123,7 @@ class MiotHumidifier(ToggleableMiotDevice, HumidifierEntity):
     def supported_features(self):
         """Return the list of supported features."""
         s = 0
-        if 'mode' in self._mapping:
+        if self._field_prefix + 'mode' in self._mapping:
             s |= SUPPORT_MODES
         return s
 
@@ -155,5 +178,5 @@ class MiotHumidifier(ToggleableMiotDevice, HumidifierEntity):
 
     async def async_update(self):
         await super().async_update()
-        self._target_humidity = self._state_attrs.get('target_humidity')
-        self._mode = self.get_key_by_value(self._ctrl_params['mode'], self._state_attrs.get('mode_'))
+        self._target_humidity = self._state_attrs.get(self._field_prefix + 'target_humidity')
+        self._mode = self.get_key_by_value(self._ctrl_params['mode'], self._state_attrs.get(self._field_prefix + 'mode_'))

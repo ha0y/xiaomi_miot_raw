@@ -15,16 +15,7 @@ from homeassistant.components.cover import (
     SUPPORT_CLOSE, SUPPORT_OPEN,
     SUPPORT_SET_POSITION, SUPPORT_STOP,
     CoverDevice, CoverEntity)
-from homeassistant.const import (
-    CONF_HOST, CONF_NAME, CONF_TOKEN,
-    SERVICE_CLOSE_COVER, SERVICE_CLOSE_COVER_TILT,
-    SERVICE_OPEN_COVER, SERVICE_OPEN_COVER_TILT,
-    SERVICE_SET_COVER_POSITION,
-    SERVICE_SET_COVER_TILT_POSITION,
-    SERVICE_STOP_COVER, SERVICE_STOP_COVER_TILT,
-    SERVICE_TOGGLE, SERVICE_TOGGLE_COVER_TILT,
-    STATE_CLOSED, STATE_CLOSING, STATE_OPEN,
-    STATE_OPENING)
+from homeassistant.const import *
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers import aiohttp_client
 from homeassistant.util import Throttle
@@ -32,6 +23,7 @@ from miio.device import Device
 from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
 
+import copy
 from . import GenericMiotDevice
 from .deps.const import (
     DOMAIN,
@@ -45,6 +37,7 @@ from .deps.const import (
     ATTR_FIRMWARE_VERSION,
     ATTR_HARDWARE_VERSION,
     SCHEMA,
+    MAP,
 )
 TYPE = 'cover'
 _LOGGER = logging.getLogger(__name__)
@@ -69,38 +62,60 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     host = config.get(CONF_HOST)
     token = config.get(CONF_TOKEN)
     mapping = config.get(CONF_MAPPING)
+    params = config.get(CONF_CONTROL_PARAMS)
 
-    _LOGGER.info("Initializing %s with host %s (token %s...)", config.get(CONF_NAME), host, token[:5])
+    mappingnew = {}
 
-    try:
-        # miio_device = Device(host, token)
-        miio_device = MiotDevice(ip=host, token=token, mapping=mapping)
+    main_mi_type = None
+    this_mi_type = []
+    _LOGGER.error(params)
+    for t in MAP[TYPE]:
+        if params.get(t):
+            this_mi_type.append(t)
+        if 'main' in (params.get(t) or ""):
+            main_mi_type = t
 
-        device_info = miio_device.info()
-        model = device_info.model
-        _LOGGER.info(
-            "%s %s %s detected",
-            model,
-            device_info.firmware_version,
-            device_info.hardware_version,
-        )
+    if main_mi_type:
+        for k,v in mapping.items():
+            for kk,vv in v.items():
+                mappingnew[f"{k[:10]}_{kk}"] = vv
 
-        device = MiotCover(miio_device, config, device_info, hass)
-    except DeviceException:
-        raise PlatformNotReady
+        _LOGGER.info("Initializing %s with host %s (token %s...)", config.get(CONF_NAME), host, token[:5])
 
-    hass.data[DATA_KEY][host] = device
-    async_add_devices([device], update_before_add=True)
+        try:
+            # miio_device = Device(host, token)
+            miio_device = MiotDevice(ip=host, token=token, mapping=mappingnew)
+
+            device_info = miio_device.info()
+            model = device_info.model
+            _LOGGER.info(
+                "%s %s %s detected",
+                model,
+                device_info.firmware_version,
+                device_info.hardware_version,
+            )
+
+            device = MiotCover(miio_device, config, device_info, hass, main_mi_type)
+        except DeviceException as de:
+            _LOGGER.warn(de)
+            raise PlatformNotReady
+
+        _LOGGER.error(f"{main_mi_type} is the main device of {host}.")
+        hass.data[DOMAIN]['miot_main_entity'][host] = device
+        hass.data[DOMAIN]['entities'][device.unique_id] = device
+        async_add_devices([device], update_before_add=True)
+    else:
+        _LOGGER.error(f"cover只能作为主设备！请检查{config.get(CONF_NAME)}配置")
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     config = copy.copy(hass.data[DOMAIN]['configs'].get(config_entry.entry_id, dict(config_entry.data)))
-    config[CONF_MAPPING] = config[CONF_MAPPING][TYPE]
-    config[CONF_CONTROL_PARAMS] = config[CONF_CONTROL_PARAMS][TYPE]
+    # config[CONF_MAPPING] = config[CONF_MAPPING][TYPE]
+    # config[CONF_CONTROL_PARAMS] = config[CONF_CONTROL_PARAMS][TYPE]
     await async_setup_platform(hass, config, async_add_entities)
 
 class MiotCover(GenericMiotDevice, CoverEntity):
-    def __init__(self, device, config, device_info, hass):
-        GenericMiotDevice.__init__(self, device, config, device_info, hass)
+    def __init__(self, device, config, device_info, hass, main_mi_type):
+        GenericMiotDevice.__init__(self, device, config, device_info, hass, main_mi_type)
         self._current_position = None
         self._target_position = None
         self._action = None
@@ -110,6 +125,8 @@ class MiotCover(GenericMiotDevice, CoverEntity):
         self._throttle10 = Throttle(timedelta(seconds=10))(self._async_update)
         self.async_update = self._throttle10
 
+        _LOGGER.error(self._mapping)
+
     @property
     def available(self):
         """Return true when state is known."""
@@ -117,7 +134,7 @@ class MiotCover(GenericMiotDevice, CoverEntity):
 
     @property
     def supported_features(self):
-        if 'target_position' in self._mapping:
+        if self._field_prefix + 'target_position' in self._mapping:
             return SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_STOP | SUPPORT_SET_POSITION
         else:
             return SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_STOP
@@ -152,7 +169,7 @@ class MiotCover(GenericMiotDevice, CoverEntity):
 
     async def async_open_cover(self, **kwargs):
         """Open the cover."""
-        result = await self.set_property_new("motor_control",self._ctrl_params['motor_control']['open'])
+        result = await self.set_property_new(self._field_prefix + "motor_control",self._ctrl_params['motor_control']['open'])
         if result:
             # self._skip_update = True
             try:
@@ -164,7 +181,7 @@ class MiotCover(GenericMiotDevice, CoverEntity):
 
     async def async_close_cover(self, **kwargs):
         """Close the cover."""
-        result = await self.set_property_new("motor_control",self._ctrl_params['motor_control']['close'])
+        result = await self.set_property_new(self._field_prefix + "motor_control",self._ctrl_params['motor_control']['close'])
         if result:
             try:
                 self._action = self._ctrl_params['motor_status']['close']
@@ -175,22 +192,22 @@ class MiotCover(GenericMiotDevice, CoverEntity):
 
     async def async_stop_cover(self, **kwargs):
         """Close the cover."""
-        result = await self.set_property_new("motor_control",self._ctrl_params['motor_control']['stop'])
+        result = await self.set_property_new(self._field_prefix + "motor_control",self._ctrl_params['motor_control']['stop'])
         if result:
             # self._skip_update = True
             pass
 
     async def async_set_cover_position(self, **kwargs):
         """Set the cover."""
-        result = await self.set_property_new("target_position",kwargs['position'])
+        result = await self.set_property_new(self._field_prefix + "target_position",kwargs['position'])
 
         if result:
             self._skip_update = True
 
     async def _async_update(self):
         await super().async_update()
-        self._current_position = self._state_attrs.get('current_position')
-        self._action = self._state_attrs.get('motor_status')
+        self._current_position = self._state_attrs.get(self._field_prefix + 'current_position')
+        self._action = self._state_attrs.get(self._field_prefix + 'motor_status')
         if self.is_closing or self.is_opening:
             self.async_update = self._throttle1
         else:

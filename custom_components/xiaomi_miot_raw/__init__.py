@@ -62,6 +62,7 @@ async def async_setup(hass, hassconfig):
     hass.data[DOMAIN]['config'] = config
     hass.data[DOMAIN].setdefault('entities', {})
     hass.data[DOMAIN].setdefault('configs', {})
+    hass.data[DOMAIN].setdefault('miot_main_entity', {})
 
     component = EntityComponent(_LOGGER, DOMAIN, hass, SCAN_INTERVAL)
     hass.data[DOMAIN]['component'] = component
@@ -116,16 +117,26 @@ async def async_setup_entry(hass, entry):
 class GenericMiotDevice(Entity):
     """通用 MiOT 设备"""
 
-    def __init__(self, device, config, device_info, hass = None):
+    def __init__(self, device, config, device_info, hass = None, mi_type = None):
         """Initialize the entity."""
         self._device = device
+        self._mi_type = mi_type
+        self._field_prefix = f"{self._mi_type}_" if self._mi_type else ""
+
         self._mapping = config.get(CONF_MAPPING)
         if type(self._mapping) == str:
             self._mapping = json.loads(self._mapping)
+        mappingnew = {}
+        for k,v in self._mapping.items():
+            for kk,vv in v.items():
+                mappingnew[f"{k[:10]}_{kk}"] = vv
+        self._mapping = mappingnew
 
         self._ctrl_params = config.get(CONF_CONTROL_PARAMS)
         if type(self._ctrl_params) == str:
             self._ctrl_params = json.loads(self._ctrl_params)
+        if mi_type:
+            self._ctrl_params = self._ctrl_params[mi_type]
 
         self._name = config.get(CONF_NAME)
         self._update_instant = config.get(CONF_UPDATE_INSTANT)
@@ -296,6 +307,7 @@ class GenericMiotDevice(Entity):
             return False
 
     async def async_update(self):
+        # _LOGGER.error(self._hass.data[DOMAIN])
         """Fetch state from the device."""
         # On state change some devices doesn't provide the new state immediately.
         if self._update_instant is False or self._skip_update:
@@ -396,7 +408,7 @@ class GenericMiotDevice(Entity):
             _LOGGER.info(f"get_key_by_value: {value} is not in dict{json.dumps (d)}!")
             return None
 
-    def convert_value(self, value, param, dir = True):
+    def convert_value(self, value, param, dir = True, valuerange = None):
         if param == 'color':
             if dir:
                 rgb = color.color_hs_to_RGB(*value)
@@ -407,14 +419,14 @@ class GenericMiotDevice(Entity):
                 hs = color.color_RGB_to_hs(*rgb)
                 return hs
         elif param == 'brightness':
-            valuerange = self._ctrl_params[param]['value_range']
+            # valuerange = self._ctrl_params[param]['value_range']
             if dir:
                 slider_value = round(value/255*100)
                 return int(slider_value/100*(valuerange[1]-valuerange[0]+1)/valuerange[2])*valuerange[2]
             else:
                 return round(value/(valuerange[1]-valuerange[0]+1)*255)
         elif param == 'target_humidity':
-            valuerange = self._ctrl_params[param]['value_range']
+            # valuerange = self._ctrl_params[param]['value_range']
             if value < valuerange[0]:
                 return valuerange[0]
             elif value > valuerange[1]:
@@ -423,25 +435,27 @@ class GenericMiotDevice(Entity):
                 return round((value - valuerange[0])/valuerange[2])*valuerange[2]+valuerange[0]
 
 class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
-    def __init__(self, device, config, device_info, hass = None):
-        GenericMiotDevice.__init__(self, device, config, device_info, hass)
+    def __init__(self, device, config, device_info, hass = None, mi_type = None):
+        GenericMiotDevice.__init__(self, device, config, device_info, hass, mi_type)
 
     async def async_turn_on(self, **kwargs):
         """Turn on."""
-        result = await self.set_property_new("switch_status",self._ctrl_params['switch_status']['power_on'])
+        prm = self._ctrl_params['switch_status']['power_on']
+        result = await self.set_property_new(self._field_prefix + "switch_status",prm)
         if result:
             self._state = True
 
     async def async_turn_off(self, **kwargs):
         """Turn off."""
-        result = await self.set_property_new("switch_status",self._ctrl_params['switch_status']['power_off'])
+        prm = self._ctrl_params['switch_status']['power_off']
+        result = await self.set_property_new(self._field_prefix + "switch_status",prm)
         if result:
             self._state = False
 
     async def async_update(self):
 
         await super().async_update()
-        state = self._state_attrs.get('switch_status')
+        state = self._state_attrs.get(self._field_prefix + 'switch_status')
         _LOGGER.debug("%s 's new state: %s", self._name, state)
 
         if state == self._ctrl_params['switch_status']['power_on']:
@@ -471,3 +485,113 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
     @property
     def is_on(self):
         return self._state
+
+
+class MiotSubDevice(Entity):
+    """This part is modified from @al-one 's."""
+    def __init__(self, parent_device, mapping, params, mitype):
+        self._unique_id = f'{parent_device.unique_id}-{mitype}'
+        self._name = f'{parent_device.name} {mitype.capitalize()}'
+        self._state = STATE_UNKNOWN
+        self._available = True
+        self._parent_device = parent_device
+        self._state_attrs = {}
+        self._mapping = mapping
+        self._ctrl_params = params
+        self._mitype = mitype
+        self._field_prefix= f"{mitype}_" if mitype else ""
+        self._skip_update = False
+
+        self.convert_value = parent_device.convert_value
+        self.get_key_by_value = parent_device.get_key_by_value
+
+    @property
+    def unique_id(self):
+        return self._unique_id
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def state(self):
+        return self._state
+
+    @property
+    def available(self):
+        return self._available
+
+    @property
+    def device_state_attributes(self):
+        return self._state_attrs
+
+    @property
+    def device_info(self):
+        return self._parent_device.device_info
+
+    # @property
+    # def unit_of_measurement(self):
+    #     return self._option.get('unit')
+
+    async def async_update(self):
+        if self._skip_update:
+            self._skip_update = False
+            return
+        attrs = self._parent_device.device_state_attributes or {}
+        self._state_attrs = attrs
+        pass
+
+    # def update_attrs(self, attrs: dict, update_parent=True):
+    #     self._state_attrs.update(attrs or {})
+    #     if update_parent:
+    #         if self._parent and hasattr(self._parent, 'update_attrs'):
+    #             getattr(self._parent, 'update_attrs')(attrs or {}, update_parent=False)
+    #     return self._state_attrs
+
+    # def call_parent(self, method, *args, **kwargs):
+    #     ret = None
+    #     for f in cv.ensure_list(method):
+    #         if hasattr(self._parent, f):
+    #             ret = getattr(self._parent, f)(*args, **kwargs)
+    #             break
+    #     if ret:
+    #         self.update()
+    #     return ret
+
+class MiotSubToggleableDevice(MiotSubDevice):
+    async def async_turn_on(self, **kwargs):
+        """Turn on."""
+        prm = self._ctrl_params['switch_status']['power_on']
+        result = await self._parent_device.set_property_new(self._field_prefix + "switch_status",prm)
+        if result:
+            self._state = True
+            self._state_attrs[f"{self._field_prefix}switch_status"] = True
+            self._skip_update = True
+
+    async def async_turn_off(self, **kwargs):
+        """Turn off."""
+        prm = self._ctrl_params['switch_status']['power_off']
+        result = await self._parent_device.set_property_new(self._field_prefix + "switch_status",prm)
+        if result:
+            self._state = False
+            self._state_attrs[f"{self._field_prefix}switch_status"] = False
+            self._skip_update = True
+
+    @property
+    def is_on(self):
+        return self._state
+
+    @property
+    def available(self):
+        return True
+
+    @property
+    def state(self):
+        return STATE_ON if self._state else STATE_OFF
+
+    async def async_update(self):
+        if self._skip_update:
+            self._skip_update = False
+            return
+        await super().async_update()
+        self._state = self._state_attrs.get(f"{self._field_prefix}switch_status")

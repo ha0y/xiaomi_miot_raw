@@ -33,10 +33,42 @@ SCHEMA = {
         vol.Optional(CONF_UPDATE_INSTANT, default=True): cv.boolean,
         vol.Optional(CONF_CLOUD): vol.All(),
         vol.Optional('cloud_write'):vol.All(),
-        
+
         vol.Required(CONF_MAPPING):vol.All(),
         vol.Optional(CONF_CONTROL_PARAMS):vol.All(),
-        
+
         vol.Optional(CONF_SENSOR_PROPERTY): cv.string,
         vol.Optional(CONF_SENSOR_UNIT): cv.string,
+}
+MAP = {
+    "sensor": {
+        "air_monitor",
+        "water_purifier",
+        "cooker",
+        "pressure_cooker",
+        "induction_cooker",
+        "power_consumption",
+        "electricity",
+    },
+    "switch": {
+        "switch",
+        "outlet",
+        "scene",
+    },
+    "light": {
+        "light",
+    },
+    "fan": {
+        "fan",
+        "ceiling_fan",
+    },
+    "cover": {
+        "curtain",
+        "airer",
+
+    },
+    "humidifier": {
+        "humidifier",
+        "dehumidifier",
+    },
 }
