@@ -103,8 +103,12 @@ async def guess_mp_from_model(hass,model):
             ad = MiotAdapter(spec)
             mt = ad.mitype
             dt = ad.devtype
-            mp = ad.get_mapping_by_snewid(mt) or ad.get_mapping_by_snewid(dt)
-            prm = ad.get_params_by_snewid(mt) or ad.get_params_by_snewid(dt)
+
+            # adapter.get_all_mapping()
+            # mp = ad.get_mapping_by_snewid(mt) or ad.get_mapping_by_snewid(dt)
+            # prm = ad.get_params_by_snewid(mt) or ad.get_params_by_snewid(dt)
+            mp = ad.get_all_mapping()
+            prm = ad.get_all_params()
             return {
                 'device_type': dt or 'switch',
                 'mapping': json.dumps(mp,separators=(',', ':')),
@@ -179,15 +183,20 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
                 # self._info = self.get_devconfg_by_model(self._model)
 
-                self._info = await async_get_mp_from_net(self.hass, self._model) \
-                    or await guess_mp_from_model(self.hass, self._model)
+                # self._info = await async_get_mp_from_net(self.hass, self._model) \
+                    # or await guess_mp_from_model(self.hass, self._model)
+
+                self._info = await guess_mp_from_model(self.hass, self._model)
 
                 if self._info:
                     device_info += "\n已经自动发现配置参数。\n如无特殊需要，无需修改下列内容。\n"
                     devtype_default = [self._info.get('device_type')]
 
-                    mp = f'''{{"{self._info.get('device_type')}":{self._info.get('mapping')}}}'''
-                    prm = f'''{{"{self._info.get('device_type')}":{self._info.get('params')}}}'''
+                    # mp = f'''{{"{self._info.get('device_type')}":{self._info.get('mapping')}}}'''
+                    # prm = f'''{{"{self._info.get('device_type')}":{self._info.get('params')}}}'''
+
+                    mp = self._info.get('mapping')
+                    prm = self._info.get('params')
                     mapping_default = mp
                     params_default = prm
                 else:
