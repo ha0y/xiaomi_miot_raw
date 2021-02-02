@@ -15,6 +15,7 @@ from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers import aiohttp_client, discovery
 from homeassistant.helpers.entity import Entity, ToggleEntity
 from homeassistant.helpers.entity_component import EntityComponent
+from homeassistant.util import color
 from miio.device import Device
 from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
@@ -62,9 +63,9 @@ async def async_setup(hass, hassconfig):
     hass.data.setdefault(DOMAIN, {})
 
     config = hassconfig.get(DOMAIN) or {}
-    hass.data[DOMAIN]['config'] = config           
-    hass.data[DOMAIN].setdefault('entities', {})   
-    hass.data[DOMAIN].setdefault('configs', {})    
+    hass.data[DOMAIN]['config'] = config
+    hass.data[DOMAIN].setdefault('entities', {})
+    hass.data[DOMAIN].setdefault('configs', {})
 
     component = EntityComponent(_LOGGER, DOMAIN, hass, SCAN_INTERVAL)
     hass.data[DOMAIN]['component'] = component
@@ -75,7 +76,7 @@ async def async_setup(hass, hassconfig):
 async def async_setup_entry(hass, entry):
     """Set up shopping list from config flow."""
     hass.data.setdefault(DOMAIN, {})
-    
+
     config = {}
     for item in [CONF_NAME,
                  CONF_HOST,
@@ -89,17 +90,17 @@ async def async_setup_entry(hass, entry):
                  CONF_CONTROL_PARAMS,
                  ]:
         config[item] = json.loads(entry.data.get(item))
-    
+
     config['config_entry'] = entry
     entry_id = entry.entry_id
     unique_id = entry.unique_id
     hass.data[DOMAIN]['configs'][entry_id] = config
     hass.data[DOMAIN]['configs'][unique_id] = config
-    
+
     hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, entry.data.get('devtype')))
-    
+
     return True
-    
+
 class GenericMiotDevice(Entity):
     """通用 MiOT 设备"""
 
@@ -109,11 +110,11 @@ class GenericMiotDevice(Entity):
         self._mapping = config.get(CONF_MAPPING)
         if type(self._mapping) == str:
             self._mapping = json.loads(self._mapping)
-            
+
         self._ctrl_params = config.get(CONF_CONTROL_PARAMS)
         if type(self._ctrl_params) == str:
             self._mapping = json.loads(self._ctrl_params)
-        
+
         self._name = config.get(CONF_NAME)
         self._update_instant = config.get(CONF_UPDATE_INSTANT)
         self._skip_update = False
@@ -123,7 +124,7 @@ class GenericMiotDevice(Entity):
             device_info.model, device_info.mac_address, self._name
         )
         # self._icon = "mdi:flask-outline"
-        
+
         self._hass = hass
         self._cloud = config.get(CONF_CLOUD)
         self._cloud_write = config.get('cloud_write')
@@ -139,8 +140,8 @@ class GenericMiotDevice(Entity):
                 self._cloud.get('ssecurity')
             )
             self._cloud_instance = mc
-                
-        
+
+
         self._available = None
         self._state = None
         self._assumed_state = False
@@ -161,7 +162,7 @@ class GenericMiotDevice(Entity):
     def unique_id(self):
         """Return an unique ID."""
         return self._unique_id
-        
+
     @property
     def name(self):
         """Return the name of this entity, if any."""
@@ -181,7 +182,7 @@ class GenericMiotDevice(Entity):
     def device_state_attributes(self):
         """Return the state attributes of the device."""
         return self._state_attrs
-    
+
     @property
     def device_info(self):
         return {
@@ -191,7 +192,7 @@ class GenericMiotDevice(Entity):
             'manufacturer': (self._model or 'Xiaomi').split('.', 1)[0],
             'sw_version': self._state_attrs.get(ATTR_FIRMWARE_VERSION),
         }
-        
+
     async def _try_command(self, mask_error, func, *args, **kwargs):
         """Call a device command handling error messages."""
         try:
@@ -246,12 +247,12 @@ class GenericMiotDevice(Entity):
                     _LOGGER.info(f"Control {self._name} params: {ppp}")
                     results = await self._cloud_instance.set_props(ppp)
                     return True
-                    
-            
+
+
         except DeviceException as ex:
             _LOGGER.error('Set miot property to %s: %s(%s) failed: %s', self._name, field, params, ex)
             return False
-    
+
     async def do_action_new(self, siid, aiid, params=None, did=None):
         params = {
             'did':  did or self.miot_did or f'action-{siid}-{aiid}',
@@ -259,7 +260,7 @@ class GenericMiotDevice(Entity):
             'aiid': aiid,
             'in':   params or [],
         }
-        
+
         try:
             if not self._cloud_write:
                 result = await self._try_command(
@@ -283,8 +284,8 @@ class GenericMiotDevice(Entity):
         except DeviceException as ex:
             _LOGGER.error('Call miot action to %s (%s) failed: %s', self._name, params, ex)
             return False
-            
-    
+
+
     async def async_update(self):
         """Fetch state from the device."""
         # On state change some devices doesn't provide the new state immediately.
@@ -352,9 +353,9 @@ class GenericMiotDevice(Entity):
                 for value in self._mapping.values():
                     data1['params'].append({**{'did':self._cloud.get("did")},**value})
                 data2 = json.dumps(data1,separators=(',', ':'))
-                
+
                 a = await self._cloud_instance.get_props(data2)
-                
+
                 dict1 = {}
                 statedict = {}
                 if a:
@@ -371,10 +372,10 @@ class GenericMiotDevice(Entity):
                             statedict[key] = dict1[value['siid']][value['piid']]
                         except KeyError:
                             statedict[key] = None
-                            
+
                 else:
                     pass
-                
+
             if statedict.get('brightness'):
                 statedict['brightness_'] = statedict.pop('brightness')
             if statedict.get('speed'):
@@ -386,7 +387,7 @@ class GenericMiotDevice(Entity):
         except DeviceException as ex:
             self._available = False
             _LOGGER.error("Got exception while fetching %s 's state: %s", self._name, ex)
-    
+
     def get_key_by_value(self, d:dict, value):
         try:
             return [k for k,v in d.items() if v == value][0]
@@ -398,10 +399,10 @@ class GenericMiotDevice(Entity):
         if param == 'color':
             if dir:
                 rgb = color.color_hs_to_RGB(*value)
-                int_ = rgb[0] | rgb[1] << 8 | rgb[2] << 16
+                int_ =  rgb[0] << 16 | rgb[1] << 8 | rgb[2]
                 return int_
             else:
-                rgb = [0xFF & value, (0xFF00 & value) >> 8, (0xFF0000 & value) >> 16]
+                rgb = [(0xFF0000 & value) >> 16, (0xFF00 & value) >> 8, 0xFF & value]
                 hs = color.color_RGB_to_hs(*rgb)
                 return hs
         elif param == 'brightness':
@@ -423,19 +424,19 @@ class GenericMiotDevice(Entity):
 class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
     def __init__(self, device, config, device_info, hass = None):
         GenericMiotDevice.__init__(self, device, config, device_info, hass)
-        
-        
+
+
     async def async_turn_on(self, **kwargs):
         """Turn on."""
         result = await self.set_property_new("switch_status",self._ctrl_params['switch_status']['power_on'])
-        
+
         if result:
             self._state = True
 
     async def async_turn_off(self, **kwargs):
         """Turn off."""
         result = await self.set_property_new("switch_status",self._ctrl_params['switch_status']['power_off'])
-        
+
         if result:
             self._state = False
 
