@@ -15,6 +15,7 @@ from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers import aiohttp_client, discovery
 from homeassistant.helpers.entity import Entity, ToggleEntity
 from homeassistant.helpers.entity_component import EntityComponent
+from homeassistant.util import color
 from miio.device import Device
 from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
@@ -412,10 +413,10 @@ class GenericMiotDevice(Entity):
         if param == 'color':
             if dir:
                 rgb = color.color_hs_to_RGB(*value)
-                int_ = rgb[0] | rgb[1] << 8 | rgb[2] << 16
+                int_ =  rgb[0] << 16 | rgb[1] << 8 | rgb[2]
                 return int_
             else:
-                rgb = [0xFF & value, (0xFF00 & value) >> 8, (0xFF0000 & value) >> 16]
+                rgb = rgb = [(0xFF0000 & value) >> 16, (0xFF00 & value) >> 8, 0xFF & value]
                 hs = color.color_RGB_to_hs(*rgb)
                 return hs
         elif param == 'brightness':

@@ -59,8 +59,6 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     main_mi_type = None
     this_mi_type = []
 
-    _LOGGER.error(mappingnew)
-
     for t in MAP[TYPE]:
         if params.get(t):
             this_mi_type.append(t)
@@ -93,7 +91,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
             _LOGGER.warn(de)
             raise PlatformNotReady
 
-        _LOGGER.error(f"{main_mi_type} is the main device of {host}.")
+        _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
         hass.data[DOMAIN]['miot_main_entity'][host] = device
         hass.data[DOMAIN]['entities'][device.unique_id] = device
         async_add_devices([device], update_before_add=True)
@@ -104,7 +102,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
         except KeyError:
             raise PlatformNotReady
 
-        _LOGGER.error( parent_device.device_state_attributes)
+        # _LOGGER.error( parent_device.device_state_attributes)
 
         for k,v in mapping.items():
             if k in MAP[TYPE]:
@@ -112,7 +110,6 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
                     mappingnew[f"{k[:10]}_{kk}"] = vv
 
         devices = []
-        _LOGGER.error(this_mi_type)
         for item in this_mi_type:
             devices.append(MiotSubSwitch(parent_device, mapping.get(item), params.get(item), item))
         async_add_devices(devices, update_before_add=True)

@@ -63,7 +63,6 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 
     main_mi_type = None
     this_mi_type = []
-    _LOGGER.error(params)
 
     #sensor的添加逻辑和其他实体不一样。他会把每个属性都作为实体。其他设备会作为attr
 
@@ -102,7 +101,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
             raise PlatformNotReady
 
 
-        _LOGGER.error(f"{main_mi_type} is the main device of {host}.")
+        _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
         hass.data[DOMAIN]['miot_main_entity'][host] = device
         hass.data[DOMAIN]['entities'][device.unique_id] = device
         async_add_devices(devices, update_before_add=True)
@@ -113,7 +112,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
         except KeyError:
             raise PlatformNotReady
 
-        _LOGGER.error( parent_device.device_state_attributes)
+        # _LOGGER.error( parent_device.device_state_attributes)
 
         for k,v in mapping.items():
             if k in MAP[TYPE]:
@@ -169,7 +168,7 @@ class MiotSubSensor(Entity):
     @property
     def state(self):
         """Return the state of the device."""
-        _LOGGER.error(self._parent.device_state_attributes)
+        # _LOGGER.error(self._parent.device_state_attributes)
         try:
             return self._parent.device_state_attributes[self._sensor_property]
         except:

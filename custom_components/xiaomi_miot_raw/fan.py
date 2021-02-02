@@ -69,8 +69,6 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     main_mi_type = None
     this_mi_type = []
 
-    _LOGGER.error(mappingnew)
-
     for t in MAP[TYPE]:
         if params.get(t):
             this_mi_type.append(t)

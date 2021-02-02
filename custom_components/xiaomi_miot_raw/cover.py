@@ -68,7 +68,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 
     main_mi_type = None
     this_mi_type = []
-    _LOGGER.error(params)
+
     for t in MAP[TYPE]:
         if params.get(t):
             this_mi_type.append(t)
@@ -124,8 +124,6 @@ class MiotCover(GenericMiotDevice, CoverEntity):
         self._throttle1 = Throttle(timedelta(seconds=1))(self._async_update)
         self._throttle10 = Throttle(timedelta(seconds=10))(self._async_update)
         self.async_update = self._throttle10
-
-        _LOGGER.error(self._mapping)
 
     @property
     def available(self):
