@@ -53,7 +53,6 @@ MAP = {
     "switch": {
         "switch",
         "outlet",
-        "scene",
     },
     "light": {
         "light",
