@@ -35,6 +35,7 @@ from .deps.const import (
     SCHEMA,
     MAP,
 )
+import copy
 TYPE = 'humidifier'
 
 _LOGGER = logging.getLogger(__name__)
@@ -46,7 +47,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     SCHEMA
 )
 
-SCAN_INTERVAL = timedelta(seconds=2)
+SCAN_INTERVAL = timedelta(seconds=10)
 # pylint: disable=unused-argument
 
 @asyncio.coroutine

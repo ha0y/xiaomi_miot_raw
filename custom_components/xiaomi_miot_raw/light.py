@@ -3,6 +3,7 @@ import asyncio
 import logging
 from functools import partial
 
+from datetime import timedelta
 import json
 from collections import OrderedDict
 import homeassistant.helpers.config_validation as cv
@@ -41,7 +42,7 @@ import copy
 TYPE = 'light'
 
 _LOGGER = logging.getLogger(__name__)
-
+SCAN_INTERVAL = timedelta(seconds=10)
 DEFAULT_NAME = "Generic MIoT " + TYPE
 DATA_KEY = TYPE + '.' + DOMAIN
 
@@ -93,7 +94,8 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
             )
 
             device = MiotLight(miio_device, config, device_info, hass, main_mi_type)
-        except DeviceException:
+        except DeviceException as de:
+            _LOGGER.warn(de)
             raise PlatformNotReady
 
         _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
@@ -265,45 +267,44 @@ class MiotSubLight(MiotSubToggleableDevice, LightEntity):
     def supported_features(self):
         """Return the supported features."""
         s = 0
-        if self._field_prefix + 'brightness' in self._mapping:
+        if 'brightness' in self._mapping:
             s |= SUPPORT_BRIGHTNESS
-        if self._field_prefix + 'color_temperature' in self._mapping:
+        if 'color_temperature' in self._mapping:
             s |= SUPPORT_COLOR_TEMP
-        if self._field_prefix + 'mode' in self._mapping:
+        if 'mode' in self._mapping:
             s |= SUPPORT_EFFECT
-        if self._field_prefix + 'color' in self._mapping:
+        if 'color' in self._mapping:
             s |= SUPPORT_COLOR
         return s
 
     @property
     def brightness(self):
-        """Return the brightness of the light.
-
-        This method is optional. Removing it indicates to Home Assistant
-        that brightness is not supported for this light.
-        """
-        return self._brightness
+        """Return the brightness of the light."""
+        try:
+            return self.convert_value(self.device_state_attributes[self._field_prefix + 'brightness'],"brightness",False,self._ctrl_params['brightness']['value_range'])
+        except:
+            return None
 
     async def async_turn_on(self, **kwargs):
         """Turn on."""
-        parameters = [{**{'did': self._field_prefix + "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping[self._field_prefix + 'switch_status'])}]
+        parameters = [{**{'did': self._field_prefix + "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping['switch_status'])}]
         if ATTR_EFFECT in kwargs:
             modes = self._ctrl_params['mode']
-            parameters.append({**{'did': self._field_prefix + "mode", 'value': self._ctrl_params['mode'].get(kwargs[ATTR_EFFECT])}, **(self._mapping[self._field_prefix + 'mode'])})
+            parameters.append({**{'did': self._field_prefix + "mode", 'value': self._ctrl_params['mode'].get(kwargs[ATTR_EFFECT])}, **(self._mapping['mode'])})
         else:
             if ATTR_BRIGHTNESS in kwargs:
                 self._effect = None
-                parameters.append({**{'did': self._field_prefix + "brightness", 'value': self.convert_value(kwargs[ATTR_BRIGHTNESS],"brightness", True, self._ctrl_params['brightness']['value_range'])}, **(self._mapping[self._field_prefix + 'brightness'])})
+                parameters.append({**{'did': self._field_prefix + "brightness", 'value': self.convert_value(kwargs[ATTR_BRIGHTNESS],"brightness", True, self._ctrl_params['brightness']['value_range'])}, **(self._mapping['brightness'])})
             if ATTR_COLOR_TEMP in kwargs:
                 self._effect = None
                 valuerange = self._ctrl_params['color_temperature']['value_range']
                 ct = color.color_temperature_mired_to_kelvin(kwargs[ATTR_COLOR_TEMP])
                 ct = valuerange[0] if ct < valuerange[0] else valuerange[1] if ct > valuerange[1] else ct
-                parameters.append({**{'did': self._field_prefix + "color_temperature", 'value': ct}, **(self._mapping[self._field_prefix + 'color_temperature'])})
+                parameters.append({**{'did': self._field_prefix + "color_temperature", 'value': ct}, **(self._mapping['color_temperature'])})
             if ATTR_HS_COLOR in kwargs:
                 self._effect = None
                 intcolor = self.convert_value(kwargs[ATTR_HS_COLOR],'color')
-                parameters.append({**{'did': self._field_prefix + "color", 'value': intcolor}, **(self._mapping[self._field_prefix + 'color'])})
+                parameters.append({**{'did': self._field_prefix + "color", 'value': intcolor}, **(self._mapping['color'])})
 
 
         # result = await self._try_command(
@@ -317,11 +318,17 @@ class MiotSubLight(MiotSubToggleableDevice, LightEntity):
         if result:
             self._state = True
             self._state_attrs[f"{self._field_prefix}switch_status"] = True
+            self._parent_device.schedule_update_ha_state(force_refresh=True)
             # self._skip_update = True
 
     @property
     def color_temp(self):
         """Return the color temperature in mired."""
+        try:
+            self._color_temp = color.color_temperature_kelvin_to_mired(self.device_state_attributes[self._field_prefix + 'color_temperature'])
+        except KeyError: pass
+        except ZeroDivisionError:
+            self._color_temp = color.color_temperature_kelvin_to_mired(1)
         return self._color_temp
 
     @property
@@ -348,36 +355,44 @@ class MiotSubLight(MiotSubToggleableDevice, LightEntity):
     @property
     def effect(self):
         """Return the current effect."""
+        try:
+            self._effect = self.get_key_by_value(self._ctrl_params['mode'],self.device_state_attributes[self._field_prefix + 'mode'])
+        except KeyError:
+            self._effect = None
         return self._effect
 
     @property
     def hs_color(self):
         """Return the hs color value."""
+        try:
+            self._color = self.convert_value(self.device_state_attributes[self._field_prefix + 'color'],"color",False)
+        except KeyError:
+            self._color = None
         return self._color
 
-    async def async_update(self):
-        """Fetch state from the device."""
+    # async def async_update(self):
+    #     """Fetch state from the device."""
 
-        # On state change some devices doesn't provide the new state immediately.
-        await super().async_update()
-        try:
-            self._brightness = self.convert_value(self._state_attrs[self._field_prefix + 'brightness'],"brightness",False,self._ctrl_params['brightness']['value_range'])
-        except KeyError: pass
-        try:
-            self._color = self.convert_value(self._state_attrs[self._field_prefix + 'color'],"color",False)
-        except KeyError: pass
-        try:
-            self._color_temp = color.color_temperature_kelvin_to_mired(self._state_attrs[self._field_prefix + 'color_temperature'])
-        except KeyError: pass
-        except ZeroDivisionError:
-            self._color_temp = color.color_temperature_kelvin_to_mired(1)
-        try:
-            self._state_attrs.update({'color_temperature': self._state_attrs[self._field_prefix + 'color_temperature']})
-        except KeyError: pass
-        try:
-            self._state_attrs.update({'mode': self._state_attrs['mode']})
-        except KeyError: pass
-        try:
-            self._effect = self.get_key_by_value(self._ctrl_params['mode'],self._state_attrs[self._field_prefix + 'mode'])
-        except KeyError:
-            self._effect = None
+    #     # On state change some devices doesn't provide the new state immediately.
+    #     # await super().async_update()
+    #     try:
+    #         self._brightness = self.convert_value(self._state_attrs[self._field_prefix + 'brightness'],"brightness",False,self._ctrl_params['brightness']['value_range'])
+    #     except KeyError: pass
+    #     try:
+    #         self._color = self.convert_value(self._state_attrs[self._field_prefix + 'color'],"color",False)
+    #     except KeyError: pass
+    #     try:
+    #         self._color_temp = color.color_temperature_kelvin_to_mired(self._state_attrs[self._field_prefix + 'color_temperature'])
+    #     except KeyError: pass
+    #     except ZeroDivisionError:
+    #         self._color_temp = color.color_temperature_kelvin_to_mired(1)
+    #     try:
+    #         self._state_attrs.update({'color_temperature': self._state_attrs[self._field_prefix + 'color_temperature']})
+    #     except KeyError: pass
+    #     try:
+    #         self._state_attrs.update({'mode': self._state_attrs['mode']})
+    #     except KeyError: pass
+    #     try:
+    #         self._effect = self.get_key_by_value(self._ctrl_params['mode'],self._state_attrs[self._field_prefix + 'mode'])
+    #     except KeyError:
+    #         self._effect = None

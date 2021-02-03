@@ -140,7 +140,7 @@ class MiotCover(GenericMiotDevice, CoverEntity):
     @property
     def current_cover_position(self):
         """Return the current position of the cover."""
-        return self._current_position
+        return self._current_position or 50
 
     @property
     def is_closed(self):

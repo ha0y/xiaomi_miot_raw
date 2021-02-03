@@ -20,6 +20,23 @@
                     "host": "IP",
                     "token": "token"
                 },
+                "description": "如果您的设备支持本地接入，无需登录小米账号",
+                "title": "选择操作"
+            },
+            "xiaomi_account": {
+				"title": "小米账号登录",
+				"description": "",
+				"data": {
+					"username": "邮箱/小米 ID",
+					"password": "密码"
+				}
+			},
+            "localinfo": {
+                "data": {
+                    "name": "名称",
+                    "host": "IP",
+                    "token": "token"
+                },
                 "description": "本地通信需要获取以下信息",
                 "title": "配置"
             },

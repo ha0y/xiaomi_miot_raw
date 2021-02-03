@@ -38,7 +38,7 @@ _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = "Generic MIoT " + TYPE
 DATA_KEY = TYPE + '.' + DOMAIN
-# SCAN_INTERVAL = timedelta(seconds=5)
+SCAN_INTERVAL = timedelta(seconds=10)
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     SCHEMA
 )

@@ -30,6 +30,7 @@ from homeassistant.helpers import aiohttp_client, discovery
 import requests
 from .deps.miot_device_adapter import MiotAdapter
 from homeassistant.components import persistent_notification
+from .deps.xiaomi_cloud_new import MiCloud
 
 VALIDATE = {'fan': [{"switch_status"}, {"switch_status"}],
             'switch': [{"switch_status"}, {"switch_status"}],
@@ -102,15 +103,12 @@ async def guess_mp_from_model(hass,model):
             spec = await s.json()
             ad = MiotAdapter(spec)
             mt = ad.mitype
-            dt = ad.devtype
 
-            # adapter.get_all_mapping()
-            # mp = ad.get_mapping_by_snewid(mt) or ad.get_mapping_by_snewid(dt)
-            # prm = ad.get_params_by_snewid(mt) or ad.get_params_by_snewid(dt)
+            dt = ad.get_all_devtype()
             mp = ad.get_all_mapping()
             prm = ad.get_all_params()
             return {
-                'device_type': dt or 'switch',
+                'device_type': dt or ['switch'],
                 'mapping': json.dumps(mp,separators=(',', ':')),
                 'params': json.dumps(prm,separators=(',', ':'))
             }
@@ -134,6 +132,42 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._model = None
 
     async def async_step_user(self, user_input=None):
+        if user_input is not None:
+            if user_input['action'] == 'xiaomi_account':
+                return await self.async_step_xiaomi_account()
+            elif user_input['action'] == 'localinfo':
+                return await self.async_step_localinfo()
+            else:
+                # device = next(d for d in self.hass.data[DOMAIN]['devices']
+                            #   if d['did'] == user_input['action'])
+                # return self.async_show_form(
+                #     step_id='localinfo',
+                #     data_schema=vol.Schema({
+                #         vol.Required('host', default=device['localip']): str,
+                #         vol.Required('token', default=device['token']): str,
+                #     }),
+                #     description_placeholders={'error_text': ''}
+                # )
+                pass
+
+        # if DOMAIN in self.hass.data and 'micloud_devices' in self.hass.data[DOMAIN]:
+        #     for device in self.hass.data[DOMAIN]['devices']:
+        #         if (device['model'] == 'lumi.gateway.mgl03' and
+        #                 device['did'] not in ACTIONS):
+        #             name = f"Add {device['name']} ({device['localip']})"
+        #             ACTIONS[device['did']] = name
+
+        return self.async_show_form(
+            step_id='user',
+            data_schema=vol.Schema({
+                vol.Required('action', default='localinfo'): vol.In({
+                    'xiaomi_account': "登录小米账号",
+                    'localinfo': "接入设备"
+                })
+            })
+        )
+
+    async def async_step_localinfo(self, user_input=None):
         """Handle a flow initialized by the user."""
         errors = {}
 
@@ -190,7 +224,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
                 if self._info:
                     device_info += "\n已经自动发现配置参数。\n如无特殊需要，无需修改下列内容。\n"
-                    devtype_default = [self._info.get('device_type')]
+                    devtype_default = self._info.get('device_type')
 
                     # mp = f'''{{"{self._info.get('device_type')}":{self._info.get('mapping')}}}'''
                     # prm = f'''{{"{self._info.get('device_type')}":{self._info.get('params')}}}'''
@@ -221,7 +255,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
 
         return self.async_show_form(
-            step_id="user",
+            step_id="localinfo",
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_NAME): str,
@@ -291,7 +325,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="devinfo",
             data_schema=vol.Schema({
-                vol.Required('devtype', default=user_input['devtype']): vol.In(SUPPORTED_DOMAINS),
+                vol.Required('devtype', default=user_input['devtype']): cv.multi_select(SUPPORTED_DOMAINS),
                 vol.Required(CONF_MAPPING, default=user_input[CONF_MAPPING]): str,
                 vol.Required(CONF_CONTROL_PARAMS, default=user_input[CONF_CONTROL_PARAMS]): str,
                 vol.Optional('cloud_read'): bool,
@@ -318,3 +352,30 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_import(self, user_input):
         """Import a config flow from configuration."""
         return True
+
+    async def async_step_xiaomi_account(self, user_input=None, error=None):
+        if user_input:
+            # if not user_input['servers']:
+                # return await self.async_step_cloud(error='no_servers')
+
+            session = aiohttp_client.async_create_clientsession(self.hass)
+            cloud = MiCloud(session)
+            if await cloud.login(user_input['username'],
+                                 user_input['password']):
+                user_input.update(cloud.auth)
+                return self.async_create_entry(title=user_input['username'],
+                                               data=user_input)
+
+            else:
+                return await self.async_step_cloud(error='cant_login')
+
+        return self.async_show_form(
+            step_id='xiaomi_account',
+            data_schema=vol.Schema({
+                vol.Required('username'): str,
+                vol.Required('password'): str,
+                # vol.Required('servers', default=['cn']):
+                    # cv.multi_select(SERVERS)
+            }),
+            errors={'base': error} if error else None
+        )

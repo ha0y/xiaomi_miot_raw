@@ -15,7 +15,9 @@ from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers import aiohttp_client, discovery
 from homeassistant.helpers.entity import Entity, ToggleEntity
 from homeassistant.helpers.entity_component import EntityComponent
+from homeassistant.helpers.storage import Store
 from homeassistant.util import color
+from homeassistant.util import sanitize_filename
 from miio.device import Device
 from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
@@ -36,6 +38,7 @@ from .deps.const import (
 )
 
 from .deps.xiaomi_cloud_new import *
+from .deps.xiaomi_cloud_new import MiCloud
 from asyncio.exceptions import CancelledError
 
 _LOGGER = logging.getLogger(__name__)
@@ -75,6 +78,10 @@ async def async_setup_entry(hass, entry):
     """Set up shopping list from config flow."""
     hass.data.setdefault(DOMAIN, {})
 
+    # entry for MiCloud login
+    if 'username' in entry.data:
+        return await _setup_micloud_entry(hass, entry)
+
     config = {}
     for item in [CONF_NAME,
                  CONF_HOST,
@@ -112,6 +119,69 @@ async def async_setup_entry(hass, entry):
     else:
         for t in entry.data.get('devtype'):
             hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, t))
+
+    return True
+
+async def _setup_micloud_entry(hass, config_entry):
+    """Thanks to @AlexxIT """
+    data: dict = config_entry.data.copy()
+
+    session = aiohttp_client.async_create_clientsession(hass)
+    cloud = MiCloud(session)
+
+    if 'service_token' in data:
+        # load devices with saved MiCloud auth
+        cloud.auth = data
+        devices = await cloud.get_total_devices(['cn'])
+    else:
+        devices = None
+
+    if devices is None:
+        _LOGGER.debug(f"Login to MiCloud for {config_entry.title}")
+        if await cloud.login(data['username'], data['password']):
+            # update MiCloud auth in .storage
+            data.update(cloud.auth)
+            hass.config_entries.async_update_entry(config_entry, data=data)
+
+            devices = await cloud.get_total_devices(['cn'])
+            hass.data[DOMAIN]['cloud_instance'] = cloud
+            if devices is None:
+                _LOGGER.error("Can't load devices from MiCloud")
+
+        else:
+            _LOGGER.error("Can't login to MiCloud")
+
+    # load devices from or save to .storage
+    filename = sanitize_filename(data['username'])
+    store = Store(hass, 1, f"{DOMAIN}/{filename}.json")
+    if devices is None:
+        _LOGGER.debug("Loading a list of devices from the .storage")
+        devices = await store.async_load()
+    else:
+        _LOGGER.debug(f"Loaded from MiCloud {len(devices)} devices")
+        await store.async_save(devices)
+
+    if devices is None:
+        _LOGGER.debug("No devices in .storage")
+        return False
+
+    # TODO: Think about a bunch of devices
+    if 'devices' not in hass.data[DOMAIN]:
+        hass.data[DOMAIN]['micloud_devices'] = devices
+    else:
+        hass.data[DOMAIN]['micloud_devices'] += devices
+
+    # default_devices = hass.data[DOMAIN]['config']['devices']
+    # gw_list = []
+    # for device in devices:
+    #     default_devices[device['did']] = {'device_name': device['name']}
+    #     if device['model'] == 'lumi.gateway.mgl03':
+    #         gw_list.append(device)
+
+    # hass.data[DOMAIN]['gateway_list'] = gw_list
+    # if gw_list:
+    #     hass.async_create_task(hass.config_entries.async_forward_entry_setup(
+    #             config_entry, 'alarm_control_panel'))
 
     return True
 
@@ -175,6 +245,7 @@ class GenericMiotDevice(Entity):
             # ATTR_STATE_PROPERTY: self._state_property,
         }
         self._notified = False
+        self._callbacks = set()
 
     @property
     def should_poll(self):
@@ -275,7 +346,7 @@ class GenericMiotDevice(Entity):
             _LOGGER.error('Set miot property to %s: %s(%s) failed: %s', self._name, field, params, ex)
             return False
 
-    async def do_action_new(self, siid, aiid, params=None, did=None):
+    async def call_action_new(self, siid, aiid, params=None, did=None):
         params = {
             'did':  did or self.miot_did or f'action-{siid}-{aiid}',
             'siid': siid,
@@ -390,13 +461,15 @@ class GenericMiotDevice(Entity):
                 else:
                     pass
 
-            if statedict.get('brightness'):
-                statedict['brightness_'] = statedict.pop('brightness')
-            if statedict.get('speed'):
-                statedict['speed_'] = statedict.pop('speed')
-            if statedict.get('mode'):
-                statedict['mode_'] = statedict.pop('mode')
+            # if statedict.get('brightness'):
+            #     statedict['brightness_'] = statedict.pop('brightness')
+            # if statedict.get('speed'):
+            #     statedict['speed_'] = statedict.pop('speed')
+            # if statedict.get('mode'):
+            #     statedict['mode_'] = statedict.pop('mode')
+
             self._state_attrs.update(statedict)
+            await self.publish_updates()
 
         except DeviceException as ex:
             self._available = False
@@ -435,6 +508,19 @@ class GenericMiotDevice(Entity):
             else:
                 return round((value - valuerange[0])/valuerange[2])*valuerange[2]+valuerange[0]
 
+    def register_callback(self, callback):
+        """Register callback, called when Roller changes state."""
+        self._callbacks.add(callback)
+
+    def remove_callback(self, callback):
+        """Remove previously registered callback."""
+        self._callbacks.discard(callback)
+
+    async def publish_updates(self):
+        """Schedule call all registered callbacks."""
+        for callback in self._callbacks:
+            callback()
+
 class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
     def __init__(self, device, config, device_info, hass = None, mi_type = None):
         GenericMiotDevice.__init__(self, device, config, device_info, hass, mi_type)
@@ -454,7 +540,7 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
             self._state = False
 
     async def async_update(self):
-
+        # _LOGGER.error("Update!!!!!!!")
         await super().async_update()
         state = self._state_attrs.get(self._field_prefix + 'switch_status')
         _LOGGER.debug("%s 's new state: %s", self._name, state)
@@ -474,6 +560,8 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
 
         self._state_attrs.update({ATTR_STATE_VALUE: state})
 
+        await self.publish_updates()
+
     @property
     def assumed_state(self):
         """Return true if unable to access real state of entity."""
@@ -490,6 +578,7 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
 
 class MiotSubDevice(Entity):
     """This part is modified from @al-one 's."""
+    # should_poll = False
     def __init__(self, parent_device, mapping, params, mitype):
         self._unique_id = f'{parent_device.unique_id}-{mitype}'
         self._name = f'{parent_device.name} {mitype.capitalize()}'
@@ -524,11 +613,21 @@ class MiotSubDevice(Entity):
 
     @property
     def device_state_attributes(self):
-        return self._state_attrs
+        # return self._state_attrs
+        try:
+            return self._parent_device.device_state_attributes or {}
+        except:
+            return None
 
     @property
     def device_info(self):
         return self._parent_device.device_info
+
+    async def async_added_to_hass(self):
+        self._parent_device.register_callback(self.async_write_ha_state)
+
+    async def async_will_remove_from_hass(self):
+        self._parent_device.remove_callback(self.async_write_ha_state)
 
     # @property
     # def unit_of_measurement(self):
@@ -567,6 +666,7 @@ class MiotSubToggleableDevice(MiotSubDevice):
         if result:
             self._state = True
             self._state_attrs[f"{self._field_prefix}switch_status"] = True
+            self._parent_device.schedule_update_ha_state(force_refresh=True)
             self._skip_update = True
 
     async def async_turn_off(self, **kwargs):
@@ -576,11 +676,12 @@ class MiotSubToggleableDevice(MiotSubDevice):
         if result:
             self._state = False
             self._state_attrs[f"{self._field_prefix}switch_status"] = False
+            self._parent_device.schedule_update_ha_state(force_refresh=True)
             self._skip_update = True
 
     @property
     def is_on(self):
-        return self._state
+        return STATE_ON if self.state else STATE_OFF
 
     @property
     def available(self):
@@ -588,11 +689,15 @@ class MiotSubToggleableDevice(MiotSubDevice):
 
     @property
     def state(self):
-        return STATE_ON if self._state else STATE_OFF
+        # return STATE_ON if self._state else STATE_OFF
+        try:
+            return STATE_ON if self.device_state_attributes.get(f"{self._field_prefix}switch_status") else STATE_OFF
+        except:
+            return STATE_UNKNOWN
 
-    async def async_update(self):
-        if self._skip_update:
-            self._skip_update = False
-            return
-        await super().async_update()
-        self._state = self._state_attrs.get(f"{self._field_prefix}switch_status")
+    # async def async_update(self):
+    #     if self._skip_update:
+    #         self._skip_update = False
+    #         return
+    #     await super().async_update()
+    #     self._state = self._state_attrs.get(f"{self._field_prefix}switch_status")

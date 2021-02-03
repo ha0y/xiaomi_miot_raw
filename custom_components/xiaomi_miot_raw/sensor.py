@@ -161,6 +161,7 @@ class MiotSensor(GenericMiotDevice):
         return self._unit_of_measurement
 
 class MiotSubSensor(Entity):
+    should_poll = False
     def __init__(self, parent_sensor, sensor_property):
         self._parent = parent_sensor
         self._sensor_property = sensor_property
@@ -192,3 +193,9 @@ class MiotSubSensor(Entity):
     def name(self):
         """Return the name of this entity, if any."""
         return f"{self._parent.name} {self._sensor_property.capitalize()}"
+
+    async def async_added_to_hass(self):
+        self._parent.register_callback(self.async_write_ha_state)
+
+    async def async_will_remove_from_hass(self):
+        self._parent.remove_callback(self.async_write_ha_state)
