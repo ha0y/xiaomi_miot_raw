@@ -465,13 +465,6 @@ class GenericMiotDevice(Entity):
                 else:
                     pass
 
-            # if statedict.get('brightness'):
-            #     statedict['brightness_'] = statedict.pop('brightness')
-            # if statedict.get('speed'):
-            #     statedict['speed_'] = statedict.pop('speed')
-            # if statedict.get('mode'):
-            #     statedict['mode_'] = statedict.pop('mode')
-
             self._state_attrs.update(statedict)
             await self.publish_updates()
 
@@ -493,7 +486,7 @@ class GenericMiotDevice(Entity):
                 int_ =  rgb[0] << 16 | rgb[1] << 8 | rgb[2]
                 return int_
             else:
-                rgb = rgb = [(0xFF0000 & value) >> 16, (0xFF00 & value) >> 8, 0xFF & value]
+                rgb = [(0xFF0000 & value) >> 16, (0xFF00 & value) >> 8, 0xFF & value]
                 hs = color.color_RGB_to_hs(*rgb)
                 return hs
         elif param == 'brightness':
