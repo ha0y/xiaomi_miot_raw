@@ -3,6 +3,7 @@ import asyncio
 import logging
 from functools import partial
 
+from collections import OrderedDict
 from datetime import timedelta
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -156,10 +157,10 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
 
     async def async_turn_on(self, speed: str = None, **kwargs) -> None:
         """Turn on the entity."""
-        parameters = [{**{'did': self._field_prefix + "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping['switch_status'])}]
+        parameters = [{**{'did': self._field_prefix + "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping[self._field_prefix + 'switch_status'])}]
 
         if speed:
-            parameters.append({**{'did': self._field_prefix + "speed", 'value': self._ctrl_params['speed'][speed]}, **(self._mapping['speed'])})
+            parameters.append({**{'did': self._field_prefix + "speed", 'value': self._ctrl_params['speed'][speed]}, **(self._mapping[self._field_prefix + 'speed'])})
 
         # result = await self._try_command(
         #     "Turning the miio device on failed.",
