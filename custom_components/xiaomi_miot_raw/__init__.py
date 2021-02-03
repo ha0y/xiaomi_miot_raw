@@ -22,6 +22,7 @@ from miio.device import Device
 from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
 import copy
+from collections import OrderedDict
 
 from .deps.const import (
     DOMAIN,
@@ -197,11 +198,14 @@ class GenericMiotDevice(Entity):
         self._mapping = config.get(CONF_MAPPING)
         if type(self._mapping) == str:
             self._mapping = json.loads(self._mapping)
-        mappingnew = {}
-        for k,v in self._mapping.items():
-            for kk,vv in v.items():
-                mappingnew[f"{k[:10]}_{kk}"] = vv
-        self._mapping = mappingnew
+        elif type(self._mapping) == OrderedDict:
+            pass
+        else:
+            mappingnew = {}
+            for k,v in self._mapping.items():
+                for kk,vv in v.items():
+                    mappingnew[f"{k[:10]}_{kk}"] = vv
+            self._mapping = mappingnew
 
         self._ctrl_params = config.get(CONF_CONTROL_PARAMS)
         if type(self._ctrl_params) == str:

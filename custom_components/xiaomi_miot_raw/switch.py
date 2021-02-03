@@ -6,6 +6,7 @@ from functools import partial
 from datetime import timedelta
 from collections import OrderedDict
 import json
+from collections import OrderedDict
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components.switch import PLATFORM_SCHEMA, SwitchEntity
@@ -65,7 +66,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
         if 'main' in (params.get(t) or ""):
             main_mi_type = t
 
-    if main_mi_type:
+    if main_mi_type or type(params) == OrderedDict:
         for k,v in mapping.items():
             for kk,vv in v.items():
                 mappingnew[f"{k[:10]}_{kk}"] = vv

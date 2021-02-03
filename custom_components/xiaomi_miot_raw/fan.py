@@ -76,7 +76,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
         if 'main' in (params.get(t) or ""):
             main_mi_type = t
 
-    if main_mi_type:
+    if main_mi_type or type(params) == OrderedDict:
         for k,v in mapping.items():
             for kk,vv in v.items():
                 mappingnew[f"{k[:10]}_{kk}"] = vv
@@ -84,7 +84,10 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
         _LOGGER.info("Initializing %s with host %s (token %s...)", config.get(CONF_NAME), host, token[:5])
 
         try:
-            miio_device = MiotDevice(ip=host, token=token, mapping=mappingnew)
+            if type(params) == OrderedDict:
+                miio_device = MiotDevice(ip=host, token=token, mapping=mapping)
+            else:
+                miio_device = MiotDevice(ip=host, token=token, mapping=mappingnew)
             device_info = miio_device.info()
             model = device_info.model
             _LOGGER.info(

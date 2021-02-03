@@ -5,6 +5,7 @@ from datetime import timedelta
 from functools import partial
 from typing import Optional
 
+from collections import OrderedDict
 import async_timeout
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -75,7 +76,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
         if 'main' in (params.get(t) or ""):
             main_mi_type = t
 
-    if main_mi_type:
+    if main_mi_type or type(params) == OrderedDict:
         for k,v in mapping.items():
             for kk,vv in v.items():
                 mappingnew[f"{k[:10]}_{kk}"] = vv
@@ -83,9 +84,10 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
         _LOGGER.info("Initializing %s with host %s (token %s...)", config.get(CONF_NAME), host, token[:5])
 
         try:
-            # miio_device = Device(host, token)
-            miio_device = MiotDevice(ip=host, token=token, mapping=mappingnew)
-
+            if type(params) == OrderedDict:
+                miio_device = MiotDevice(ip=host, token=token, mapping=mapping)
+            else:
+                miio_device = MiotDevice(ip=host, token=token, mapping=mappingnew)
             device_info = miio_device.info()
             model = device_info.model
             _LOGGER.info(
@@ -176,6 +178,7 @@ class MiotCover(GenericMiotDevice, CoverEntity):
                 return None
 
             self.async_update = self._throttle1
+            self.schedule_update_ha_state(force_refresh=True)
 
     async def async_close_cover(self, **kwargs):
         """Close the cover."""
@@ -187,6 +190,7 @@ class MiotCover(GenericMiotDevice, CoverEntity):
                 return None
             # self._skip_update = True
             self.async_update = self._throttle1
+            self.schedule_update_ha_state(force_refresh=True)
 
     async def async_stop_cover(self, **kwargs):
         """Close the cover."""
