@@ -122,12 +122,19 @@ async def async_setup_entry(hass, entry):
 
     return True
 
+async def async_unload_entry(hass, entry):
+    if 'username' in entry.data:
+        hass.data[DOMAIN]['cloud_instance'] = None
+        return True
+    return False
+
 async def _setup_micloud_entry(hass, config_entry):
     """Thanks to @AlexxIT """
     data: dict = config_entry.data.copy()
 
     session = aiohttp_client.async_create_clientsession(hass)
     cloud = MiCloud(session)
+    hass.data[DOMAIN]['cloud_instance'] = cloud
 
     if 'service_token' in data:
         # load devices with saved MiCloud auth
@@ -144,7 +151,7 @@ async def _setup_micloud_entry(hass, config_entry):
             hass.config_entries.async_update_entry(config_entry, data=data)
 
             devices = await cloud.get_total_devices(['cn'])
-            hass.data[DOMAIN]['cloud_instance'] = cloud
+
             if devices is None:
                 _LOGGER.error("Can't load devices from MiCloud")
 
@@ -227,16 +234,20 @@ class GenericMiotDevice(Entity):
         self._cloud_write = config.get('cloud_write')
         self._cloud_instance = None
         if self._cloud:
-            _LOGGER.info(f"Setting up xiaomi account for {self._name}...")
-            mc = MiCloud(
-                aiohttp_client.async_get_clientsession(self._hass)
-            )
-            mc.login_by_credientals(
-                self._cloud.get('userId'),
-                self._cloud.get('serviceToken'),
-                self._cloud.get('ssecurity')
-            )
-            self._cloud_instance = mc
+            if cloud := hass.data[DOMAIN].get('cloud_instance'):
+                self._cloud_instance = cloud
+                _LOGGER.info(f"Xiaomi account was already logged in for {self._name}.")
+            else:
+                _LOGGER.info(f"Setting up xiaomi account for {self._name}...")
+                mc = MiCloud(
+                    aiohttp_client.async_get_clientsession(self._hass)
+                )
+                mc.login_by_credientals(
+                    self._cloud.get('userId'),
+                    self._cloud.get('serviceToken'),
+                    self._cloud.get('ssecurity')
+                )
+                self._cloud_instance = mc
 
         self._available = None
         self._state = None
