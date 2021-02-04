@@ -4,10 +4,14 @@
             "already_configured": "You have already configured this device!"
         },
         "create_entry": {
-            "default": "Create Entry Default."
+            "default": "If the device has multiple sub-devices, it takes up to 30 seconds to show all of them."
         },
         "error": {
-            "unexpected_error": "Unexpected error"
+            "unexpected_error": "Unexpected error. See logs for detail",
+            "cannot_connect": "Can not connect",
+            "value_error": "Wrong value",
+            "bad_params": "Bad params",
+            "no_local_access": "Possible reasons:\n(1) Wrong siid oe piid\n(2) Local access is not supported by device. Try Cloud Access."
         },
         "step": {
             "user": {
@@ -16,18 +20,47 @@
                     "host": "IP",
                     "token": "token"
                 },
-                "description": "Please fill in the information below",
-                "title": "Configuration"
+                "description": "You don't need to login if your device supports local access.",
+                "title": "Select Operation"
+            },
+            "xiaomi_account": {
+				"title": "Log in Xiaomi Account",
+				"description": "",
+				"data": {
+					"username": "Emali/Xiaomi ID",
+					"password": "Password"
+				}
+			},
+            "localinfo": {
+                "data": {
+                    "name": "Name",
+                    "host": "IP",
+                    "token": "token"
+                },
+                "description": "Local access requires information above",
+                "title": "Configure"
             },
             "devinfo": {
-                "title": "Device information",
+                "title": "Device info",
                 "data": {
-                    "devtype": "Device Type",
+                    "devtype": "Device type(s)",
                     "mapping": "mapping",
-                    "params": "params"
+                    "params": "params",
+                    "cloud_read": "Read status from cloud",
+                    "cloud_write": "Control device from cloud"
 
                 },
                 "description": "{device_info}"
+            },
+            "cloudinfo": {
+                "title": "Account Credientals",
+                "data": {
+                    "did": "did",
+                    "userId": "userId",
+                    "serviceToken": "serviceToken",
+                    "ssecurity": "ssecurity"
+                },
+                "description": "Cloud access requires information above"
             }
         },
         "title": "MIoT"

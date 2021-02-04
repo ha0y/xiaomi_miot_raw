@@ -637,23 +637,6 @@ class MiotSubDevice(Entity):
         self._state_attrs = attrs
         pass
 
-    # def update_attrs(self, attrs: dict, update_parent=True):
-    #     self._state_attrs.update(attrs or {})
-    #     if update_parent:
-    #         if self._parent and hasattr(self._parent, 'update_attrs'):
-    #             getattr(self._parent, 'update_attrs')(attrs or {}, update_parent=False)
-    #     return self._state_attrs
-
-    # def call_parent(self, method, *args, **kwargs):
-    #     ret = None
-    #     for f in cv.ensure_list(method):
-    #         if hasattr(self._parent, f):
-    #             ret = getattr(self._parent, f)(*args, **kwargs)
-    #             break
-    #     if ret:
-    #         self.update()
-    #     return ret
-
 class MiotSubToggleableDevice(MiotSubDevice):
     async def async_turn_on(self, **kwargs):
         """Turn on."""
@@ -690,13 +673,6 @@ class MiotSubToggleableDevice(MiotSubDevice):
             return STATE_ON if self.device_state_attributes.get(f"{self._field_prefix}switch_status") else STATE_OFF
         except:
             return STATE_UNKNOWN
-
-    # async def async_update(self):
-    #     if self._skip_update:
-    #         self._skip_update = False
-    #         return
-    #     await super().async_update()
-    #     self._state = self._state_attrs.get(f"{self._field_prefix}switch_status")
 
 def sanitize_filename(s: str):
     valid_chars = "-_.() abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
