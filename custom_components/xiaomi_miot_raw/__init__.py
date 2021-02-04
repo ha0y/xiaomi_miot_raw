@@ -17,7 +17,6 @@ from homeassistant.helpers.entity import Entity, ToggleEntity
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.storage import Store
 from homeassistant.util import color
-from homeassistant.util import sanitize_filename
 from miio.device import Device
 from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
@@ -698,3 +697,9 @@ class MiotSubToggleableDevice(MiotSubDevice):
     #         return
     #     await super().async_update()
     #     self._state = self._state_attrs.get(f"{self._field_prefix}switch_status")
+
+def sanitize_filename(s: str):
+    valid_chars = "-_.() abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    filename = ''.join(c for c in s if c in valid_chars)
+    filename = filename.replace(' ','_')
+    return filename
