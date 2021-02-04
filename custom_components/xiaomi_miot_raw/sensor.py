@@ -59,6 +59,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     token = config.get(CONF_TOKEN)
     mapping = config.get(CONF_MAPPING)
     params = config.get(CONF_CONTROL_PARAMS)
+    if params is None: params = OrderedDict()
 
     mappingnew = {}
 
