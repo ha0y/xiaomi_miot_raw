@@ -41,7 +41,7 @@ def get_type_by_mitype(mitype:str):
             return k
     return None
 
-translate = {"on":"switch_status", "fan_level":"speed"}
+translate = {"on":"switch_status", "fan_level":"speed", "horizontal_swing":"oscillate"}
 
 class MiotAdapter:
     def __init__(self, spec: dict):
@@ -136,6 +136,7 @@ class MiotAdapter:
                         'power_on': True,
                         'power_off': False
                     }
+
             if p := propdict.get('fan_level'):
                 if vl := p.vlist:
                     lst = {item['description']: item['value'] for item in vl}
@@ -148,6 +149,7 @@ class MiotAdapter:
                 else:
                     # TODO: will this happen?
                     pass
+
             if p := propdict.get('mode'):
                 if vl := p.vlist:
                     lst = {item['description']: item['value'] for item in vl}
@@ -201,6 +203,19 @@ class MiotAdapter:
                         ret['target_position'] = {
                             'value_range': vr
                         }
+
+            if devtype == 'fan':
+                if p := propdict.get('mode'):
+                    if vl := p.vlist:
+                        if not ret.get('speed'):
+                            ret['speed'] = ret.pop('mode')
+
+            #TODO zhimi.fan.fa1 has both fan_level and mode
+                if p := propdict.get('horizontal_swing'):
+                    ret['oscillate'] = {
+                        True: True,
+                        False: False
+                    }
 
             if p := propdict.get('target_humidity'):
                 if vr := p.vrange:

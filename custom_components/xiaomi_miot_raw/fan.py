@@ -149,7 +149,8 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
 
     async def async_oscillate(self, oscillating: bool) -> None:
         """Set oscillation."""
-        result = await self.set_property_new(self._field_prefix + "oscillate",self._ctrl_params['oscillate'][oscillating])
+        # result = await self.set_property_new(self._field_prefix + "oscillate",self._ctrl_params['oscillate'][oscillating])
+        result = await self.set_property_new(self._field_prefix + "oscillate", oscillating)
 
         if result:
             self._oscillation = True

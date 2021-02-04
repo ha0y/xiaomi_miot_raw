@@ -49,6 +49,7 @@ MAP = {
         "induction_cooker",
         "power_consumption",
         "electricity",
+        "environment",
     },
     "switch": {
         "switch",
@@ -60,6 +61,8 @@ MAP = {
     "fan": {
         "fan",
         "ceiling_fan",
+        "air_fresh",
+        "air_purifier",
     },
     "cover": {
         "curtain",
