@@ -40,7 +40,7 @@ SCHEMA = {
         vol.Optional(CONF_SENSOR_PROPERTY): cv.string,
         vol.Optional(CONF_SENSOR_UNIT): cv.string,
 }
-MAP = {
+MAPold = {
     "sensor": {
         "air_monitor",
         "water_purifier",
@@ -74,3 +74,16 @@ MAP = {
         "dehumidifier",
     },
 }
+
+def newMAP(MAP:dict) -> dict:
+    newmap = {}
+    for k, v in MAP.items():
+        newmap [k] = set()
+        for vv in v:
+            newmap[k].add(vv)
+            newmap[k].add(f"{vv}_2")
+            newmap[k].add(f"{vv}_3")
+            newmap[k].add(f"{vv}_4")
+    return newmap
+
+MAP = newMAP(MAPold)

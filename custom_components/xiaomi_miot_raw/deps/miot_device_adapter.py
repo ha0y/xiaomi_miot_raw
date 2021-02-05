@@ -57,8 +57,15 @@ class MiotAdapter:
         for s in self.spec['services']:
             if (n := name_by_type(s['type'])) in SUPPORTED:
                 self.devtypeset.add(get_type_by_mitype(n))
-            self.services[name_by_type(s['type'])] = Service(
-                s['iid'], s['type'], s['description'], self.get_prop_by_siid(s), name_by_type(s['type']))
+            if not self.services.get(name_by_type(s['type'])):
+                self.services[name_by_type(s['type'])] = Service(
+                    s['iid'], s['type'], s['description'], self.get_prop_by_siid(s), name_by_type(s['type']))
+            else:
+                for i in range(2,5):
+                    if not self.services.get(f"{name_by_type(s['type'])}_{i}"):
+                        self.services[f"{name_by_type(s['type'])}_{i}"] = Service(
+                            s['iid'], s['type'], s['description'], self.get_prop_by_siid(s), f"{name_by_type(s['type'])}_{i}")
+                        break
 
     @property
     def get_all_services(self):
@@ -247,10 +254,11 @@ class MiotAdapter:
         has_main = False
         for service in self.services.values():
             if (nid := service.newid) in SUPPORTED:
-                ret[nid]=self.get_params_by_snewid(nid)
-                if nid == self.mitype:
-                    ret[nid]['main'] = True
-                    has_main = True
+                if not ret.get(nid):
+                    ret[nid]=self.get_params_by_snewid(nid)
+                    if nid == self.mitype and not has_main:
+                        ret[nid]['main'] = True
+                        has_main = True
         if not has_main:
             try:
                 ret['switch']['main'] = True

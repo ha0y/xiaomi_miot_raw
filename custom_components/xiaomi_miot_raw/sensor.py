@@ -115,6 +115,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
         try:
             parent_device = hass.data[DOMAIN]['miot_main_entity'][host]
         except KeyError:
+            _LOGGER.warning(f"{host} 的主设备尚未就绪，子设备 {TYPE} 等待主设备加载完毕后才会加载")
             raise PlatformNotReady
 
         # _LOGGER.error( parent_device.device_state_attributes)

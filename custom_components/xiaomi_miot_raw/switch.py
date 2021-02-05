@@ -58,13 +58,18 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     mappingnew = {}
 
     main_mi_type = None
-    this_mi_type = []
+    other_mi_type = []
 
     for t in MAP[TYPE]:
         if params.get(t):
-            this_mi_type.append(t)
+            other_mi_type.append(t)
         if 'main' in (params.get(t) or ""):
             main_mi_type = t
+
+    try:
+        other_mi_type.remove(main_mi_type)
+    except:
+        pass
 
     if main_mi_type or type(params) == OrderedDict:
         for k,v in mapping.items():
@@ -96,11 +101,12 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
         hass.data[DOMAIN]['miot_main_entity'][host] = device
         hass.data[DOMAIN]['entities'][device.unique_id] = device
         async_add_devices([device], update_before_add=True)
-    else:
+    if other_mi_type:
         parent_device = None
         try:
             parent_device = hass.data[DOMAIN]['miot_main_entity'][host]
         except KeyError:
+            _LOGGER.warning(f"{host} 的主设备尚未就绪，子设备 {TYPE} 等待主设备加载完毕后才会加载")
             raise PlatformNotReady
 
         # _LOGGER.error( parent_device.device_state_attributes)
@@ -111,7 +117,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
                     mappingnew[f"{k[:10]}_{kk}"] = vv
 
         devices = []
-        for item in this_mi_type:
+        for item in other_mi_type:
             devices.append(MiotSubSwitch(parent_device, mapping.get(item), params.get(item), item))
         async_add_devices(devices, update_before_add=True)
 
