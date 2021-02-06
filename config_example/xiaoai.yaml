@@ -1,0 +1,51 @@
+media_player:
+  - platform: xiaomi_miot_raw
+    name: 小爱音箱
+    host: 192.168.0.130
+    token: 38C6xxxxxxxxxxxxxxxxxxxxxxxxFB46
+    mapping:
+      mp_play:
+        siid: 2
+        aiid: 2
+      mp_pause:
+        siid: 2
+        aiid: 1
+      mp_next:
+        siid: 2
+        aiid: 3
+      mp_previous:
+        siid: 2
+        aiid: 4
+      mp_sound_mode:
+        siid: 3
+        aiid: 1
+      playing_state:
+        siid: 2
+        piid: 1
+      volume:
+        siid: 4
+        piid: 1
+    params:
+      playing_state:
+        playing: 1
+        pause: 0
+      volume:
+        value_range: [5,100,5]
+      mp_source:
+        播放私人电台:
+          siid: 3
+          aiid: 3
+        播放音乐:
+          siid: 3
+          aiid: 4
+        停止闹钟:
+          siid: 6
+          aiid: 1
+      mp_sound_mode:
+        你好: 0
+    update_from_cloud:
+      userId: ''
+      serviceToken: ''
+      ssecurity: ''
+      did: ''
+    cloud_write: yes

@@ -72,7 +72,7 @@ class MiCloud:
         except Exception as e:
             _LOGGER.exception(f"Can't login to Mi Cloud: {e}")
             return False
-    
+
     def login_by_credientals(self, userId, serviceToken, ssecurity):
         self.auth = {
             'user_id': userId,
@@ -160,12 +160,12 @@ class MiCloud:
             _LOGGER.exception(f"Can't load devices list")
 
         return None
-    
+
     async def request_miot_api(self, api, params = None):
         api_base = "https://api.io.mi.com/app"
         url2 = "/miotspec/"
         url = api_base+url2+api
-        
+
         nonce = gen_nonce()
         signed_nonce = gen_signed_nonce(self.auth['ssecurity'], nonce)
         signature = gen_signature(url2+api, signed_nonce, nonce, params)
@@ -194,7 +194,7 @@ class MiCloud:
                 _LOGGER.error("小米账号登录信息失效")
                 return None
             elif resp.get('code') != 0:
-                _LOGGER.error(f"Response from cloud: {resp}")
+                _LOGGER.error(f"Response of {api} from cloud: {resp}")
                 return resp
             else:
                 _LOGGER.info(f"Response of {api} from cloud: {resp}")
@@ -207,13 +207,13 @@ class MiCloud:
 
     async def get_props(self, params: str = ""):
         return await self.request_miot_api('prop/get', params)
-    
+
     async def set_props(self, params: str = ""):
         return await self.request_miot_api('prop/set', params)
-    
-    async def do_action(self, params: str = ""):
+
+    async def call_action(self, params: str = ""):
         return await self.request_miot_api('action', params)
-        
+
 
 def get_random_string(length: int):
     seq = string.ascii_uppercase + string.digits

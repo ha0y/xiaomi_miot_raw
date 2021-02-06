@@ -360,32 +360,30 @@ class GenericMiotDevice(Entity):
             _LOGGER.error('Set miot property to %s: %s(%s) failed: %s', self._name, field, params, ex)
             return False
 
-    async def call_action_new(self, siid, aiid, params=None, did=None):
+    async def call_action_new(self, siid, aiid, params2=None, did=None):
         params = {
-            'did':  did or self.miot_did or f'action-{siid}-{aiid}',
+            'did':  did or self._cloud.get("did") or f'action-{siid}-{aiid}',
             'siid': siid,
             'aiid': aiid,
-            'in':   params or [],
+            'in':   params2 or [],
         }
 
         try:
             if not self._cloud_write:
                 result = await self._try_command(
-                    f"Setting property for {self._name} failed.",
+                    f"Calling action for {self._name} failed.",
                     self._device.send,
                     "action",
                     params,
                 )
-                _LOGGER.error(result)
                 if result:
                     return True
             else:
-                result = await self._cloud_instance.do_action(
+                result = await self._cloud_instance.call_action(
                     json.dumps({
                         'params': params or []
                     })
                 )
-                _LOGGER.error(result)
                 if result:
                     return True
         except DeviceException as ex:
@@ -514,6 +512,12 @@ class GenericMiotDevice(Entity):
                 return valuerange[1]
             else:
                 return round((value - valuerange[0])/valuerange[2])*valuerange[2]+valuerange[0]
+        elif param == 'volume':
+            if dir:
+                value *= valuerange[1]
+                return round((value - valuerange[0])/valuerange[2])*valuerange[2]+valuerange[0]
+            else:
+                return value / valuerange[1]
 
     def register_callback(self, callback):
         """Register callback, called when Roller changes state."""
