@@ -28,6 +28,15 @@ class Service:
     properties  :dict
     newid       :str
 
+@dataclass
+class Action:
+    siid        :int
+    aiid        :int
+    type_       :str
+    description :str
+    in_         :list
+    out_        :list
+
 def name_by_type(typ):
     arr = f'{typ}:::'.split(':')
     nam = arr[3] or ''
@@ -60,12 +69,12 @@ class MiotAdapter:
                 self.devtypeset.add(get_type_by_mitype(n))
             if not self.services.get(name_by_type(s['type'])):
                 self.services[name_by_type(s['type'])] = Service(
-                    s['iid'], s['type'], s['description'], self.get_prop_by_siid(s), name_by_type(s['type']))
+                    s['iid'], s['type'], s['description'], self.get_prop_by_siid(s), name_by_type(s['type']), s.get('actions') or [])
             else:
                 for i in range(2,5):
                     if not self.services.get(f"{name_by_type(s['type'])}_{i}"):
                         self.services[f"{name_by_type(s['type'])}_{i}"] = Service(
-                            s['iid'], s['type'], s['description'], self.get_prop_by_siid(s), f"{name_by_type(s['type'])}_{i}")
+                            s['iid'], s['type'], s['description'], self.get_prop_by_siid(s), f"{name_by_type(s['type'])}_{i}", s.get('actions') or [])
                         break
 
     @property
@@ -101,7 +110,25 @@ class MiotAdapter:
 
         return props
 
-    def get_mapping(self, propdict: dict = {}):
+    def get_action_by_siid(self, service: dict = [], siid: int = None):
+        if siid:
+            service = self.get_service_by_id(siid)
+        if not service :
+            return None
+        actions = {}
+        for a in service.get('actions') or []:
+            actions[name_by_type(a['type'])] = Action(
+                service['iid'],
+                a['iid'],
+                a['type'],
+                a['description'],
+                a.get('in'),
+                a.get('out')
+            )
+
+        return actions
+
+    def get_mapping(self, propdict: dict = {}, devtype = ""):
         try:
             # ret = []
             ret = {}
@@ -111,6 +138,8 @@ class MiotAdapter:
                     "siid": p.siid,
                     "piid": p.piid
                 }
+            if devtype == 'fan' and 'speed' not in ret and 'mode' in ret:
+                ret['speed'] = ret.pop('mode')
             return ret
         except:
             return {}
@@ -123,7 +152,7 @@ class MiotAdapter:
 
     def get_mapping_by_snewid(self, newid: str):
         try:
-            return self.get_mapping(self.services.get(newid).properties)
+            return self.get_mapping(self.services.get(newid).properties, get_type_by_mitype(newid))
         except AttributeError:
             return None
 
@@ -248,6 +277,10 @@ class MiotAdapter:
         for service in self.services.values():
             if (nid := service.newid) in SUPPORTED:
                 ret[nid]=self.get_mapping_by_snewid(nid)
+
+        if action_dict := self.get_all_actions():
+            ret['a_l'] = action_dict
+            self.devtypeset.add('fan')
         return ret
 
     def get_all_params(self):
@@ -266,6 +299,18 @@ class MiotAdapter:
             except KeyError:
                 _LOGGER.error("识别不出主设备，请手动指定")
         return ret
+
+    def get_all_actions(self):
+        adict = {}
+        for service in self.services.values():
+            if a := self.get_action_by_siid(siid=service.siid):
+                for k, v in a.items():
+                    adict[f"{service.newid}_{k}"] = {
+                        'siid': v.siid,
+                        'aiid': v.aiid
+                    }
+        return adict
+
 
     def get_all_devtype(self):
         return list(self.devtypeset)

@@ -56,13 +56,18 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     mappingnew = {}
 
     main_mi_type = None
-    this_mi_type = []
+    other_mi_type = []
 
     for t in MAP[TYPE]:
         if params.get(t):
-            this_mi_type.append(t)
+            other_mi_type.append(t)
         if 'main' in (params.get(t) or ""):
             main_mi_type = t
+
+    try:
+        other_mi_type.remove(main_mi_type)
+    except:
+        pass
 
     if main_mi_type or type(params) == OrderedDict:
         for k,v in mapping.items():
@@ -82,7 +87,9 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
             _LOGGER.warn(de)
             raise PlatformNotReady
 
-        hass.data[DATA_KEY][host] = device
+        _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
+        hass.data[DOMAIN]['miot_main_entity'][host] = device
+        hass.data[DOMAIN]['entities'][device.unique_id] = device
         async_add_devices([device], update_before_add=True)
     else:
         _LOGGER.error("media player只能作为主设备！")

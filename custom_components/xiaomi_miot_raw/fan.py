@@ -25,7 +25,7 @@ from miio.device import Device
 from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
 
-from . import GenericMiotDevice, ToggleableMiotDevice, MiotSubToggleableDevice
+from . import GenericMiotDevice, ToggleableMiotDevice, MiotSubToggleableDevice, MiotSubDevice
 from .deps.const import (
     DOMAIN,
     CONF_UPDATE_INSTANT,
@@ -72,9 +72,9 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     other_mi_type = []
 
     for t in MAP[TYPE]:
-        if params.get(t):
+        if mapping.get(t):
             other_mi_type.append(t)
-        if 'main' in (params.get(t) or ""):
+        if 'main' in (mapping.get(t) or ""):
             main_mi_type = t
 
     try:
@@ -273,10 +273,12 @@ class MiotSubFan(MiotSubToggleableDevice, FanEntity):
 class MiotActionList(MiotSubDevice, FanEntity):
     def __init__(self, parent_device, mapping, mitype):
         super().__init__(parent_device, mapping, {}, mitype)
+        self._name = f'{parent_device.name} 动作列表'
         self._action_list = []
         for k, v in mapping.items():
             if 'aiid' in v:
                 self._action_list.append(k)
+        self._state2 = STATE_ON
 
     @property
     def supported_features(self):
@@ -294,18 +296,26 @@ class MiotActionList(MiotSubDevice, FanEntity):
         return None
 
     async def async_turn_on(self, speed: str = None, **kwargs) -> None:
-        pass
+        result = await self._parent_device.call_action_new(*self._mapping[speed].values())
+        if result:
+            self._state2 = STATE_OFF
+            self.schedule_update_ha_state()
 
     async def async_turn_off(self):
         pass
 
     @property
     def is_on(self):
-        return True
+        return self._state2 == STATE_ON
 
     @property
     def state(self):
-        return STATE_ON
+        return self._state2
+
+    @property
+    def device_state_attributes(self):
+        return {ATTR_ATTRIBUTION: "在上方列表选择动作。选择后会立即执行。\n操作成功后，开关会短暂回弹。"}
 
     async def async_update(self):
-        pass
+        await asyncio.sleep(1)
+        self._state2 = STATE_ON
