@@ -218,8 +218,9 @@ class MiotMediaPlayer(GenericMiotDevice, MediaPlayerEntity):
     #             self._player_state = STATE_PLAYING
     #         else:
     #             _LOGGER.warning(f"Unknown state for player {self._name}: {player_state}")
+
         self._volume_level = self.convert_value(
-            self._state_attrs.get(self._did_prefix + 'volume'),
+            self._state_attrs.get(self._did_prefix + 'volume') or 0,
             'volume', False, self._ctrl_params['volume']['value_range']
         )
 

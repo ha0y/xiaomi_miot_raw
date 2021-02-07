@@ -69,13 +69,18 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     mappingnew = {}
 
     main_mi_type = None
-    this_mi_type = []
+    other_mi_type = []
 
     for t in MAP[TYPE]:
         if params.get(t):
-            this_mi_type.append(t)
+            other_mi_type.append(t)
         if 'main' in (params.get(t) or ""):
             main_mi_type = t
+
+    try:
+        other_mi_type.remove(main_mi_type)
+    except:
+        pass
 
     if main_mi_type or type(params) == OrderedDict:
         for k,v in mapping.items():
@@ -103,12 +108,32 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
             _LOGGER.warn(de)
             raise PlatformNotReady
 
-        hass.data[DATA_KEY][host] = device
+        _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
+        hass.data[DOMAIN]['miot_main_entity'][host] = device
+        hass.data[DOMAIN]['entities'][device.unique_id] = device
         async_add_devices([device], update_before_add=True)
-    else:
-        _LOGGER.error("目前风扇只能作为主设备！")
-        pass
-    # TODO SUBFAN
+    if other_mi_type:
+
+        parent_device = None
+        try:
+            parent_device = hass.data[DOMAIN]['miot_main_entity'][host]
+        except KeyError:
+            _LOGGER.warning(f"{host} 的主设备尚未就绪，子设备 {TYPE} 等待主设备加载完毕后才会加载")
+            raise PlatformNotReady
+
+        for k,v in mapping.items():
+            if k in MAP[TYPE]:
+                for kk,vv in v.items():
+                    mappingnew[f"{k[:10]}_{kk}"] = vv
+
+        devices = []
+
+        for item in other_mi_type:
+            if item == 'a_l':
+                devices.append(MiotActionList(parent_device, mapping.get(item), item))
+            else:
+                devices.append(MiotSubLight(parent_device, mapping.get(item), params.get(item), item))
+        async_add_devices(devices, update_before_add=True)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     config = copy.copy(hass.data[DOMAIN]['configs'].get(config_entry.entry_id, dict(config_entry.data)))
@@ -178,7 +203,109 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
         await super().async_update()
         # self._speed = self._ctrl_params['speed'].get(self._state_attrs.get('speed_'))
         try:
-            self._speed = self.get_key_by_value(self._ctrl_params['speed'],self._state_attrs.get(self._did_prefix + 'speed_'))
+            self._speed = self.get_key_by_value(self._ctrl_params['speed'],self._state_attrs.get(self._did_prefix + 'speed'))
         except KeyError:
             pass
         self._oscillation = self._state_attrs.get(self._did_prefix + 'oscillate')
+
+class MiotSubFan(MiotSubToggleableDevice, FanEntity):
+    def __init__(self, parent_device, mapping, params, mitype):
+        super().__init__(parent_device, mapping, params, mitype)
+        self._speed = None
+        self._oscillation = None
+
+    @property
+    def supported_features(self):
+        """Return the supported features."""
+        s = 0
+        if 'oscillate' in self._mapping:
+            s |= SUPPORT_OSCILLATE
+        if 'speed' in self._mapping:
+            s |= SUPPORT_SET_SPEED
+        return s
+
+    @property
+    def speed_list(self) -> list:
+        """Get the list of available speeds."""
+        return list(self._ctrl_params['speed'].keys())
+
+    @property
+    def speed(self):
+        """Return the current speed."""
+        try:
+            self._speed = self.get_key_by_value(self._ctrl_params['speed'],self.device_state_attributes[self._did_prefix + 'speed'])
+        except KeyError:
+            self._speed = None
+        return self._speed
+
+    @property
+    def oscillating(self):
+        """Return the oscillation state."""
+        return self.device_state_attributes.get(self._did_prefix + 'oscillate')
+
+    async def async_oscillate(self, oscillating: bool) -> None:
+        """Set oscillation."""
+        # result = await self.set_property_new(self._did_prefix + "oscillate",self._ctrl_params['oscillate'][oscillating])
+        result = await self.set_property_new(self._did_prefix + "oscillate", oscillating)
+
+        if result:
+            self._oscillation = True
+            self._skip_update = True
+
+    async def async_turn_on(self, speed: str = None, **kwargs) -> None:
+        """Turn on the entity."""
+        parameters = [{**{'did': self._did_prefix + "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping[self._did_prefix + 'switch_status'])}]
+
+        if speed:
+            parameters.append({**{'did': self._did_prefix + "speed", 'value': self._ctrl_params['speed'][speed]}, **(self._mapping[self._did_prefix + 'speed'])})
+
+        # result = await self._try_command(
+        #     "Turning the miio device on failed.",
+        #     self._device.send,
+        #     "set_properties",
+        #     parameters,
+        # )
+        result = await self._parent_device.set_property_new(multiparams = parameters)
+        if result:
+            self._state = True
+            self._skip_update = True
+
+class MiotActionList(MiotSubDevice, FanEntity):
+    def __init__(self, parent_device, mapping, mitype):
+        super().__init__(parent_device, mapping, {}, mitype)
+        self._action_list = []
+        for k, v in mapping.items():
+            if 'aiid' in v:
+                self._action_list.append(k)
+
+    @property
+    def supported_features(self):
+        """Return the supported features."""
+        return SUPPORT_SET_SPEED
+
+    @property
+    def speed_list(self) -> list:
+        """Get the list of available speeds."""
+        return self._action_list
+
+    @property
+    def speed(self):
+        """Return the current speed."""
+        return None
+
+    async def async_turn_on(self, speed: str = None, **kwargs) -> None:
+        pass
+
+    async def async_turn_off(self):
+        pass
+
+    @property
+    def is_on(self):
+        return True
+
+    @property
+    def state(self):
+        return STATE_ON
+
+    async def async_update(self):
+        pass

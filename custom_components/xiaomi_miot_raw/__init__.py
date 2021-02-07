@@ -199,7 +199,7 @@ class GenericMiotDevice(Entity):
         """Initialize the entity."""
         self._device = device
         self._mi_type = mi_type
-        self._did_prefix = f"{self._mi_type}_" if self._mi_type else ""
+        self._did_prefix = f"{self._mi_type[:10]}_" if self._mi_type else ""
 
         self._mapping = config.get(CONF_MAPPING)
         if type(self._mapping) == str:

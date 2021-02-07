@@ -145,6 +145,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._devtype = vol.UNDEFINED
         self._info = None
         self._model = None
+        self._input2 = {}
 
     async def async_step_user(self, user_input=None):
         if user_input is not None:
@@ -195,6 +196,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._name = user_input[CONF_NAME]
             self._host = user_input[CONF_HOST]
             self._token = user_input[CONF_TOKEN]
+            self._input2 = {**self._input2, **user_input}
             # self._mapping = user_input[CONF_MAPPING]
             # self._params = user_input[CONF_CONTROL_PARAMS]
 
@@ -254,7 +256,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     mapping_default = '{"switch_status":{"siid":2,"piid":1}}'
                     params_default = '{"switch_status":{"power_on":true,"power_off":false}}'
 
-                self._input2 = user_input
                 return self.async_show_form(
                     step_id="devinfo",
                     data_schema=vol.Schema({
@@ -267,6 +268,14 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         }),
                     description_placeholders={"device_info": device_info},
                     errors=errors,
+                )
+            else:
+                return self.async_show_form(
+                    step_id='xiaoai',
+                    data_schema=vol.Schema({
+                        vol.Required(CONF_MODEL): str,
+                    }),
+                    errors={'base': 'no_connect_warning'}
                 )
 
         return self.async_show_form(
@@ -422,4 +431,52 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     # cv.multi_select(SERVERS)
             }),
             errors={'base': error} if error else None
+        )
+
+    async def async_step_xiaoai(self, user_input=None, error=None):
+        errors = {}
+        if user_input is not None:
+            self._input2 = {**self._input2, **user_input}
+            self._model = user_input[CONF_MODEL]
+            # Line 240-270
+            self._info = await guess_mp_from_model(self.hass, self._model)
+            hint = ""
+            if self._info and self._info.get('mapping') != "{}":
+                hint += "\n根据您手动输入的 model，已经自动发现配置参数。\n如无特殊需要，无需修改下列内容。\n"
+                devtype_default = self._info.get('device_type')
+
+                # mp = f'''{{"{self._info.get('device_type')}":{self._info.get('mapping')}}}'''
+                # prm = f'''{{"{self._info.get('device_type')}":{self._info.get('params')}}}'''
+
+                mp = self._info.get('mapping')
+                prm = self._info.get('params')
+                mapping_default = mp
+                params_default = prm
+            else:
+                hint += f"很抱歉，未能自动发现配置参数。但这不代表您的设备不受支持。\n您可以[手工编写配置](https://github.com/ha0y/xiaomi_miot_raw/#文件配置法)，或者将型号 **{self._model}** 报告给作者。"
+                devtype_default = []
+                mapping_default = '{"switch_status":{"siid":2,"piid":1}}'
+                params_default = '{"switch_status":{"power_on":true,"power_off":false}}'
+
+
+            return self.async_show_form(
+                step_id="devinfo",
+                data_schema=vol.Schema({
+                    # vol.Required('devtype', default=devtype_default): vol.In(SUPPORTED_DOMAINS),
+                    vol.Required('devtype', default=devtype_default): cv.multi_select(SUPPORTED_DOMAINS),
+                    vol.Required(CONF_MAPPING, default=mapping_default): str,
+                    vol.Required(CONF_CONTROL_PARAMS, default=params_default): str,
+                    vol.Optional('cloud_read'): bool,
+                    vol.Optional('cloud_write'): bool,
+                }),
+                description_placeholders={"device_info": hint},
+                errors=errors,
+            )
+
+        return self.async_show_form(
+            step_id='xiaoai',
+            data_schema=vol.Schema({
+                vol.Required(CONF_MODEL): str,
+            }),
+            errors={'base': 'no_connect_warning'}
         )

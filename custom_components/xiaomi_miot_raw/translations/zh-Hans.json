@@ -11,7 +11,8 @@
             "cannot_connect": "无法连接",
             "value_error": "输入错误",
             "bad_params": "参数有误",
-            "no_local_access": "出现错误，可能有以下原因：\n(1) 输入的 siid 或 piid 有误\n(2) 设备不支持本地接入，请通过云端接入"
+            "no_local_access": "出现错误，可能有以下原因：\n(1) 输入的 siid 或 piid 有误\n(2) 设备不支持本地接入，请通过云端接入",
+            "no_connect_warning": "连接设备失败。如果您添加的是小爱音箱，这是正常现象；否则，请检查信息是否有误。请在下方输入小爱音箱的 model。"
         },
         "step": {
             "user": {

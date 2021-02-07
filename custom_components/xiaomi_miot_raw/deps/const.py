@@ -36,12 +36,12 @@ SCHEMA = {
         vol.Optional('cloud_write'):vol.All(),
 
         vol.Required(CONF_MAPPING):vol.All(),
-        vol.Optional(CONF_CONTROL_PARAMS):vol.All(),
+        vol.Required(CONF_CONTROL_PARAMS):vol.All(),
 
         vol.Optional(CONF_SENSOR_PROPERTY): cv.string,
         vol.Optional(CONF_SENSOR_UNIT): cv.string,
 }
-MAPold = {
+MAP = {
     "sensor": {
         "air_monitor",
         "water_purifier",
@@ -55,11 +55,18 @@ MAPold = {
     "switch": {
         "switch",
         "outlet",
+        "switch_2",
+        "switch_3",
+        "switch_4",
     },
     "light": {
         "light",
+        "light_2",
+        "light_3",
+        "light_4",
     },
     "fan": {
+        "a_l",
         "fan",
         "ceiling_fan",
         "air_fresh",
@@ -75,19 +82,19 @@ MAPold = {
         "dehumidifier",
     },
     "media_player": {
-
+        "media_player"
     },
 }
 
-def newMAP(MAP:dict) -> dict:
-    newmap = {}
-    for k, v in MAP.items():
-        newmap [k] = set()
-        for vv in v:
-            newmap[k].add(vv)
-            newmap[k].add(f"{vv}_2")
-            newmap[k].add(f"{vv}_3")
-            newmap[k].add(f"{vv}_4")
-    return newmap
+# def newMAP(MAP:dict) -> dict:
+#     newmap = {}
+#     for k, v in MAP.items():
+#         newmap [k] = set()
+#         for vv in v:
+#             newmap[k].add(vv)
+#             newmap[k].add(f"{vv}_2")
+#             newmap[k].add(f"{vv}_3")
+#             newmap[k].add(f"{vv}_4")
+#     return newmap
 
-MAP = newMAP(MAPold)
+# MAP = newMAP(MAPold)
