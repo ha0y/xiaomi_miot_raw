@@ -76,7 +76,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
                 miio_device = MiotDevice(ip=host, token=token, mapping=mapping)
             else:
                 miio_device = MiotDevice(ip=host, token=token, mapping=mappingnew)
-            device_info = dev_info("aaa","bbb","ccc","ddd")
+            device_info = dev_info(host,token,"","")
             device = MiotMediaPlayer(miio_device, config, device_info, hass, main_mi_type)
         except DeviceException as de:
             _LOGGER.warn(de)
