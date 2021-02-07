@@ -134,7 +134,7 @@ class MiotCover(GenericMiotDevice, CoverEntity):
 
     @property
     def supported_features(self):
-        if self._field_prefix + 'target_position' in self._mapping:
+        if self._did_prefix + 'target_position' in self._mapping:
             return SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_STOP | SUPPORT_SET_POSITION
         else:
             return SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_STOP
@@ -169,7 +169,7 @@ class MiotCover(GenericMiotDevice, CoverEntity):
 
     async def async_open_cover(self, **kwargs):
         """Open the cover."""
-        result = await self.set_property_new(self._field_prefix + "motor_control",self._ctrl_params['motor_control']['open'])
+        result = await self.set_property_new(self._did_prefix + "motor_control",self._ctrl_params['motor_control']['open'])
         if result:
             # self._skip_update = True
             try:
@@ -182,7 +182,7 @@ class MiotCover(GenericMiotDevice, CoverEntity):
 
     async def async_close_cover(self, **kwargs):
         """Close the cover."""
-        result = await self.set_property_new(self._field_prefix + "motor_control",self._ctrl_params['motor_control']['close'])
+        result = await self.set_property_new(self._did_prefix + "motor_control",self._ctrl_params['motor_control']['close'])
         if result:
             try:
                 self._action = self._ctrl_params['motor_status']['close']
@@ -194,22 +194,22 @@ class MiotCover(GenericMiotDevice, CoverEntity):
 
     async def async_stop_cover(self, **kwargs):
         """Close the cover."""
-        result = await self.set_property_new(self._field_prefix + "motor_control",self._ctrl_params['motor_control']['stop'])
+        result = await self.set_property_new(self._did_prefix + "motor_control",self._ctrl_params['motor_control']['stop'])
         if result:
             # self._skip_update = True
             pass
 
     async def async_set_cover_position(self, **kwargs):
         """Set the cover."""
-        result = await self.set_property_new(self._field_prefix + "target_position",kwargs['position'])
+        result = await self.set_property_new(self._did_prefix + "target_position",kwargs['position'])
 
         if result:
             self._skip_update = True
 
     async def _async_update(self):
         await super().async_update()
-        self._current_position = self._state_attrs.get(self._field_prefix + 'current_position')
-        self._action = self._state_attrs.get(self._field_prefix + 'motor_status')
+        self._current_position = self._state_attrs.get(self._did_prefix + 'current_position')
+        self._action = self._state_attrs.get(self._did_prefix + 'motor_status')
         if self.is_closing or self.is_opening:
             self.async_update = self._throttle1
         else:

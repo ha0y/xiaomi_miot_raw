@@ -126,9 +126,9 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
     def supported_features(self):
         """Return the supported features."""
         s = 0
-        if self._field_prefix + 'oscillate' in self._mapping:
+        if self._did_prefix + 'oscillate' in self._mapping:
             s |= SUPPORT_OSCILLATE
-        if self._field_prefix + 'speed' in self._mapping:
+        if self._did_prefix + 'speed' in self._mapping:
             s |= SUPPORT_SET_SPEED
         return s
 
@@ -149,8 +149,8 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
 
     async def async_oscillate(self, oscillating: bool) -> None:
         """Set oscillation."""
-        # result = await self.set_property_new(self._field_prefix + "oscillate",self._ctrl_params['oscillate'][oscillating])
-        result = await self.set_property_new(self._field_prefix + "oscillate", oscillating)
+        # result = await self.set_property_new(self._did_prefix + "oscillate",self._ctrl_params['oscillate'][oscillating])
+        result = await self.set_property_new(self._did_prefix + "oscillate", oscillating)
 
         if result:
             self._oscillation = True
@@ -158,10 +158,10 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
 
     async def async_turn_on(self, speed: str = None, **kwargs) -> None:
         """Turn on the entity."""
-        parameters = [{**{'did': self._field_prefix + "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping[self._field_prefix + 'switch_status'])}]
+        parameters = [{**{'did': self._did_prefix + "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping[self._did_prefix + 'switch_status'])}]
 
         if speed:
-            parameters.append({**{'did': self._field_prefix + "speed", 'value': self._ctrl_params['speed'][speed]}, **(self._mapping[self._field_prefix + 'speed'])})
+            parameters.append({**{'did': self._did_prefix + "speed", 'value': self._ctrl_params['speed'][speed]}, **(self._mapping[self._did_prefix + 'speed'])})
 
         # result = await self._try_command(
         #     "Turning the miio device on failed.",
@@ -178,7 +178,7 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
         await super().async_update()
         # self._speed = self._ctrl_params['speed'].get(self._state_attrs.get('speed_'))
         try:
-            self._speed = self.get_key_by_value(self._ctrl_params['speed'],self._state_attrs.get(self._field_prefix + 'speed_'))
+            self._speed = self.get_key_by_value(self._ctrl_params['speed'],self._state_attrs.get(self._did_prefix + 'speed_'))
         except KeyError:
             pass
-        self._oscillation = self._state_attrs.get(self._field_prefix + 'oscillate')
+        self._oscillation = self._state_attrs.get(self._did_prefix + 'oscillate')

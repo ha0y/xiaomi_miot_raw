@@ -126,7 +126,7 @@ class MiotHumidifier(ToggleableMiotDevice, HumidifierEntity):
     def supported_features(self):
         """Return the list of supported features."""
         s = 0
-        if self._field_prefix + 'mode' in self._mapping:
+        if self._did_prefix + 'mode' in self._mapping:
             s |= SUPPORT_MODES
         return s
 
@@ -181,5 +181,5 @@ class MiotHumidifier(ToggleableMiotDevice, HumidifierEntity):
 
     async def async_update(self):
         await super().async_update()
-        self._target_humidity = self._state_attrs.get(self._field_prefix + 'target_humidity')
-        self._mode = self.get_key_by_value(self._ctrl_params['mode'], self._state_attrs.get(self._field_prefix + 'mode_'))
+        self._target_humidity = self._state_attrs.get(self._did_prefix + 'target_humidity')
+        self._mode = self.get_key_by_value(self._ctrl_params['mode'], self._state_attrs.get(self._did_prefix + 'mode_'))

@@ -199,7 +199,7 @@ class GenericMiotDevice(Entity):
         """Initialize the entity."""
         self._device = device
         self._mi_type = mi_type
-        self._field_prefix = f"{self._mi_type}_" if self._mi_type else ""
+        self._did_prefix = f"{self._mi_type}_" if self._mi_type else ""
 
         self._mapping = config.get(CONF_MAPPING)
         if type(self._mapping) == str:
@@ -213,9 +213,23 @@ class GenericMiotDevice(Entity):
                     mappingnew[f"{k[:10]}_{kk}"] = vv
             self._mapping = mappingnew
 
-        self._ctrl_params = config.get(CONF_CONTROL_PARAMS)
+        self._ctrl_params = config.get(CONF_CONTROL_PARAMS) or {}
+
         if type(self._ctrl_params) == str:
             self._ctrl_params = json.loads(self._ctrl_params)
+
+
+        # if type(self._ctrl_params) == str:
+        #     self._ctrl_params = json.loads(self._ctrl_params)
+        # elif type(self._ctrl_params) == OrderedDict:
+        #     pass
+        # else:
+        paramsnew = {}
+        for k,v in self._ctrl_params.items():
+            for kk,vv in v.items():
+                paramsnew[f"{k[:10]}_{kk}"] = vv
+        self._ctrl_params_new = paramsnew
+
         if mi_type:
             self._ctrl_params = self._ctrl_params[mi_type]
 
@@ -300,6 +314,10 @@ class GenericMiotDevice(Entity):
             'manufacturer': (self._model or 'Xiaomi').split('.', 1)[0],
             'sw_version': self._state_attrs.get(ATTR_FIRMWARE_VERSION),
         }
+
+    @property
+    def did_prefix(self):
+        return self._did_prefix
 
     async def _try_command(self, mask_error, func, *args, **kwargs):
         """Call a device command handling error messages."""
@@ -410,9 +428,9 @@ class GenericMiotDevice(Entity):
                 for r in response:
                     if r['code'] == 0:
                         try:
-                            f = self._ctrl_params[r['did']]['value_ratio']
+                            f = self._ctrl_params_new[r['did']]['value_ratio']
                             statedict[r['did']] = round(r['value'] * f , 3)
-                        except (KeyError, TypeError):
+                        except (KeyError, TypeError, IndexError):
                             statedict[r['did']] = r['value']
                     elif r['code'] == 9999:
                         persistent_notification.async_create(
@@ -539,21 +557,21 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
     async def async_turn_on(self, **kwargs):
         """Turn on."""
         prm = self._ctrl_params['switch_status']['power_on']
-        result = await self.set_property_new(self._field_prefix + "switch_status",prm)
+        result = await self.set_property_new(self._did_prefix + "switch_status",prm)
         if result:
             self._state = True
 
     async def async_turn_off(self, **kwargs):
         """Turn off."""
         prm = self._ctrl_params['switch_status']['power_off']
-        result = await self.set_property_new(self._field_prefix + "switch_status",prm)
+        result = await self.set_property_new(self._did_prefix + "switch_status",prm)
         if result:
             self._state = False
 
     async def async_update(self):
         # _LOGGER.error("Update!!!!!!!")
         await super().async_update()
-        state = self._state_attrs.get(self._field_prefix + 'switch_status')
+        state = self._state_attrs.get(self._did_prefix + 'switch_status')
         _LOGGER.debug("%s 's new state: %s", self._name, state)
 
         if state == self._ctrl_params['switch_status']['power_on']:
@@ -600,7 +618,7 @@ class MiotSubDevice(Entity):
         self._mapping = mapping
         self._ctrl_params = params
         self._mitype = mitype
-        self._field_prefix= f"{mitype}_" if mitype else ""
+        self._did_prefix= f"{mitype}_" if mitype else ""
         self._skip_update = False
 
         self.convert_value = parent_device.convert_value
@@ -656,20 +674,20 @@ class MiotSubToggleableDevice(MiotSubDevice):
     async def async_turn_on(self, **kwargs):
         """Turn on."""
         prm = self._ctrl_params['switch_status']['power_on']
-        result = await self._parent_device.set_property_new(self._field_prefix + "switch_status",prm)
+        result = await self._parent_device.set_property_new(self._did_prefix + "switch_status",prm)
         if result:
             self._state = True
-            self._state_attrs[f"{self._field_prefix}switch_status"] = True
+            self._state_attrs[f"{self._did_prefix}switch_status"] = True
             self._parent_device.schedule_update_ha_state(force_refresh=True)
             self._skip_update = True
 
     async def async_turn_off(self, **kwargs):
         """Turn off."""
         prm = self._ctrl_params['switch_status']['power_off']
-        result = await self._parent_device.set_property_new(self._field_prefix + "switch_status",prm)
+        result = await self._parent_device.set_property_new(self._did_prefix + "switch_status",prm)
         if result:
             self._state = False
-            self._state_attrs[f"{self._field_prefix}switch_status"] = False
+            self._state_attrs[f"{self._did_prefix}switch_status"] = False
             self._parent_device.schedule_update_ha_state(force_refresh=True)
             self._skip_update = True
 
@@ -685,7 +703,7 @@ class MiotSubToggleableDevice(MiotSubDevice):
     def state(self):
         # return STATE_ON if self._state else STATE_OFF
         try:
-            return STATE_ON if self.device_state_attributes.get(f"{self._field_prefix}switch_status") else STATE_OFF
+            return STATE_ON if self.device_state_attributes.get(f"{self._did_prefix}switch_status") else STATE_OFF
         except:
             return STATE_UNKNOWN
 

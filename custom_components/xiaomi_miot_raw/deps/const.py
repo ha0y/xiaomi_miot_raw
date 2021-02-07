@@ -24,6 +24,7 @@ SUPPORTED_DOMAINS = [
     "fan",
     "cover",
     "humidifier",
+    "media_player"
 ]
 DEFAULT_NAME = "Xiaomi MIoT Device"
 SCHEMA = {
@@ -72,6 +73,9 @@ MAPold = {
     "humidifier": {
         "humidifier",
         "dehumidifier",
+    },
+    "media_player": {
+
     },
 }
 

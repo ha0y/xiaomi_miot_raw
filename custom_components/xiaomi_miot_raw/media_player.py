@@ -108,19 +108,19 @@ class MiotMediaPlayer(GenericMiotDevice, MediaPlayerEntity):
     def supported_features(self):
         """Return the supported features."""
         s = 0
-        if self._field_prefix + 'mp_play' in self._mapping:
+        if self._did_prefix + 'mp_play' in self._mapping:
             s |= SUPPORT_PLAY
-        if self._field_prefix + 'mp_pause' in self._mapping:
+        if self._did_prefix + 'mp_pause' in self._mapping:
             s |= SUPPORT_PAUSE
-        if self._field_prefix + 'mp_next' in self._mapping:
+        if self._did_prefix + 'mp_next' in self._mapping:
             s |= SUPPORT_NEXT_TRACK
-        if self._field_prefix + 'mp_previous' in self._mapping:
+        if self._did_prefix + 'mp_previous' in self._mapping:
             s |= SUPPORT_PREVIOUS_TRACK
-        if self._field_prefix + 'mp_sound_mode' in self._mapping:
+        if self._did_prefix + 'mp_sound_mode' in self._mapping:
             s |= SUPPORT_SELECT_SOUND_MODE
         if 'mp_source' in self._ctrl_params:
             s |= SUPPORT_SELECT_SOURCE
-        if self._field_prefix + 'volume' in self._mapping:
+        if self._did_prefix + 'volume' in self._mapping:
             s |= SUPPORT_VOLUME_SET
         # s |= SUPPORT_PLAY_MEDIA
         return s
@@ -168,36 +168,36 @@ class MiotMediaPlayer(GenericMiotDevice, MediaPlayerEntity):
 
     async def async_media_play(self):
         """Send play command."""
-        result = await self.call_action_new(*(self._mapping[self._field_prefix + 'mp_play'].values()))
+        result = await self.call_action_new(*(self._mapping[self._did_prefix + 'mp_play'].values()))
         if result:
             self._player_state = STATE_PLAYING
             self.schedule_update_ha_state()
 
     async def async_media_pause(self):
         """Send pause command."""
-        result = await self.call_action_new(*(self._mapping[self._field_prefix + 'mp_pause'].values()))
+        result = await self.call_action_new(*(self._mapping[self._did_prefix + 'mp_pause'].values()))
         if result:
             self._player_state = STATE_PAUSED
             self.schedule_update_ha_state()
 
     async def async_select_sound_mode(self, sound_mode):
         """Select sound mode."""
-        result = await self.call_action_new(*(self._mapping[self._field_prefix + 'mp_sound_mode'].values()), [sound_mode])
+        result = await self.call_action_new(*(self._mapping[self._did_prefix + 'mp_sound_mode'].values()), [sound_mode])
         if result:
             # self._sound_mode = sound_mode
             self.schedule_update_ha_state()
 
     async def async_media_previous_track(self):
         """Send previous track command."""
-        result = await self.call_action_new(*(self._mapping[self._field_prefix + 'mp_next'].values()))
+        result = await self.call_action_new(*(self._mapping[self._did_prefix + 'mp_next'].values()))
 
     async def async_media_next_track(self):
         """Send next track command."""
-        result = await self.call_action_new(*(self._mapping[self._field_prefix + 'mp_previous'].values()))
+        result = await self.call_action_new(*(self._mapping[self._did_prefix + 'mp_previous'].values()))
 
     async def async_set_volume_level(self, volume):
         """Set the volume level, range 0..1."""
-        result = await self.set_property_new(self._field_prefix + "volume", self.convert_value(volume, 'volume', True, self._ctrl_params['volume']['value_range']))
+        result = await self.set_property_new(self._did_prefix + "volume", self.convert_value(volume, 'volume', True, self._ctrl_params['volume']['value_range']))
         if result:
             self._volume_level = volume
             self.schedule_update_ha_state()
@@ -210,7 +210,7 @@ class MiotMediaPlayer(GenericMiotDevice, MediaPlayerEntity):
     async def async_update(self):
         """Fetch state from the device."""
         await super().async_update()
-    #     player_state = self._state_attrs.get(self._field_prefix + 'playing_state')
+    #     player_state = self._state_attrs.get(self._did_prefix + 'playing_state')
     #     if player_state is not None and self._ctrl_params.get('playing_state'):
     #         if player_state == self._ctrl_params['playing_state'].get('paused'):
     #             self._player_state = STATE_PAUSED
@@ -219,7 +219,7 @@ class MiotMediaPlayer(GenericMiotDevice, MediaPlayerEntity):
     #         else:
     #             _LOGGER.warning(f"Unknown state for player {self._name}: {player_state}")
         self._volume_level = self.convert_value(
-            self._state_attrs.get(self._field_prefix + 'volume'),
+            self._state_attrs.get(self._did_prefix + 'volume'),
             'volume', False, self._ctrl_params['volume']['value_range']
         )
 

@@ -3,6 +3,7 @@ import re
 from dataclasses import dataclass
 import logging
 from .const import MAP
+from .special_devices import SPECIAL_DEVICES
 
 _LOGGER = logging.getLogger(__name__)
 

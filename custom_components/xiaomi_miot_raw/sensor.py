@@ -15,7 +15,7 @@ from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
 
 from datetime import timedelta
-from . import GenericMiotDevice
+from . import GenericMiotDevice, MiotSubDevice
 from .deps.const import (
     DOMAIN,
     CONF_UPDATE_INSTANT,
@@ -64,15 +64,20 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     mappingnew = {}
 
     main_mi_type = None
-    this_mi_type = []
+    other_mi_type = []
 
     #sensor的添加逻辑和其他实体不一样。他会把每个属性都作为实体。其他设备会作为attr
 
     for t in MAP[TYPE]:
         if params.get(t):
-            this_mi_type.append(t)
+            other_mi_type.append(t)
         if 'main' in (params.get(t) or ""):
             main_mi_type = t
+
+    try:
+        other_mi_type.remove(main_mi_type)
+    except:
+        pass
 
     if main_mi_type or type(params) == OrderedDict:
         for k,v in mapping.items():
@@ -105,12 +110,12 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 
             raise PlatformNotReady
 
-
         _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
         hass.data[DOMAIN]['miot_main_entity'][host] = device
         hass.data[DOMAIN]['entities'][device.unique_id] = device
         async_add_devices(devices, update_before_add=True)
-    else:
+    if other_mi_type:
+
         parent_device = None
         try:
             parent_device = hass.data[DOMAIN]['miot_main_entity'][host]
@@ -127,7 +132,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 
         devices = []
         for k in mappingnew.keys():
-            devices.append(MiotSubSensor(parent_device, k))
+            devices.append(MiotSubSensor(parent_device, mappingnew, params, other_mi_type[0],{'sensor_property': k}))
 
         # device = MiotSubSensor(parent_device, "switch_switch_status")
         async_add_devices(devices, update_before_add=True)
@@ -139,7 +144,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 class MiotSensor(GenericMiotDevice):
     def __init__(self, device, config, device_info, hass = None, mi_type = None):
-        GenericMiotDevice.__init__(self, device, config, device_info)
+        GenericMiotDevice.__init__(self, device, config, device_info, mi_type)
         self._state = None
         self._sensor_property = config.get(CONF_SENSOR_PROPERTY) or \
             list(config['mapping'].keys())[0]
@@ -166,42 +171,42 @@ class MiotSensor(GenericMiotDevice):
         """Return the unit of measurement of this entity, if any."""
         return self._unit_of_measurement
 
-class MiotSubSensor(Entity):
-    should_poll = False
-    def __init__(self, parent_sensor, sensor_property):
-        self._parent = parent_sensor
-        self._sensor_property = sensor_property
+class MiotSubSensor(MiotSubDevice):
+    def __init__(self, parent_device, mapping, params, mitype, others={}):
+        super().__init__(parent_device, mapping, params, mitype)
+        self._sensor_property = others.get('sensor_property')
+        self._unit_of_measurement = others.get('uom') or None
 
     @property
     def state(self):
         """Return the state of the device."""
-        # _LOGGER.error(self._parent.device_state_attributes)
         try:
-            return self._parent.device_state_attributes[self._sensor_property]
+            return self._parent_device.device_state_attributes[self._sensor_property]
         except:
             return None
 
     @property
     def device_info(self):
         return {
-            'identifiers': {(DOMAIN, self._parent.unique_id)},
+            'identifiers': {(DOMAIN, self._parent_device.unique_id)},
             # 'name': self._name,
             # 'model': self._model,
             # 'manufacturer': (self._model or 'Xiaomi').split('.', 1)[0],
             # 'sw_version': self._state_attrs.get(ATTR_FIRMWARE_VERSION),
         }
+
+    @property
+    def unit_of_measurement(self):
+        """Return the unit of measurement of this entity, if any."""
+        return self._unit_of_measurement
+
+
     @property
     def unique_id(self):
         """Return an unique ID."""
-        return f"{self._parent.unique_id}-{self._sensor_property}"
+        return f"{self._parent_device.unique_id}-{self._sensor_property}"
 
     @property
     def name(self):
         """Return the name of this entity, if any."""
-        return f"{self._parent.name} {self._sensor_property.capitalize()}"
-
-    async def async_added_to_hass(self):
-        self._parent.register_callback(self.async_write_ha_state)
-
-    async def async_will_remove_from_hass(self):
-        self._parent.remove_callback(self.async_write_ha_state)
+        return f"{self._parent_device.name} {self._sensor_property.replace('_', ' ').capitalize()}"

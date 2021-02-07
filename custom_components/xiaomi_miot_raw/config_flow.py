@@ -32,6 +32,7 @@ from .deps.miot_device_adapter import MiotAdapter
 from homeassistant.components import persistent_notification
 from .deps.xiaomi_cloud_new import MiCloud
 import re
+from .deps.special_devices import SPECIAL_DEVICES
 
 VALIDATE = {'fan': [{"switch_status"}, {"switch_status"}],
             'switch': [{"switch_status"}, {"switch_status"}],
@@ -73,6 +74,13 @@ async def async_get_mp_from_net(hass, model):
     return None
 
 async def guess_mp_from_model(hass,model):
+    if m := SPECIAL_DEVICES.get(model):
+        return {
+            "device_type": m["device_type"],
+            "mapping": json.dumps(m["mapping"],separators=(',', ':')),
+            "params": json.dumps(m["params"],separators=(',', ':')),
+        }
+
     cs = aiohttp_client.async_get_clientsession(hass)
     url_all = 'http://miot-spec.org/miot-spec-v2/instances?status=all'
     url_spec = 'http://miot-spec.org/miot-spec-v2/instance'
