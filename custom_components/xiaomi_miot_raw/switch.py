@@ -61,7 +61,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     other_mi_type = []
 
     for t in MAP[TYPE]:
-        if params.get(t):
+        if mapping.get(t):
             other_mi_type.append(t)
         if 'main' in (params.get(t) or ""):
             main_mi_type = t

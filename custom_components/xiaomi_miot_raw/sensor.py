@@ -69,7 +69,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     #sensor的添加逻辑和其他实体不一样。他会把每个属性都作为实体。其他设备会作为attr
 
     for t in MAP[TYPE]:
-        if params.get(t):
+        if mapping.get(t):
             other_mi_type.append(t)
         if 'main' in (params.get(t) or ""):
             main_mi_type = t
