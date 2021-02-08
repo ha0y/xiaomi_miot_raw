@@ -141,6 +141,9 @@ class MiotAdapter:
                 }
             if devtype == 'fan' and 'speed' not in ret and 'mode' in ret:
                 ret['speed'] = ret.pop('mode')
+            if devtype == 'humidifier' and 'mode' not in ret and 'speed' in ret:
+                # deerma.humidifier.mjjsq
+                ret['mode'] = ret.pop('speed')
             return ret
         except Exception as ex:
             _LOGGER.error(ex)
@@ -256,6 +259,13 @@ class MiotAdapter:
                         True: True,
                         False: False
                     }
+
+            if devtype == 'humidifier':
+                # deerma.humidifier.mjjsq
+                if p := propdict.get('fan_level'):
+                    if vl := p.vlist:
+                        if not ret.get('mode'):
+                            ret['mode'] = ret.pop('speed')
 
             if devtype == 'media_player':
                 if p := propdict.get('volume'):

@@ -197,6 +197,8 @@ class MiCloud:
                 _LOGGER.error(f"Response of {api} from cloud: {resp}")
                 return resp
             else:
+                # 注意：此处成功只代表请求是成功的，但控制设备不一定成功，
+                # 取决于 result 里的 code
                 _LOGGER.info(f"Response of {api} from cloud: {resp}")
                 return resp
 

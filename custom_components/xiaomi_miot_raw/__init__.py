@@ -357,12 +357,22 @@ class GenericMiotDevice(Entity):
                 if not multiparams:
                     did = self._cloud.get("did")
                     spiid = self._mapping.get(field) or {}
+                    if not (spiid := self._mapping.get(field)):
+                        _LOGGER.error("Cannot control {self._name} by cloud because can't find siid and piid")
+                        return False
                     p = {**{'did': did, 'value': params},**spiid}
                     p = {'params': [p]}
                     pp = json.dumps(p,separators=(',', ':'))
                     _LOGGER.info(f"Control {self._name} params: {pp}")
                     results = await self._cloud_instance.set_props(pp)
-                    return True
+                    if results:
+                        if r := results.get('result'):
+                            for item in r:
+                                if item['code'] != 0:
+                                    _LOGGER.error(f"Control {self._name} by cloud failed: {r}")
+                                    return False
+                            return True
+                    return False
                 else:
                     did = self._cloud.get("did")
                     p = multiparams
@@ -372,7 +382,14 @@ class GenericMiotDevice(Entity):
                     ppp = json.dumps(pp,separators=(',', ':'))
                     _LOGGER.info(f"Control {self._name} params: {ppp}")
                     results = await self._cloud_instance.set_props(ppp)
-                    return True
+                    if results:
+                        if r := results.get('result'):
+                            for item in r:
+                                if item['code'] != 0:
+                                    _LOGGER.error(f"Control {self._name} by cloud failed: {r}")
+                                    return False
+                            return True
+                    return False
 
         except DeviceException as ex:
             _LOGGER.error('Set miot property to %s: %s(%s) failed: %s', self._name, field, params, ex)
