@@ -132,7 +132,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
             if item == 'a_l':
                 devices.append(MiotActionList(parent_device, mapping.get(item), item))
             else:
-                devices.append(MiotSubLight(parent_device, mapping.get(item), params.get(item), item))
+                devices.append(MiotSubFan(parent_device, mapping.get(item), params.get(item), item))
         async_add_devices(devices, update_before_add=True)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -254,10 +254,10 @@ class MiotSubFan(MiotSubToggleableDevice, FanEntity):
 
     async def async_turn_on(self, speed: str = None, **kwargs) -> None:
         """Turn on the entity."""
-        parameters = [{**{'did': self._did_prefix + "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping[self._did_prefix + 'switch_status'])}]
+        parameters = [{**{'did': self._did_prefix + "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping['switch_status'])}]
 
         if speed:
-            parameters.append({**{'did': self._did_prefix + "speed", 'value': self._ctrl_params['speed'][speed]}, **(self._mapping[self._did_prefix + 'speed'])})
+            parameters.append({**{'did': self._did_prefix + "speed", 'value': self._ctrl_params['speed'][speed]}, **(self._mapping['speed'])})
 
         # result = await self._try_command(
         #     "Turning the miio device on failed.",
