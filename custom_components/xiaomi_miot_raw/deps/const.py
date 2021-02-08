@@ -82,6 +82,7 @@ MAP = {
         "dehumidifier",
     },
     "media_player": {
+        "media_player",
         "speaker",
         "play_control",
     },
