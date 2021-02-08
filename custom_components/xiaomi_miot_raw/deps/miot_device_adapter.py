@@ -27,6 +27,7 @@ class Service:
     description :str
     properties  :dict
     newid       :str
+    actions     :list
 
 @dataclass
 class Action:
@@ -60,8 +61,8 @@ class MiotAdapter:
         self.devtypeset = set()
         try:
             self.init_all_services()
-        except:
-            pass
+        except Exception as ex:
+            _LOGGER.error(ex)
 
     def init_all_services(self) -> None:
         for s in self.spec['services']:
@@ -141,13 +142,15 @@ class MiotAdapter:
             if devtype == 'fan' and 'speed' not in ret and 'mode' in ret:
                 ret['speed'] = ret.pop('mode')
             return ret
-        except:
+        except Exception as ex:
+            _LOGGER.error(ex)
             return {}
 
     def get_mapping_by_siid(self, siid: int):
         try:
             return self.get_mapping(self.get_prop_by_siid(siid=siid))
-        except:
+        except Exception as ex:
+            _LOGGER.error(ex)
             return None
 
     def get_mapping_by_snewid(self, newid: str):
@@ -254,13 +257,31 @@ class MiotAdapter:
                         False: False
                     }
 
+            if devtype == 'media_player':
+                if p := propdict.get('volume'):
+                    if vr := p.vrange:
+                        ret['volume'] = {
+                            'value_range': vr
+                        }
+                if p := propdict.get('playing_state'):
+                    if vl := p.vlist:
+                        dct = {}
+                        for item in vl:
+                            if 'pause' in item['description'].lower() or \
+                                'idle' in item['description'].lower():
+                                    dct['pause'] = item['value']
+                            if 'play' in item['description'].lower():
+                                dct['playing'] = item['value']
+                        ret['playing_state'] = dct
+
             if p := propdict.get('target_humidity'):
                 if vr := p.vrange:
                     ret['target_humidity'] = {
                         'value_range': vr
                     }
             return ret
-        except:
+        except Exception as ex:
+            _LOGGER.error(ex)
             return {}
 
     def get_params_by_siid(self, siid: int):
@@ -281,6 +302,16 @@ class MiotAdapter:
         if action_dict := self.get_all_actions():
             ret['a_l'] = action_dict
             self.devtypeset.add('fan')
+
+        if self.mitype == 'air_conditioner':
+            try:
+                ret['air_conditioner'] = {**ret['air_conditioner'], **ret.pop('fan_control')}
+            except Exception as ex:
+                pass
+
+        if 'speaker' in ret and 'play_control' in ret:
+            ret['speaker'] = {**ret['speaker'], **ret.pop('play_control')}
+
         return ret
 
     def get_all_params(self):
@@ -293,6 +324,14 @@ class MiotAdapter:
                     if nid == self.mitype and not has_main:
                         ret[nid]['main'] = True
                         has_main = True
+        if self.mitype == 'air_conditioner':
+            try:
+                ret['air_conditioner'] = {**ret['air_conditioner'], **ret.pop('fan_control')}
+            except Exception as ex:
+                pass
+        if 'speaker' in ret and 'play_control' in ret:
+            ret['speaker'] = {**ret['speaker'], **ret.pop('play_control')}
+
         if not has_main:
             try:
                 ret['switch']['main'] = True

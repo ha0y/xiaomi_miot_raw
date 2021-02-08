@@ -71,18 +71,19 @@ MAP = {
         "ceiling_fan",
         "air_fresh",
         "air_purifier",
+        "washer",
     },
     "cover": {
         "curtain",
         "airer",
-
     },
     "humidifier": {
         "humidifier",
         "dehumidifier",
     },
     "media_player": {
-        "media_player"
+        "speaker",
+        "play_control",
     },
 }
 
