@@ -104,7 +104,7 @@ async def async_setup_entry(hass, entry):
                             f"您的 **{entry.data.get(CONF_NAME)}** 配置项是旧版本格式。\n"
                             f"建议您重新添加设备，确认设备正常后删除旧设备，\n"
                             f"即可消除此提示。\n",
-                            "Xiaomi MIoT Raw")
+                            "Xiaomi MIoT")
         config[CONF_MAPPING] = {entry.data.get('devtype'): config[CONF_MAPPING]}
         config[CONF_CONTROL_PARAMS] = {entry.data.get('devtype'): config[CONF_CONTROL_PARAMS]}
 

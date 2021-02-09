@@ -14,6 +14,7 @@ from homeassistant.exceptions import PlatformNotReady
 from miio.device import Device
 from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
+from homeassistant.components import persistent_notification
 
 from . import GenericMiotDevice, ToggleableMiotDevice
 from .deps.const import (ATTR_FIRMWARE_VERSION, ATTR_HARDWARE_VERSION,
@@ -93,6 +94,13 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
             for kk,vv in v.items():
                 mappingnew[f"{k[:10]}_{kk}"] = vv
 
+        if 'a_l' not in mapping.keys():
+            persistent_notification.async_create(
+                hass,
+                f"为了支持更多种类小爱，配置参数有变动，\n"
+                f"请删除您的 **{config.get(CONF_NAME)}** 重新配置。谢谢\n",
+                "Xiaomi MIoT")
+
         _LOGGER.info("Initializing %s with host %s (token %s...)", config.get(CONF_NAME), host, token[:5])
 
         try:
@@ -167,13 +175,13 @@ class MiotMediaPlayer(GenericMiotDevice, MediaPlayerEntity):
     def supported_features(self):
         """Return the supported features."""
         s = 0
-        if self._did_prefix + 'mp_play' in self._mapping:
+        if 'a_l_play_control_play' in self._mapping:
             s |= SUPPORT_PLAY
-        if self._did_prefix + 'mp_pause' in self._mapping:
+        if 'a_l_play_control_pause' in self._mapping:
             s |= SUPPORT_PAUSE
-        if self._did_prefix + 'mp_next' in self._mapping:
+        if 'a_l_play_control_next' in self._mapping:
             s |= SUPPORT_NEXT_TRACK
-        if self._did_prefix + 'mp_previous' in self._mapping:
+        if 'a_l_play_control_previous' in self._mapping:
             s |= SUPPORT_PREVIOUS_TRACK
         if self._did_prefix + 'mp_sound_mode' in self._mapping:
             s |= SUPPORT_SELECT_SOUND_MODE
@@ -227,14 +235,14 @@ class MiotMediaPlayer(GenericMiotDevice, MediaPlayerEntity):
 
     async def async_media_play(self):
         """Send play command."""
-        result = await self.call_action_new(*(self._mapping[self._did_prefix + 'mp_play'].values()))
+        result = await self.call_action_new(*(self._mapping['a_l_play_control_play'].values()))
         if result:
             self._player_state = STATE_PLAYING
             self.schedule_update_ha_state()
 
     async def async_media_pause(self):
         """Send pause command."""
-        result = await self.call_action_new(*(self._mapping[self._did_prefix + 'mp_pause'].values()))
+        result = await self.call_action_new(*(self._mapping['a_l_play_control_pause'].values()))
         if result:
             self._player_state = STATE_PAUSED
             self.schedule_update_ha_state()
@@ -248,11 +256,11 @@ class MiotMediaPlayer(GenericMiotDevice, MediaPlayerEntity):
 
     async def async_media_previous_track(self):
         """Send previous track command."""
-        result = await self.call_action_new(*(self._mapping[self._did_prefix + 'mp_next'].values()))
+        result = await self.call_action_new(*(self._mapping['a_l_play_control_previous'].values()))
 
     async def async_media_next_track(self):
         """Send next track command."""
-        result = await self.call_action_new(*(self._mapping[self._did_prefix + 'mp_previous'].values()))
+        result = await self.call_action_new(*(self._mapping['a_l_play_control_next'].values()))
 
     async def async_set_volume_level(self, volume):
         """Set the volume level, range 0..1."""
