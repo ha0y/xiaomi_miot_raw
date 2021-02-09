@@ -1,7 +1,7 @@
 # Xiaomi MIoT Raw
 
-[简体中文](https://github.com/ha0y/xiaomi_miot_raw/blob/add-miot-support/README.md) | English
-> This readme is translated by Google with human corrections.
+[简体中文](https://github.com/ha0y/xiaomi_miot_raw/blob/add-miot-support/README_cn.md) | English
+> 应 HACS 要求，临时修改默认 README 语言为英语。[点击此处查看中文说明](https://github.com/ha0y/xiaomi_miot_raw/blob/add-miot-support/README_cn.md)。
 
 This custom component implements the Xiaomi MIoT protocol with the help of [python-miio](https://github.com/rytilahti/python-miio), and the usage is similar to [xiaomi_raw](https://github.com/syssi/xiaomi_raw).
 
@@ -11,6 +11,8 @@ Currently this custom component supports:
 * cover (supports open/close/set position, get position is not supported yet)
 * light (turn on/off, adjust brightness and color temprature)
 * fan (turn on/off, set oscillation and speed)
+* humidifier (turn on/off, set target humidity and mode)
+* media player (Xiaomi AI Speaker)
 
 ## Install
 
@@ -63,6 +65,28 @@ Optional:
 - **speed**: After setting this option, will support speed adjustment.
 
 ## Update log
+
+### February 9
+1. Support the sensor to automatically add units.
+2. Add Xiao Ai "Broadcast designated text" and "Execute designated instructions" services.
+
+### February 8
+1. Support Xiaoai speaker configuration from UI.
+2. Support action calls for devices e.g. washing machines.
+
+### February 6
+1. Support Xiaoai speakers.
+
+### February 3
+1. Supports multiple types of automatic configuration for one device. Now devices with sub-devices such as fan-lights and airers can be integrated in one time automatically.
+2. Due to the reason of 1, the internal data storage method has undergone major changes. **Some devices need to be deleted and reconfigured, and the devices that need to be reconfigured have been stated in the notification bar**; the file-configured devices are not affected.
+3. Greatly improve the accuracy of automatic identification.
+
+### January 31
+1. **Now supports automatic configuration of some device types. **
+2. Fix a lot of bugs.
+3. **Support humidifier. **
+
 ### January 28
 1. Support UI configuration.
 

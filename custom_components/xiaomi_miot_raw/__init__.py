@@ -523,36 +523,40 @@ class GenericMiotDevice(Entity):
             return None
 
     def convert_value(self, value, param, dir = True, valuerange = None):
-        if param == 'color':
-            if dir:
-                rgb = color.color_hs_to_RGB(*value)
-                int_ =  rgb[0] << 16 | rgb[1] << 8 | rgb[2]
-                return int_
-            else:
-                rgb = [(0xFF0000 & value) >> 16, (0xFF00 & value) >> 8, 0xFF & value]
-                hs = color.color_RGB_to_hs(*rgb)
-                return hs
-        elif param == 'brightness':
-            # valuerange = self._ctrl_params[param]['value_range']
-            if dir:
-                slider_value = round(value/255*100)
-                return int(slider_value/100*(valuerange[1]-valuerange[0]+1)/valuerange[2])*valuerange[2]
-            else:
-                return round(value/(valuerange[1]-valuerange[0]+1)*255)
-        elif param == 'target_humidity':
-            # valuerange = self._ctrl_params[param]['value_range']
-            if value < valuerange[0]:
-                return valuerange[0]
-            elif value > valuerange[1]:
-                return valuerange[1]
-            else:
-                return round((value - valuerange[0])/valuerange[2])*valuerange[2]+valuerange[0]
-        elif param == 'volume':
-            if dir:
-                value *= valuerange[1]
-                return round((value - valuerange[0])/valuerange[2])*valuerange[2]+valuerange[0]
-            else:
-                return value / valuerange[1]
+        try:
+            if param == 'color':
+                if dir:
+                    rgb = color.color_hs_to_RGB(*value)
+                    int_ =  rgb[0] << 16 | rgb[1] << 8 | rgb[2]
+                    return int_
+                else:
+                    rgb = [(0xFF0000 & value) >> 16, (0xFF00 & value) >> 8, 0xFF & value]
+                    hs = color.color_RGB_to_hs(*rgb)
+                    return hs
+            elif param == 'brightness':
+                # valuerange = self._ctrl_params[param]['value_range']
+                if dir:
+                    slider_value = round(value/255*100)
+                    return int(slider_value/100*(valuerange[1]-valuerange[0]+1)/valuerange[2])*valuerange[2]
+                else:
+                    return round(value/(valuerange[1]-valuerange[0]+1)*255)
+            elif param == 'target_humidity':
+                # valuerange = self._ctrl_params[param]['value_range']
+                if value < valuerange[0]:
+                    return valuerange[0]
+                elif value > valuerange[1]:
+                    return valuerange[1]
+                else:
+                    return round((value - valuerange[0])/valuerange[2])*valuerange[2]+valuerange[0]
+            elif param == 'volume':
+                if dir:
+                    value *= valuerange[1]
+                    return round((value - valuerange[0])/valuerange[2])*valuerange[2]+valuerange[0]
+                else:
+                    return value / valuerange[1]
+        except Exception as ex:
+            _LOGGER.error(f"Error converting value, type:{param}, value:{value}, error:{ex}")
+            return None
 
     def register_callback(self, callback):
         """Register callback, called when Roller changes state."""
