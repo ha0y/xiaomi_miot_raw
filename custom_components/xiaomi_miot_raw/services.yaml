@@ -1,0 +1,21 @@
+speak_text:
+  description: 让小爱播报指定文本
+  fields:
+    entity_id:
+      description: 实体 ID
+      example: "media_player.xiao_ai"
+    text:
+      description: 要播报的文本
+      example: "你好"
+execute_text:
+  description: 让小爱执行指定指令
+  fields:
+    entity_id:
+      description: 实体 ID
+      example: "media_player.xiao_ai"
+    text:
+      description: 要执行的文本
+      example: "播放轻音乐"
+    silent:
+      description: (可选，默认否)静默执行
+      example: "true"

@@ -34,6 +34,25 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 
 SCAN_INTERVAL = timedelta(seconds=10)
 
+SERVICE_SCHEMA = vol.Schema({vol.Optional(ATTR_ENTITY_ID): cv.entity_ids})
+
+SERVICE_TO_METHOD = {
+    'speak_text': {
+        "method": "async_speak_text",
+        "schema": SERVICE_SCHEMA.extend({
+                vol.Required('text'): cv.string,
+            })
+    },
+    'execute_text': {
+        "method": "async_execute_text",
+        "schema": SERVICE_SCHEMA.extend({
+                vol.Required('text'): cv.string,
+                vol.Optional('silent'): cv.boolean,
+            })
+    },
+}
+
+
 @dataclass
 class dev_info:
     model             : str
@@ -91,6 +110,39 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
         hass.data[DOMAIN]['miot_main_entity'][host] = device
         hass.data[DOMAIN]['entities'][device.unique_id] = device
         async_add_devices([device], update_before_add=True)
+
+        @asyncio.coroutine
+        def async_service_handler(service):
+            """Map services to methods on XiaomiMiioDevice."""
+            method = SERVICE_TO_METHOD.get(service.service)
+            params = {
+                key: value for key, value in service.data.items() if key != ATTR_ENTITY_ID
+            }
+            entity_ids = service.data.get(ATTR_ENTITY_ID)
+            if entity_ids:
+                devices = [
+                    device
+                    for device in hass.data[DOMAIN]['entities'].values()
+                    if device.entity_id in entity_ids
+                ]
+            else:
+                # devices = hass.data[DOMAIN]['entities'].values()
+                _LOGGER.error("No entity_id specified.")
+
+            update_tasks = []
+            for device in devices:
+                yield from getattr(device, method["method"])(**params)
+                update_tasks.append(device.async_update_ha_state(True))
+
+            if update_tasks:
+                yield from asyncio.wait(update_tasks, loop=hass.loop)
+
+        for service in SERVICE_TO_METHOD:
+            schema = SERVICE_TO_METHOD[service].get("schema", SERVICE_SCHEMA)
+            hass.services.async_register(
+                DOMAIN, service, async_service_handler, schema=schema
+            )
+
     else:
         _LOGGER.error("media player只能作为主设备！")
         pass
@@ -208,6 +260,12 @@ class MiotMediaPlayer(GenericMiotDevice, MediaPlayerEntity):
         if result:
             self._volume_level = volume
             self.schedule_update_ha_state()
+
+    async def async_speak_text(self, text):
+        result = await self.call_action_new(*(self._mapping['a_l_intelligent_speaker_play_text'].values()), [text])
+
+    async def async_execute_text(self, text, silent = False):
+        result = await self.call_action_new(*(self._mapping['a_l_intelligent_speaker_execute_text_directive'].values()), [text, (0 if silent else 1)])
 
     @property
     def volume_level(self):
