@@ -11,7 +11,8 @@
             "cannot_connect": "Can not connect",
             "value_error": "Wrong value",
             "bad_params": "Bad params",
-            "no_local_access": "Possible reasons:\n(1) Wrong siid oe piid\n(2) Local access is not supported by device. Try Cloud Access."
+            "no_local_access": "Possible reasons:\n(1) Wrong siid or piid\n(2) Local access is not supported by device. Try Cloud Access.",
+            "no_connect_warning": "Failed to discover your device. If it is a Xiaomi Speaker, it is normal and you need to enter its model manually above. If not, please check your input."
         },
         "step": {
             "user": {

@@ -409,7 +409,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_xiaomi_account(self, user_input=None, error=None):
         if user_input:
             # if not user_input['servers']:
-                # return await self.async_step_cloud(error='no_servers')
+                # return await self.async_step_xiaomi_account(error='no_servers')
 
             session = aiohttp_client.async_create_clientsession(self.hass)
             cloud = MiCloud(session)
@@ -420,7 +420,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                                                data=user_input)
 
             else:
-                return await self.async_step_cloud(error='cant_login')
+                return await self.async_step_xiaomi_account(error='cant_login')
 
         return self.async_show_form(
             step_id='xiaomi_account',
