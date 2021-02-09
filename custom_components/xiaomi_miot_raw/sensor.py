@@ -29,6 +29,7 @@ from .deps.const import (
     ATTR_HARDWARE_VERSION,
     SCHEMA,
     MAP,
+    UNIT_MAPPING,
 )
 from collections import OrderedDict
 TYPE = 'sensor'
@@ -62,6 +63,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     if params is None: params = OrderedDict()
 
     mappingnew = {}
+    paramsnew = {}
 
     main_mi_type = None
     other_mi_type = []
@@ -129,10 +131,13 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
             if k in MAP[TYPE]:
                 for kk,vv in v.items():
                     mappingnew[f"{k[:10]}_{kk}"] = vv
-
+        for k,v in params.items():
+            if k in MAP[TYPE]:
+                for kk,vv in v.items():
+                    paramsnew[f"{k[:10]}_{kk}"] = vv
         devices = []
         for k in mappingnew.keys():
-            devices.append(MiotSubSensor(parent_device, mappingnew, params, other_mi_type[0],{'sensor_property': k}))
+            devices.append(MiotSubSensor(parent_device, mappingnew, paramsnew, other_mi_type[0],{'sensor_property': k}))
 
         # device = MiotSubSensor(parent_device, "switch_switch_status")
         async_add_devices(devices, update_before_add=True)
@@ -175,7 +180,10 @@ class MiotSubSensor(MiotSubDevice):
     def __init__(self, parent_device, mapping, params, mitype, others={}):
         super().__init__(parent_device, mapping, params, mitype)
         self._sensor_property = others.get('sensor_property')
-        self._unit_of_measurement = others.get('uom') or None
+        try:
+            self._unit_of_measurement = UNIT_MAPPING[params[self._sensor_property]['unit']]
+        except:
+            self._unit_of_measurement = None
 
     @property
     def state(self):

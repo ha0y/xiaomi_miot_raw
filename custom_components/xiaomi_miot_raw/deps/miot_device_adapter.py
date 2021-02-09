@@ -289,6 +289,14 @@ class MiotAdapter:
                     ret['target_humidity'] = {
                         'value_range': vr
                     }
+
+            if devtype == 'sensor':
+                for k,v in propdict.items():
+                    if u := v.unit:
+                        if k not in ret:
+                            ret[k] = {}
+                        ret[k]['unit'] = u
+
             return ret
         except Exception as ex:
             _LOGGER.error(ex)
