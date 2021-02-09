@@ -167,14 +167,14 @@ class MiotHumidifier(ToggleableMiotDevice, HumidifierEntity):
     async def async_set_humidity(self, humidity):
         """Set new humidity level."""
         hum = self.convert_value(humidity, "target_humidity")
-        result = await self.set_property_new("target_humidity", hum)
+        result = await self.set_property_new(self._did_prefix + "target_humidity", hum)
 
         if result:
             self._target_humidity = hum
 
     async def async_set_mode(self, mode):
         """Update mode."""
-        result = await self.set_property_new("mode", self._ctrl_params['mode'].get(mode))
+        result = await self.set_property_new(self._did_prefix + "mode", self._ctrl_params['mode'].get(mode))
 
         if result:
             self._mode = mode

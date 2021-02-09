@@ -358,7 +358,7 @@ class GenericMiotDevice(Entity):
                     did = self._cloud.get("did")
                     spiid = self._mapping.get(field) or {}
                     if not (spiid := self._mapping.get(field)):
-                        _LOGGER.error("Cannot control {self._name} by cloud because can't find siid and piid")
+                        _LOGGER.error(f"Cannot control {self._name} by cloud because can't find {field} siid and piid from {self._mapping}")
                         return False
                     p = {**{'did': did, 'value': params},**spiid}
                     p = {'params': [p]}
