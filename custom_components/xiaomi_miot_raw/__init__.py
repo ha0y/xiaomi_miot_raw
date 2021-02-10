@@ -483,7 +483,8 @@ class GenericMiotDevice(Entity):
                 data1['datasource'] = 1
                 data1['params'] = []
                 for value in self._mapping.values():
-                    data1['params'].append({**{'did':self._cloud.get("did")},**value})
+                    if 'aiid' not in value:
+                        data1['params'].append({**{'did':self._cloud.get("did")},**value})
                 data2 = json.dumps(data1,separators=(',', ':'))
 
                 a = await self._cloud_instance.get_props(data2)
@@ -523,6 +524,13 @@ class GenericMiotDevice(Entity):
             return None
 
     def convert_value(self, value, param, dir = True, valuerange = None):
+        if not type(value) == int and not type(value) == float:
+            _LOGGER.debug(f"Converting {param} value ({value}) is not a number but {type(value)}, trying to convert to number")
+            try:
+                value = float(value)
+            except Exception as ex:
+                _LOGGER.error(f"Error converting value, type:{param}, value:{value}({type(value)}), error:{ex}")
+                return None
         try:
             if param == 'color':
                 if dir:
