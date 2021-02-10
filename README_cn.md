@@ -1,4 +1,4 @@
-# Xiaomi MIoT Raw
+# Xiaomi MIoT
 
 简体中文 | [English](https://github.com/ha0y/xiaomi_miot_raw/blob/add-miot-support/README_en.md)
 
@@ -35,7 +35,7 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 * 将 custom_component 文件夹中的内容拷贝至自己的相应目录
 
 或者
-* 将此 repo ([https://github.com/ha0y/xiaomi_miot_raw](https://github.com/ha0y/xiaomi_miot_raw)) 添加到 [HACS](https://hacs.xyz/)，然后添加“Xiaomi MiOT Raw”
+* 在 [HACS](https://hacs.xyz/) 商店中，直接搜索添加“[Xiaomi MIoT](https://github.com/ha0y/xiaomi_miot_raw)”
 
 
 ## 配置

@@ -1,4 +1,4 @@
-# Xiaomi MIoT Raw
+# Xiaomi MIoT
 
 [简体中文](https://github.com/ha0y/xiaomi_miot_raw/blob/add-miot-support/README_cn.md) | English
 > 应 HACS 要求，临时修改默认 README 语言为英语。[点击此处查看中文说明](https://github.com/ha0y/xiaomi_miot_raw/blob/add-miot-support/README_cn.md)。
@@ -19,7 +19,7 @@ Currently this custom component supports:
 * Copy the custom_component folder to your Home Assistant configuration folder
 
 or
-* Add this repo ([https://github.com/ha0y/xiaomi_miot_raw](https://github.com/ha0y/xiaomi_miot_raw)) to [HACS](https://hacs.xyz/), then add "Xiaomi MiOT Raw"
+* From [HACS](https://hacs.xyz/), search and add [Xiaomi MIoT](https://github.com/ha0y/xiaomi_miot_raw)
 
 
 ## Configuration file
