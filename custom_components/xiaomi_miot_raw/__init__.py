@@ -204,8 +204,10 @@ class GenericMiotDevice(Entity):
 
         self._mapping = config.get(CONF_MAPPING)
         if type(self._mapping) == str:
+            # 旧版单设备配置格式
             self._mapping = json.loads(self._mapping)
         elif type(self._mapping) == OrderedDict:
+            # YAML 配置格式
             pass
         else:
             mappingnew = {}
@@ -219,17 +221,14 @@ class GenericMiotDevice(Entity):
         if type(self._ctrl_params) == str:
             self._ctrl_params = json.loads(self._ctrl_params)
 
-
-        # if type(self._ctrl_params) == str:
-        #     self._ctrl_params = json.loads(self._ctrl_params)
-        # elif type(self._ctrl_params) == OrderedDict:
-        #     pass
-        # else:
-        paramsnew = {}
-        for k,v in self._ctrl_params.items():
-            for kk,vv in v.items():
-                paramsnew[f"{k[:10]}_{kk}"] = vv
-        self._ctrl_params_new = paramsnew
+        if not type(self._ctrl_params) == OrderedDict:
+            paramsnew = {}
+            for k,v in self._ctrl_params.items():
+                for kk,vv in v.items():
+                    paramsnew[f"{k[:10]}_{kk}"] = vv
+            self._ctrl_params_new = paramsnew
+        else:
+            self._ctrl_params_new = self._ctrl_params
 
         if mi_type:
             self._ctrl_params = self._ctrl_params[mi_type]

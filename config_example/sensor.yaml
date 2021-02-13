@@ -1,6 +1,6 @@
-##############################
-#    Thanks to @countrysideboy
-##############################
+########################################
+#    Thanks to @countrysideboy, @ptbsare
+########################################
 sensor:
   - platform: xiaomi_miot_raw
     name: air_monitor
@@ -31,6 +31,7 @@ sensor:
       voltage:
         siid: 4
         piid: 3
+    params:
     sensor_property: co2
     sensor_unit: 'ppm'
     scan_interval: 3

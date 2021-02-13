@@ -148,7 +148,7 @@ class MiCloud:
                 'signature': signature,
                 '_nonce': nonce,
                 'data': data
-            }, timeout=10)
+            }, timeout=5)
 
             resp = await r.json(content_type=None)
             assert resp['code'] == 0, resp
@@ -187,7 +187,7 @@ class MiCloud:
                 'signature': signature,
                 '_nonce': nonce,
                 'data': params
-            }, timeout=10)
+            }, timeout=5)
 
             resp = await r.json(content_type=None)
             if resp.get('message') == 'auth err':
