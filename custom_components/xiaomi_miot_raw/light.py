@@ -179,7 +179,7 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
             if ATTR_COLOR_TEMP in kwargs:
                 self._effect = None
                 valuerange = self._ctrl_params['color_temperature']['value_range']
-                ct = color.color_temperature_mired_to_kelvin(kwargs[ATTR_COLOR_TEMP])
+                ct = self.convert_value(kwargs[ATTR_COLOR_TEMP], "color_temperature")
                 ct = valuerange[0] if ct < valuerange[0] else valuerange[1] if ct > valuerange[1] else ct
                 parameters.append({**{'did': self._did_prefix + "color_temperature", 'value': ct}, **(self._mapping[self._did_prefix + 'color_temperature'])})
             if ATTR_HS_COLOR in kwargs:
@@ -209,16 +209,14 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
     def min_mireds(self):
         """Return the coldest color_temp that this light supports."""
         try:
-            return color.color_temperature_kelvin_to_mired(self._ctrl_params['color_temperature']['value_range'][1])
+            return self.convert_value(self._ctrl_params['color_temperature']['value_range'][1], "color_temperature") or 1
         except KeyError:
             return None
-        except ZeroDivisionError:
-            return color.color_temperature_kelvin_to_mired(1)
     @property
     def max_mireds(self):
         """Return the warmest color_temp that this light supports."""
         try:
-            return color.color_temperature_kelvin_to_mired(self._ctrl_params['color_temperature']['value_range'][0])
+            return self.convert_value(self._ctrl_params['color_temperature']['value_range'][0], "color_temperature") or 100
         except KeyError:
             return None
     @property
@@ -247,10 +245,8 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
             self._color = self.convert_value(self._state_attrs[self._did_prefix + 'color'],"color",False)
         except KeyError: pass
         try:
-            self._color_temp = color.color_temperature_kelvin_to_mired(self._state_attrs[self._did_prefix + 'color_temperature'])
+            self._color_temp = self.convert_value(self._state_attrs[self._did_prefix + 'color_temperature'], "color_temperature") or 100
         except KeyError: pass
-        except ZeroDivisionError:
-            self._color_temp = color.color_temperature_kelvin_to_mired(1)
         try:
             self._state_attrs.update({'color_temperature': self._state_attrs[self._did_prefix + 'color_temperature']})
         except KeyError: pass
@@ -305,7 +301,7 @@ class MiotSubLight(MiotSubToggleableDevice, LightEntity):
             if ATTR_COLOR_TEMP in kwargs:
                 self._effect = None
                 valuerange = self._ctrl_params['color_temperature']['value_range']
-                ct = color.color_temperature_mired_to_kelvin(kwargs[ATTR_COLOR_TEMP])
+                ct = self.convert_value(kwargs[ATTR_COLOR_TEMP], "color_temperature")
                 ct = valuerange[0] if ct < valuerange[0] else valuerange[1] if ct > valuerange[1] else ct
                 parameters.append({**{'did': self._did_prefix + "color_temperature", 'value': ct}, **(self._mapping['color_temperature'])})
             if ATTR_HS_COLOR in kwargs:
@@ -332,26 +328,22 @@ class MiotSubLight(MiotSubToggleableDevice, LightEntity):
     def color_temp(self):
         """Return the color temperature in mired."""
         try:
-            self._color_temp = color.color_temperature_kelvin_to_mired(self.device_state_attributes[self._did_prefix + 'color_temperature'])
+            self._color_temp = self.convert_value(self.device_state_attributes[self._did_prefix + 'color_temperature'], "color_temperature") or 100
         except KeyError: pass
-        except ZeroDivisionError:
-            self._color_temp = color.color_temperature_kelvin_to_mired(1)
         return self._color_temp
 
     @property
     def min_mireds(self):
         """Return the coldest color_temp that this light supports."""
         try:
-            return color.color_temperature_kelvin_to_mired(self._ctrl_params['color_temperature']['value_range'][1])
+            return self.convert_value(self._ctrl_params['color_temperature']['value_range'][1], "color_temperature") or 1
         except KeyError:
             return None
-        except ZeroDivisionError:
-            return color.color_temperature_kelvin_to_mired(1)
     @property
     def max_mireds(self):
         """Return the warmest color_temp that this light supports."""
         try:
-            return color.color_temperature_kelvin_to_mired(self._ctrl_params['color_temperature']['value_range'][0])
+            return self.convert_value(self._ctrl_params['color_temperature']['value_range'][0], "color_temperature") or 100
         except KeyError:
             return None
     @property
@@ -376,30 +368,3 @@ class MiotSubLight(MiotSubToggleableDevice, LightEntity):
         except KeyError:
             self._color = None
         return self._color
-
-    # async def async_update(self):
-    #     """Fetch state from the device."""
-
-    #     # On state change some devices doesn't provide the new state immediately.
-    #     # await super().async_update()
-    #     try:
-    #         self._brightness = self.convert_value(self._state_attrs[self._did_prefix + 'brightness'],"brightness",False,self._ctrl_params['brightness']['value_range'])
-    #     except KeyError: pass
-    #     try:
-    #         self._color = self.convert_value(self._state_attrs[self._did_prefix + 'color'],"color",False)
-    #     except KeyError: pass
-    #     try:
-    #         self._color_temp = color.color_temperature_kelvin_to_mired(self._state_attrs[self._did_prefix + 'color_temperature'])
-    #     except KeyError: pass
-    #     except ZeroDivisionError:
-    #         self._color_temp = color.color_temperature_kelvin_to_mired(1)
-    #     try:
-    #         self._state_attrs.update({'color_temperature': self._state_attrs[self._did_prefix + 'color_temperature']})
-    #     except KeyError: pass
-    #     try:
-    #         self._state_attrs.update({'mode': self._state_attrs['mode']})
-    #     except KeyError: pass
-    #     try:
-    #         self._effect = self.get_key_by_value(self._ctrl_params['mode'],self._state_attrs[self._did_prefix + 'mode'])
-    #     except KeyError:
-    #         self._effect = None

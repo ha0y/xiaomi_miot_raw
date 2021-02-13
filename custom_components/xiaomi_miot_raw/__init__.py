@@ -21,6 +21,7 @@ from miio.device import Device
 from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
 import copy
+import math
 from collections import OrderedDict
 
 from .deps.const import (
@@ -562,6 +563,12 @@ class GenericMiotDevice(Entity):
                     return round((value - valuerange[0])/valuerange[2])*valuerange[2]+valuerange[0]
                 else:
                     return value / valuerange[1]
+            elif param == 'color_temperature':
+                # dir: mired to kelvin; not dir: kelvin to mired
+                # both are 1000000 / value
+                # if value != 0:
+                return math.floor(1000000 / value)
+                # else:
         except Exception as ex:
             _LOGGER.error(f"Error converting value, type:{param}, value:{value}, error:{ex}")
             return None
