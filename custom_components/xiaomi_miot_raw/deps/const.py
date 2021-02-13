@@ -51,6 +51,10 @@ MAP = {
         "power_consumption",
         "electricity",
         "environment",
+        "filter",
+        "filter_2",
+        "filter_3",
+        "filter_4",
     },
     "switch": {
         "switch",
@@ -72,6 +76,7 @@ MAP = {
         "air_fresh",
         "air_purifier",
         "washer",
+        "hood",
     },
     "cover": {
         "curtain",

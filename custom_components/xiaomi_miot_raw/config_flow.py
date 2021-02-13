@@ -252,9 +252,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     params_default = prm
                 else:
                     device_info += f"很抱歉，未能自动发现配置参数。但这不代表您的设备不受支持。\n您可以[手工编写配置](https://github.com/ha0y/xiaomi_miot_raw/#文件配置法)，或者将型号 **{self._model}** 报告给作者。"
-                    devtype_default = []
-                    mapping_default = '{"switch_status":{"siid":2,"piid":1}}'
-                    params_default = '{"switch_status":{"power_on":true,"power_off":false}}'
+                    devtype_default = ['switch']
+                    mapping_default = '{"switch":{"switch_status":{"siid":2,"piid":1}}}'
+                    params_default = '{"switch":{"switch_status":{"power_on":true,"power_off":false}}}'
 
                 return self.async_show_form(
                     step_id="devinfo",

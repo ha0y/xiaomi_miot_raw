@@ -321,9 +321,9 @@ class MiotAdapter:
             ret['a_l'] = action_dict
             self.devtypeset.add('fan')
 
-        if self.mitype == 'air_conditioner':
+        if self.mitype == 'air_conditioner' or self.mitype == 'hood':
             try:
-                ret['air_conditioner'] = {**ret['air_conditioner'], **ret.pop('fan_control')}
+                ret[self.mitype] = {**ret[self.mitype], **ret.pop('fan_control')}
             except Exception as ex:
                 pass
 
@@ -342,11 +342,12 @@ class MiotAdapter:
                     if nid == self.mitype and not has_main:
                         ret[nid]['main'] = True
                         has_main = True
-        if self.mitype == 'air_conditioner':
+        if self.mitype == 'air_conditioner' or self.mitype == 'hood':
             try:
-                ret['air_conditioner'] = {**ret['air_conditioner'], **ret.pop('fan_control')}
+                ret[self.mitype] = {**ret[self.mitype], **ret.pop('fan_control')}
             except Exception as ex:
                 pass
+
         if 'speaker' in ret and 'play_control' in ret:
             ret['speaker'] = {**ret['speaker'], **ret.pop('play_control')}
 
