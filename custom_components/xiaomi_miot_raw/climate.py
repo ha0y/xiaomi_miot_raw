@@ -266,8 +266,6 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
     @property
     def fan_modes(self):
         """Return the list of available fan modes."""
-        # return self._fan_modes
-        # return ["On Low", "On High", "Auto Low", "Auto High", "Off"]
         return list(self._ctrl_params['speed'].keys())
 
     @property

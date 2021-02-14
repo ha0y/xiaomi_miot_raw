@@ -174,9 +174,10 @@ class MiotAdapter:
                         'power_on': True,
                         'power_off': False
                     }
-                else:
-                    # TODO: will this happen?
-                    ret['switch_status'] = {
+
+            if p := propdict.get('dryer'):
+                if p.format_ == 'bool':
+                    ret['dryer'] = {
                         'power_on': True,
                         'power_off': False
                     }
@@ -204,6 +205,11 @@ class MiotAdapter:
                     ret['target_temperature'] = {
                         'value_range': vr
                     }
+
+            if p := propdict.get('drying_level'):
+                if vl := p.vlist:
+                    lst = {item['description']: item['value'] for item in vl}
+                    ret['drying_level'] = lst
 
             # print(devtype)
             if devtype == 'light':
@@ -337,6 +343,15 @@ class MiotAdapter:
         if 'speaker' in ret and 'play_control' in ret:
             ret['speaker'] = {**ret['speaker'], **ret.pop('play_control')}
 
+        if 'airer' in ret:
+            if 'dryer' in ret['airer']:
+                if 'dryer' not in ret: ret['dryer'] = {}
+                ret['dryer'].update({'switch_status': ret['airer'].pop('dryer')})
+                self.devtypeset.add('fan')
+            if 'drying_level' in ret['airer']:
+                if 'dryer' not in ret: ret['dryer'] = {}
+                ret['dryer'].update({'speed': ret['airer'].pop('drying_level')})
+
         return ret
 
     def get_all_params(self):
@@ -357,6 +372,14 @@ class MiotAdapter:
 
         if 'speaker' in ret and 'play_control' in ret:
             ret['speaker'] = {**ret['speaker'], **ret.pop('play_control')}
+
+        if 'airer' in ret:
+            if 'dryer' in ret['airer']:
+                if 'dryer' not in ret: ret['dryer'] = {}
+                ret['dryer'].update({'switch_status': ret['airer'].pop('dryer')})
+            if 'drying_level' in ret['airer']:
+                if 'dryer' not in ret: ret['dryer'] = {}
+                ret['dryer'].update({'speed': ret['airer'].pop('drying_level')})
 
         if not has_main:
             try:

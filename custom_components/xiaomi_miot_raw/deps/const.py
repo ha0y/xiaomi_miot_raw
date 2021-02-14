@@ -79,6 +79,7 @@ MAP = {
         "washer",
         "hood",
         "fan_control",
+        "dryer",
     },
     "cover": {
         "curtain",
