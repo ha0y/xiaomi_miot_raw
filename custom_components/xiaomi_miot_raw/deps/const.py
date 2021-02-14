@@ -24,7 +24,8 @@ SUPPORTED_DOMAINS = [
     "fan",
     "cover",
     "humidifier",
-    "media_player"
+    "media_player",
+    "climate",
 ]
 DEFAULT_NAME = "Xiaomi MIoT Device"
 SCHEMA = {
@@ -77,6 +78,7 @@ MAP = {
         "air_purifier",
         "washer",
         "hood",
+        "fan_control",
     },
     "cover": {
         "curtain",
@@ -90,6 +92,9 @@ MAP = {
         "media_player",
         "speaker",
         "play_control",
+    },
+    "climate": {
+        "air_conditioner",
     },
 }
 

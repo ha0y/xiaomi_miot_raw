@@ -67,7 +67,8 @@ class MiotAdapter:
     def init_all_services(self) -> None:
         for s in self.spec['services']:
             if (n := name_by_type(s['type'])) in SUPPORTED:
-                self.devtypeset.add(get_type_by_mitype(n))
+                if n != 'fan_control':
+                    self.devtypeset.add(get_type_by_mitype(n))
             if not self.services.get(name_by_type(s['type'])):
                 self.services[name_by_type(s['type'])] = Service(
                     s['iid'], s['type'], s['description'], self.get_prop_by_siid(s), name_by_type(s['type']), s.get('actions') or [])
@@ -197,6 +198,12 @@ class MiotAdapter:
                 if vl := p.vlist:
                     lst = {item['description']: item['value'] for item in vl}
                     ret['mode'] = lst
+
+            if p := propdict.get('target_temperature'):
+                if vr := p.vrange:
+                    ret['target_temperature'] = {
+                        'value_range': vr
+                    }
 
             # print(devtype)
             if devtype == 'light':
