@@ -383,7 +383,7 @@ class MiotAdapter:
 
         if not has_main:
             try:
-                ret['switch']['main'] = True
+                ret[list(ret.keys())[0]]['main'] = True
             except KeyError:
                 _LOGGER.error("识别不出主设备，请手动指定")
         return ret

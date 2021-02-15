@@ -198,6 +198,24 @@ class GenericMiotDevice(Entity):
 
     def __init__(self, device, config, device_info, hass = None, mi_type = None):
         """Initialize the entity."""
+
+        def setup_cloud(self, hass):
+            if cloud := hass.data[DOMAIN].get('cloud_instance'):
+                if cloud.auth.get('user_id') == self._cloud.get('userId'):
+                    _LOGGER.info(f"Xiaomi account was already logged in for {self._name}.")
+                    return cloud
+
+            _LOGGER.info(f"Setting up xiaomi account for {self._name}...")
+            mc = MiCloud(
+                aiohttp_client.async_get_clientsession(self._hass)
+            )
+            mc.login_by_credientals(
+                self._cloud.get('userId'),
+                self._cloud.get('serviceToken'),
+                self._cloud.get('ssecurity')
+            )
+            return mc
+
         self._device = device
         self._mi_type = mi_type
         self._did_prefix = f"{self._mi_type[:10]}_" if self._mi_type else ""
@@ -236,6 +254,7 @@ class GenericMiotDevice(Entity):
         self._name = config.get(CONF_NAME)
         self._update_instant = config.get(CONF_UPDATE_INSTANT)
         self._skip_update = False
+        self._delay_update = False
 
         self._model = device_info.model
         self._unique_id = "{}-{}-{}".format(
@@ -248,20 +267,7 @@ class GenericMiotDevice(Entity):
         self._cloud_write = config.get('cloud_write')
         self._cloud_instance = None
         if self._cloud:
-            if cloud := hass.data[DOMAIN].get('cloud_instance'):
-                self._cloud_instance = cloud
-                _LOGGER.info(f"Xiaomi account was already logged in for {self._name}.")
-            else:
-                _LOGGER.info(f"Setting up xiaomi account for {self._name}...")
-                mc = MiCloud(
-                    aiohttp_client.async_get_clientsession(self._hass)
-                )
-                mc.login_by_credientals(
-                    self._cloud.get('userId'),
-                    self._cloud.get('serviceToken'),
-                    self._cloud.get('ssecurity')
-                )
-                self._cloud_instance = mc
+            self._cloud_instance = setup_cloud(self, hass)
 
         self._available = None
         self._state = None
@@ -371,6 +377,7 @@ class GenericMiotDevice(Entity):
                                 if item['code'] != 0:
                                     _LOGGER.error(f"Control {self._name} by cloud failed: {r}")
                                     return False
+                            self._delay_update = True
                             return True
                     return False
                 else:
@@ -388,6 +395,7 @@ class GenericMiotDevice(Entity):
                                 if item['code'] != 0:
                                     _LOGGER.error(f"Control {self._name} by cloud failed: {r}")
                                     return False
+                            self._delay_update = True
                             return True
                     return False
 
@@ -432,7 +440,9 @@ class GenericMiotDevice(Entity):
         if self._update_instant is False or self._skip_update:
             self._skip_update = False
             return
-
+        if self._delay_update:
+            await asyncio.sleep(1)
+            self._delay_update = False
         try:
             if not self._cloud:
                 response = await self.hass.async_add_job(
