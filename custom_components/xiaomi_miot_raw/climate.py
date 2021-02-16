@@ -5,7 +5,6 @@ from collections import OrderedDict
 from datetime import timedelta
 from functools import partial
 from typing import Optional
-from dataclasses import dataclass
 
 import async_timeout
 import homeassistant.helpers.config_validation as cv
@@ -22,7 +21,7 @@ from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
 
 import copy
-from . import GenericMiotDevice, ToggleableMiotDevice
+from . import GenericMiotDevice, ToggleableMiotDevice, get_dev_info, dev_info
 from .deps.const import (
     DOMAIN,
     CONF_UPDATE_INSTANT,
@@ -48,12 +47,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     SCHEMA
 )
 
-@dataclass
-class dev_info:
-    model             : str
-    mac_address       : str
-    firmware_version  : str
-    hardware_version  : str
 
 HVAC_MAPPING = {
     HVAC_MODE_OFF:  ['Off', 'Idle', 'None'],
@@ -68,7 +61,7 @@ HVAC_MAPPING = {
 SCAN_INTERVAL = timedelta(seconds=10)
 # pylint: disable=unused-argument
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     """Set up the sensor from config."""
 
     if DATA_KEY not in hass.data:
@@ -110,14 +103,23 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
                 device_info.hardware_version,
             )
 
-            device = MiotClimate(miio_device, config, device_info, hass, main_mi_type)
         except DeviceException as de:
             if not config.get(CONF_CLOUD):
                 _LOGGER.warn(de)
                 raise PlatformNotReady
             else:
-                device_info = dev_info(host,token,"","")
-                device = MiotClimate(miio_device, config, device_info, hass, main_mi_type)
+                try:
+                    devinfo = await get_dev_info(hass, config.get(CONF_CLOUD)['did'])
+                    device_info = dev_info(
+                        devinfo['result'][1]['value'],
+                        token,
+                        devinfo['result'][3]['value'],
+                        ""
+                    )
+                except Exception as ex:
+                    _LOGGER.error(f"Failed to get device info for {config.get(CONF_NAME)}")
+                    device_info = dev_info(host,token,"","")
+        device = MiotClimate(miio_device, config, device_info, hass, main_mi_type)
 
         _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
         hass.data[DOMAIN]['miot_main_entity'][host] = device

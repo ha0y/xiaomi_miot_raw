@@ -51,7 +51,7 @@ ATTR_SENSOR_PROPERTY = "sensor_property"
 SCAN_INTERVAL = timedelta(seconds=5)
 # pylint: disable=unused-argument
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     """Set up the sensor from config."""
     if DATA_KEY not in hass.data:
         hass.data[DATA_KEY] = {}

@@ -62,7 +62,7 @@ class dev_info:
     hardware_version  : str
 
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     """Set up the fan from config."""
 
     if DATA_KEY not in hass.data:

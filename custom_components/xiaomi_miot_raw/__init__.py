@@ -3,6 +3,7 @@ import json
 import logging
 from datetime import timedelta
 from functools import partial
+from dataclasses import dataclass
 
 import async_timeout
 import homeassistant.helpers.config_validation as cv
@@ -759,3 +760,27 @@ def sanitize_filename(s: str):
     filename = ''.join(c for c in s if c in valid_chars)
     filename = filename.replace(' ','_')
     return filename
+
+async def get_dev_info(hass, did):
+    cloud = hass.data[DOMAIN].get('cloud_instance')
+    if not cloud:
+        return None
+    data1 = {}
+    data1['datasource'] = 1
+    data1['params'] = [
+        {"did": str(did), "siid": 1, "piid": 1},
+        {"did": str(did), "siid": 1, "piid": 2},
+        {"did": str(did), "siid": 1, "piid": 3},
+        {"did": str(did), "siid": 1, "piid": 4},
+    ]
+
+    data2 = json.dumps(data1,separators=(',', ':'))
+
+    return await cloud.get_props(data2)
+
+@dataclass
+class dev_info:
+    model             : str
+    mac_address       : str
+    firmware_version  : str
+    hardware_version  : str

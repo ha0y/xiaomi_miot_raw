@@ -113,6 +113,19 @@ async def guess_mp_from_model(hass,model):
 def data_masking(s: str, n: int) -> str:
     return re.sub(f"(?<=.{{{n}}}).(?=.{{{n}}})", "*", str(s))
 
+def get_conn_type(device: dict):
+    #0 for wifi, 1 for zigbee, 2 for BLE, 3 for Mesh, -1 for Unknown
+    if 'blt' in device['did']:
+        return 2
+    if device.get('parent_id'):
+        return 1
+    if device.get('localip'):
+        if not device.get('ssid'):
+            return 3
+        return 0
+    return -1
+
+
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
@@ -127,6 +140,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._devtype = vol.UNDEFINED
         self._info = None
         self._model = None
+        self._did = None
         self._input2 = {}
 
     async def async_step_user(self, user_input=None):
@@ -138,16 +152,28 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 device = next(d for d in self.hass.data[DOMAIN]['micloud_devices']
                               if d['did'] == user_input['action'])
-                return await self.async_step_localinfo({
-                    CONF_NAME: device.get('name') or DEFAULT_NAME,
-                    CONF_HOST: device.get('localip') or DUMMY_IP,
-                    CONF_TOKEN: device.get('token') if device.get('localip') else DUMMY_TOKEN,
-                })
+                self._model = device.get('model')
+                self._did = device.get('did')
+                if get_conn_type(device) == 0:
+                    return await self.async_step_localinfo({
+                        CONF_NAME: device.get('name') or DEFAULT_NAME,
+                        CONF_HOST: device.get('localip') or DUMMY_IP,
+                        CONF_TOKEN: device.get('token') if device.get('localip') else DUMMY_TOKEN,
+                    })
+                else:
+                    return await self.async_step_localinfo({
+                        CONF_NAME: device.get('name') or DEFAULT_NAME,
+                        CONF_HOST: DUMMY_IP,
+                        CONF_TOKEN: DUMMY_TOKEN,
+                    })
 
         if DOMAIN in self.hass.data and 'micloud_devices' in self.hass.data[DOMAIN]:
             for device in self.hass.data[DOMAIN]['micloud_devices']:
-                if device['did'] not in actions and device.get('localip'):
-                    name = f"接入 {device['name']} ({device['localip']})"
+                if device['did'] not in actions:
+                    dt = get_conn_type(device)
+                    dt = "WiFi" if dt == 0 else "ZigBee" if dt == 1 else "BLE" if dt == 2 \
+                                           else "BLE Mesh" if dt == 3 else "Unknown"
+                    name = f"接入 {device['name']} ({dt}{', '+device['localip'] if (dt == '''WiFi''') else ''})"
                     actions[device['did']] = name
 
         return self.async_show_form(
@@ -235,13 +261,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     errors=errors,
                 )
             else:
-                return self.async_show_form(
-                    step_id='xiaoai',
-                    data_schema=vol.Schema({
-                        vol.Required(CONF_MODEL): str,
-                    }),
-                    errors={'base': 'no_connect_warning'}
-                )
+                return await self.async_step_xiaoai({
+                    CONF_MODEL: self._model
+                } if self._model else None)
 
         return self.async_show_form(
             step_id="localinfo",
@@ -277,7 +299,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     )
                 else:
                     if cloud := self.hass.data[DOMAIN].get('cloud_instance'):
-                        did = None
+                        did = self._did
                         for dev in self.hass.data[DOMAIN]['micloud_devices']:
                             if dev.get('localip') == self._input2[CONF_HOST]:
                                 did = dev['did']
@@ -397,8 +419,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 hint += f"很抱歉，未能自动发现配置参数。但这不代表您的设备不受支持。\n您可以[手工编写配置](https://github.com/ha0y/xiaomi_miot_raw/#文件配置法)，或者将型号 **{self._model}** 报告给作者。"
                 devtype_default = []
-                mapping_default = '{"switch_status":{"siid":2,"piid":1}}'
-                params_default = '{"switch_status":{"power_on":true,"power_off":false}}'
+                mapping_default = '{"switch":{"switch_status":{"siid":2,"piid":1}}}'
+                params_default = '{"switch":{"switch_status":{"power_on":true,"power_off":false}}}'
 
 
             return self.async_show_form(
@@ -418,7 +440,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id='xiaoai',
             data_schema=vol.Schema({
-                vol.Required(CONF_MODEL): str,
+                vol.Required(CONF_MODEL, default=self._model): str,
             }),
             errors={'base': 'no_connect_warning'}
         )

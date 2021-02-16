@@ -25,7 +25,7 @@ from miio.device import Device
 from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
 
-from . import GenericMiotDevice, ToggleableMiotDevice, MiotSubToggleableDevice, MiotSubDevice
+from . import GenericMiotDevice, ToggleableMiotDevice, MiotSubToggleableDevice, MiotSubDevice, get_dev_info, dev_info
 from .deps.const import (
     DOMAIN,
     CONF_UPDATE_INSTANT,
@@ -55,7 +55,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 SCAN_INTERVAL = timedelta(seconds=10)
 # pylint: disable=unused-argument
 @asyncio.coroutine
-def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     """Set up the fan from config."""
 
     if DATA_KEY not in hass.data:
@@ -88,12 +88,11 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
                 mappingnew[f"{k[:10]}_{kk}"] = vv
 
         _LOGGER.info("Initializing %s with host %s (token %s...)", config.get(CONF_NAME), host, token[:5])
-
+        if type(params) == OrderedDict:
+            miio_device = MiotDevice(ip=host, token=token, mapping=mapping)
+        else:
+            miio_device = MiotDevice(ip=host, token=token, mapping=mappingnew)
         try:
-            if type(params) == OrderedDict:
-                miio_device = MiotDevice(ip=host, token=token, mapping=mapping)
-            else:
-                miio_device = MiotDevice(ip=host, token=token, mapping=mappingnew)
             device_info = miio_device.info()
             model = device_info.model
             _LOGGER.info(
@@ -103,10 +102,23 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
                 device_info.hardware_version,
             )
 
-            device = MiotFan(miio_device, config, device_info, hass, main_mi_type)
         except DeviceException as de:
-            _LOGGER.warn(de)
-            raise PlatformNotReady
+            if not config.get(CONF_CLOUD):
+                _LOGGER.warn(de)
+                raise PlatformNotReady
+            else:
+                try:
+                    devinfo = await get_dev_info(hass, config.get(CONF_CLOUD)['did'])
+                    device_info = dev_info(
+                        devinfo['result'][1]['value'],
+                        token,
+                        devinfo['result'][3]['value'],
+                        ""
+                    )
+                except Exception as ex:
+                    _LOGGER.error(f"Failed to get device info for {config.get(CONF_NAME)}")
+                    device_info = dev_info(host,token,"","")
+        device = MiotFan(miio_device, config, device_info, hass, main_mi_type)
 
         _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
         hass.data[DOMAIN]['miot_main_entity'][host] = device
