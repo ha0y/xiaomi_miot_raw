@@ -327,8 +327,6 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
             if result:
                 self._hvac_mode = hvac_mode
 
-        # self.async_write_ha_state()
-
     async def async_set_preset_mode(self, preset_mode):
         """Update preset_mode on."""
         self._preset = preset_mode

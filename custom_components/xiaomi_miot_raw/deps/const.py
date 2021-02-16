@@ -28,6 +28,10 @@ SUPPORTED_DOMAINS = [
     "climate",
 ]
 DEFAULT_NAME = "Xiaomi MIoT Device"
+
+DUMMY_IP = "0.0.0.0"
+DUMMY_TOKEN = "00000000000000000000000000000000"
+
 SCHEMA = {
         vol.Required(CONF_HOST): cv.string,
         vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),

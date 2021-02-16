@@ -317,7 +317,7 @@ class GenericMiotDevice(Entity):
             'identifiers': {(DOMAIN, self._unique_id)},
             'name': self._name,
             'model': self._model,
-            'manufacturer': (self._model or 'Xiaomi').split('.', 1)[0],
+            'manufacturer': (self._model or 'Xiaomi').split('.', 1)[0].capitalize(),
             'sw_version': self._state_attrs.get(ATTR_FIRMWARE_VERSION),
         }
 
@@ -441,7 +441,7 @@ class GenericMiotDevice(Entity):
             self._skip_update = False
             return
         if self._delay_update:
-            await asyncio.sleep(1)
+            await asyncio.sleep(3)
             self._delay_update = False
         try:
             if not self._cloud:
@@ -605,6 +605,7 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
         result = await self.set_property_new(self._did_prefix + "switch_status",prm)
         if result:
             self._state = True
+            self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs):
         """Turn off."""
@@ -612,6 +613,7 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
         result = await self.set_property_new(self._did_prefix + "switch_status",prm)
         if result:
             self._state = False
+            self.async_write_ha_state()
 
     async def async_update(self):
         # _LOGGER.error("Update!!!!!!!")

@@ -1,9 +1,20 @@
-"""teset."""
-from homeassistant import config_entries
+import json
+import re
+
+import async_timeout
 import homeassistant.helpers.config_validation as cv
+import requests
 import voluptuous as vol
+from aiohttp import ClientSession
 from homeassistant import config_entries
+from homeassistant.components import persistent_notification
 from homeassistant.const import *
+from homeassistant.helpers import aiohttp_client, discovery
+from homeassistant.helpers.device_registry import format_mac
+from miio import Device as MiioDevice
+from miio import DeviceException
+from miio.miot_device import MiotDevice
+
 from .deps.const import (
     DOMAIN,
     CONF_UPDATE_INSTANT,
@@ -16,47 +27,18 @@ from .deps.const import (
     ATTR_FIRMWARE_VERSION,
     ATTR_HARDWARE_VERSION,
     SUPPORTED_DOMAINS,
+    DEFAULT_NAME,
+    DUMMY_IP,
+    DUMMY_TOKEN,
 )
-import json
-from homeassistant.helpers.device_registry import format_mac
-from miio import (
-    Device as MiioDevice,
-    DeviceException,
-)
-from miio.miot_device import MiotDevice
-import async_timeout
-from aiohttp import ClientSession
-from homeassistant.helpers import aiohttp_client, discovery
-import requests
 from .deps.miot_device_adapter import MiotAdapter
-from homeassistant.components import persistent_notification
-from .deps.xiaomi_cloud_new import MiCloud
-import re
 from .deps.special_devices import SPECIAL_DEVICES
+from .deps.xiaomi_cloud_new import MiCloud
 
-VALIDATE = {'fan': [{"switch_status"}, {"switch_status"}],
-            'switch': [{"switch_status"}, {"switch_status"}],
-            'light': [{"switch_status"}, {"switch_status"}],
-            'cover': [{"motor_control"}, {"motor_control"}],
-            'humidifier': [{"switch_status","target_humidity"}, {"switch_status","target_humidity"}]
-            }
-
-async def validate_devinfo(hass, data):
-    """检验配置是否缺项。无问题返回[[],[]]，有缺项返回缺项。"""
-    # print(result)
-    devtype = data['devtype']
-    ret = [[],[]]
-    requirements = VALIDATE.get(devtype)
-    if not requirements:
-        return ret
-    else:
-        for item in requirements[0]:
-            if item not in json.loads(data[CONF_MAPPING]):
-                ret[0].append(item)
-        for item in requirements[1]:
-            if item not in json.loads(data[CONF_CONTROL_PARAMS]):
-                ret[1].append(item)
-        return ret
+actions = {
+    'xiaomi_account': "登录小米账号",
+    'localinfo': "接入设备"
+}
 
 async def async_get_mp_from_net(hass, model):
     cs = aiohttp_client.async_get_clientsession(hass)
@@ -154,32 +136,24 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             elif user_input['action'] == 'localinfo':
                 return await self.async_step_localinfo()
             else:
-                # device = next(d for d in self.hass.data[DOMAIN]['devices']
-                            #   if d['did'] == user_input['action'])
-                # return self.async_show_form(
-                #     step_id='localinfo',
-                #     data_schema=vol.Schema({
-                #         vol.Required('host', default=device['localip']): str,
-                #         vol.Required('token', default=device['token']): str,
-                #     }),
-                #     description_placeholders={'error_text': ''}
-                # )
-                pass
+                device = next(d for d in self.hass.data[DOMAIN]['micloud_devices']
+                              if d['did'] == user_input['action'])
+                return await self.async_step_localinfo({
+                    CONF_NAME: device.get('name') or DEFAULT_NAME,
+                    CONF_HOST: device.get('localip') or DUMMY_IP,
+                    CONF_TOKEN: device.get('token') if device.get('localip') else DUMMY_TOKEN,
+                })
 
-        # if DOMAIN in self.hass.data and 'micloud_devices' in self.hass.data[DOMAIN]:
-        #     for device in self.hass.data[DOMAIN]['devices']:
-        #         if (device['model'] == 'lumi.gateway.mgl03' and
-        #                 device['did'] not in ACTIONS):
-        #             name = f"Add {device['name']} ({device['localip']})"
-        #             ACTIONS[device['did']] = name
+        if DOMAIN in self.hass.data and 'micloud_devices' in self.hass.data[DOMAIN]:
+            for device in self.hass.data[DOMAIN]['micloud_devices']:
+                if device['did'] not in actions and device.get('localip'):
+                    name = f"接入 {device['name']} ({device['localip']})"
+                    actions[device['did']] = name
 
         return self.async_show_form(
             step_id='user',
             data_schema=vol.Schema({
-                vol.Required('action', default='localinfo'): vol.In({
-                    'xiaomi_account': "登录小米账号",
-                    'localinfo': "接入设备"
-                })
+                vol.Required('action', default='localinfo'): vol.In(actions),
             })
         )
 
@@ -232,19 +206,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     f"MAC: {d['mac']}\n"
                 )
 
-                # self._info = self.get_devconfg_by_model(self._model)
-
-                # self._info = await async_get_mp_from_net(self.hass, self._model) \
-                    # or await guess_mp_from_model(self.hass, self._model)
-
                 self._info = await guess_mp_from_model(self.hass, self._model)
 
                 if self._info and self._info.get('mapping') != "{}":
                     device_info += "\n已经自动发现配置参数。\n如无特殊需要，无需修改下列内容。\n"
                     devtype_default = self._info.get('device_type')
-
-                    # mp = f'''{{"{self._info.get('device_type')}":{self._info.get('mapping')}}}'''
-                    # prm = f'''{{"{self._info.get('device_type')}":{self._info.get('params')}}}'''
 
                     mp = self._info.get('mapping')
                     prm = self._info.get('params')
@@ -259,7 +225,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 return self.async_show_form(
                     step_id="devinfo",
                     data_schema=vol.Schema({
-                        # vol.Required('devtype', default=devtype_default): vol.In(SUPPORTED_DOMAINS),
                         vol.Required('devtype', default=devtype_default): cv.multi_select(SUPPORTED_DOMAINS),
                         vol.Required(CONF_MAPPING, default=mapping_default): str,
                         vol.Required(CONF_CONTROL_PARAMS, default=params_default): str,
@@ -285,8 +250,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_NAME): str,
                     vol.Required(CONF_HOST, default='192.168.'): str,
                     vol.Required(CONF_TOKEN): str,
-                    # vol.Required(CONF_MAPPING, default='{"switch_status":{"siid":2,"piid":1}}'): str,
-                    # vol.Required(CONF_CONTROL_PARAMS, default='{"switch_status":{"power_on":true,"power_off":false}}'): str,
                 }
             ),
             # description_placeholders={"device_info": "device_info"},
@@ -301,80 +264,62 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._input2['devtype'] = self._devtype
             self._input2[CONF_MAPPING] = user_input[CONF_MAPPING]
             self._input2[CONF_CONTROL_PARAMS] = user_input[CONF_CONTROL_PARAMS]
-            # self._input2['cloud_read'] = user_input['cloud_read']
             self._input2['cloud_write'] = user_input.get('cloud_write')
 
-            # v = await validate_devinfo(self.hass, self._input2)
-            v= [[],[]]
-            if v == [[],[]] :
-
-                try:
-                    # print(result)
-                    if not user_input.get('cloud_read') and not user_input.get('cloud_write'):
-                        device = MiotDevice(ip=self._input2[CONF_HOST], token=self._input2[CONF_TOKEN], mapping=list(json.loads(self._input2[CONF_MAPPING]).values())[0])
-                        result = device.get_properties_for_mapping()
-                        return self.async_create_entry(
-                            title=self._input2[CONF_NAME],
-                            data=self._input2,
-                        )
-                    else:
-                        if cloud := self.hass.data[DOMAIN].get('cloud_instance'):
-                            did = None
-                            for dev in self.hass.data[DOMAIN]['micloud_devices']:
-                                if dev.get('localip') == self._input2[CONF_HOST]:
-                                    did = dev['did']
-                            if did:
-                                self._input2['update_from_cloud'] = {
-                                    'did': did,
-                                    'userId': cloud.auth['user_id'],
-                                    'serviceToken': cloud.auth['service_token'],
-                                    'ssecurity': cloud.auth['ssecurity'],
-                                }
-                                return self.async_create_entry(
-                                    title=self._input2[CONF_NAME],
-                                    data=self._input2,
-                                )
-                            else:
-                                return self.async_show_form(
-                                    step_id="cloudinfo",
-                                    data_schema=vol.Schema({
-                                        vol.Required('did'): str,
-                                        vol.Required('userId', default=cloud.auth['user_id']): str,
-                                        vol.Required('serviceToken', default=cloud.auth['service_token']): str,
-                                        vol.Required('ssecurity', default=cloud.auth['ssecurity']): str,
-                                    }),
-                                description_placeholders={"device_info": "没找到 did，请手动填一下"},
-                                errors=errors,
+            try:
+                # print(result)
+                if not user_input.get('cloud_read') and not user_input.get('cloud_write'):
+                    device = MiotDevice(ip=self._input2[CONF_HOST], token=self._input2[CONF_TOKEN], mapping=list(json.loads(self._input2[CONF_MAPPING]).values())[0])
+                    result = device.get_properties_for_mapping()
+                    return self.async_create_entry(
+                        title=self._input2[CONF_NAME],
+                        data=self._input2,
+                    )
+                else:
+                    if cloud := self.hass.data[DOMAIN].get('cloud_instance'):
+                        did = None
+                        for dev in self.hass.data[DOMAIN]['micloud_devices']:
+                            if dev.get('localip') == self._input2[CONF_HOST]:
+                                did = dev['did']
+                        if did:
+                            self._input2['update_from_cloud'] = {
+                                'did': did,
+                                'userId': cloud.auth['user_id'],
+                                'serviceToken': cloud.auth['service_token'],
+                                'ssecurity': cloud.auth['ssecurity'],
+                            }
+                            return self.async_create_entry(
+                                title=self._input2[CONF_NAME],
+                                data=self._input2,
                             )
                         else:
                             return self.async_show_form(
                                 step_id="cloudinfo",
                                 data_schema=vol.Schema({
                                     vol.Required('did'): str,
-                                    vol.Required('userId'): str,
-                                    vol.Required('serviceToken'): str,
-                                    vol.Required('ssecurity'): str,
-                                    }),
-                                # description_placeholders={"device_info": hint},
-                                errors=errors,
-                            )
-                except DeviceException as ex:
-                    errors["base"] = "no_local_access"
-                    hint = f"错误信息: {ex}"
-            else:
-                errors["base"] = "bad_params"
+                                    vol.Required('userId', default=cloud.auth['user_id']): str,
+                                    vol.Required('serviceToken', default=cloud.auth['service_token']): str,
+                                    vol.Required('ssecurity', default=cloud.auth['ssecurity']): str,
+                                }),
+                            description_placeholders={"device_info": "没找到 did，请手动填一下"},
+                            errors=errors,
+                        )
+                    else:
+                        return self.async_show_form(
+                            step_id="cloudinfo",
+                            data_schema=vol.Schema({
+                                vol.Required('did'): str,
+                                vol.Required('userId'): str,
+                                vol.Required('serviceToken'): str,
+                                vol.Required('ssecurity'): str,
+                                }),
+                            # description_placeholders={"device_info": hint},
+                            errors=errors,
+                        )
+            except DeviceException as ex:
+                errors["base"] = "no_local_access"
+                hint = f"错误信息: {ex}"
 
-                hint = ""
-                if v[0]:
-                    hint += "\nmapping 缺少必须配置的项目："
-                    for item in v[0]:
-                        hint += (item + ', ')
-                if v[1]:
-                    hint += "\nparams 缺少必须配置的项目："
-                    for item in v[1]:
-                        hint += (item + ', ')
-
-            # if info:
         return self.async_show_form(
             step_id="devinfo",
             data_schema=vol.Schema({
@@ -444,9 +389,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if self._info and self._info.get('mapping') != "{}":
                 hint += "\n根据您手动输入的 model，已经自动发现配置参数。\n如无特殊需要，无需修改下列内容。\n"
                 devtype_default = self._info.get('device_type')
-
-                # mp = f'''{{"{self._info.get('device_type')}":{self._info.get('mapping')}}}'''
-                # prm = f'''{{"{self._info.get('device_type')}":{self._info.get('params')}}}'''
 
                 mp = self._info.get('mapping')
                 prm = self._info.get('params')
