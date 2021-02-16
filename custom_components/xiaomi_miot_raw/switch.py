@@ -29,7 +29,9 @@ from .deps.const import (
     ATTR_FIRMWARE_VERSION,
     ATTR_HARDWARE_VERSION,
     SCHEMA,
-    MAP
+    MAP,
+    DUMMY_IP,
+    DUMMY_TOKEN,
 )
 import copy
 
