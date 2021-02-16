@@ -118,14 +118,18 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         hass.data[DOMAIN]['entities'][device.unique_id] = device
         async_add_devices([device], update_before_add=True)
     if other_mi_type:
-        parent_device = None
-        try:
-            parent_device = hass.data[DOMAIN]['miot_main_entity'][host]
-        except KeyError:
-            _LOGGER.warning(f"{host} 的主设备尚未就绪，子设备 {TYPE} 等待主设备加载完毕后才会加载")
-            raise PlatformNotReady
-
-        # _LOGGER.error( parent_device.device_state_attributes)
+        retry_time = 1
+        while True:
+            if parent_device := hass.data[DOMAIN]['miot_main_entity'].get(host):
+                break
+            else:
+                retry_time *= 2
+                if retry_time > 120:
+                    _LOGGER.error(f"The main device of {config.get(CONF_NAME)}({host}) is still not ready after 120 seconds!")
+                    raise PlatformNotReady
+                else:
+                    _LOGGER.debug(f"The main device of {config.get(CONF_NAME)}({host}) is still not ready after {retry_time - 1} seconds.")
+                    await asyncio.sleep(retry_time)
 
         for k,v in mapping.items():
             if k in MAP[TYPE]:
