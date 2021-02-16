@@ -21,7 +21,7 @@
                     "host": "IP",
                     "token": "token"
                 },
-                "description": "You don't need to login if your device supports local access.",
+                "description": "Log in your Xiaomi account for a faster way to add devices.\nNot all devices in the list are supported yet.\nAdding non-WiFi devices is in beta and unstable. Use it at your own risk.",
                 "title": "Select Operation"
             },
             "xiaomi_account": {

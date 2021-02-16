@@ -35,10 +35,6 @@ from .deps.miot_device_adapter import MiotAdapter
 from .deps.special_devices import SPECIAL_DEVICES
 from .deps.xiaomi_cloud_new import MiCloud
 
-actions = {
-    'xiaomi_account': "登录小米账号",
-    'localinfo': "接入设备"
-}
 
 async def async_get_mp_from_net(hass, model):
     cs = aiohttp_client.async_get_clientsession(hass)
@@ -142,6 +138,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._model = None
         self._did = None
         self._input2 = {}
+        self._actions = {
+            'xiaomi_account': "登录小米账号",
+            'localinfo': "接入设备"
+        }
 
     async def async_step_user(self, user_input=None):
         if user_input is not None:
@@ -169,17 +169,18 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if DOMAIN in self.hass.data and 'micloud_devices' in self.hass.data[DOMAIN]:
             for device in self.hass.data[DOMAIN]['micloud_devices']:
-                if device['did'] not in actions:
+                if device['did'] not in self._actions:
                     dt = get_conn_type(device)
                     dt = "WiFi" if dt == 0 else "ZigBee" if dt == 1 else "BLE" if dt == 2 \
                                            else "BLE Mesh" if dt == 3 else "Unknown"
                     name = f"接入 {device['name']} ({dt}{', '+device['localip'] if (dt == '''WiFi''') else ''})"
-                    actions[device['did']] = name
+                    self._actions[device['did']] = name
+            self._actions.pop('xiaomi_account')
 
         return self.async_show_form(
             step_id='user',
             data_schema=vol.Schema({
-                vol.Required('action', default='localinfo'): vol.In(actions),
+                vol.Required('action', default='localinfo'): vol.In(self._actions),
             })
         )
 

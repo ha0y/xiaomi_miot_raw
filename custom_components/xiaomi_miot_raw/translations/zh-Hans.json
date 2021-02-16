@@ -21,7 +21,7 @@
                     "host": "IP",
                     "token": "token"
                 },
-                "description": "如果您的设备支持本地接入，无需登录小米账号",
+                "description": "登录小米账号以后，可以更快捷地添加设备。\n并非所有列表中的设备都支持。\n接入非 WiFi 设备功能仍在测试中，可能不稳定。",
                 "title": "选择操作"
             },
             "xiaomi_account": {

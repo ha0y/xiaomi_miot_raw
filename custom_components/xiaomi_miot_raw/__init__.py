@@ -127,8 +127,14 @@ async def async_setup_entry(hass, entry):
 async def async_unload_entry(hass, entry):
     if 'username' in entry.data:
         hass.data[DOMAIN]['cloud_instance'] = None
+        hass.data[DOMAIN].pop('micloud_devices')
         return True
-    return False
+    else:
+        entry_id = entry.entry_id
+        unique_id = entry.unique_id
+        hass.data[DOMAIN]['configs'].pop(entry_id)
+        hass.data[DOMAIN]['configs'].pop(unique_id)
+        return True
 
 async def _setup_micloud_entry(hass, config_entry):
     """Thanks to @AlexxIT """
@@ -175,7 +181,7 @@ async def _setup_micloud_entry(hass, config_entry):
         return False
 
     # TODO: Think about a bunch of devices
-    if 'devices' not in hass.data[DOMAIN]:
+    if 'micloud_devices' not in hass.data[DOMAIN]:
         hass.data[DOMAIN]['micloud_devices'] = devices
     else:
         hass.data[DOMAIN]['micloud_devices'] += devices
@@ -473,7 +479,7 @@ class GenericMiotDevice(Entity):
                         if r['code'] == -4004:
                             count4004 += 1
                         else:
-                            _LOGGER.error("Error getting %s 's property '%s' (code: %s)", self._name, r['did'], r['code'])
+                            _LOGGER.info("Error getting %s 's property '%s' (code: %s)", self._name, r['did'], r['code'])
                 if count4004 == len(response):
                     self._assumed_state = True
                     self._skip_update = True
