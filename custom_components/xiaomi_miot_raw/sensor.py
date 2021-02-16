@@ -15,7 +15,7 @@ from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
 
 from datetime import timedelta
-from . import GenericMiotDevice, MiotSubDevice
+from . import GenericMiotDevice, MiotSubDevice, get_dev_info, dev_info
 from .deps.const import (
     DOMAIN,
     CONF_UPDATE_INSTANT,
@@ -90,12 +90,13 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
 
         _LOGGER.info("Initializing %s with host %s (token %s...)", config.get(CONF_NAME), host, token[:5])
 
-
+        if type(params) == OrderedDict:
+            miio_device = MiotDevice(ip=host, token=token, mapping=mapping)
+        else:
+            miio_device = MiotDevice(ip=host, token=token, mapping=mappingnew)
         try:
-            if type(params) == OrderedDict:
-                miio_device = MiotDevice(ip=host, token=token, mapping=mapping)
-            else:
-                miio_device = MiotDevice(ip=host, token=token, mapping=mappingnew)
+            if host == DUMMY_IP and token == DUMMY_TOKEN:
+                raise DeviceException
             device_info = miio_device.info()
             model = device_info.model
             _LOGGER.info(
@@ -105,19 +106,28 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
                 device_info.hardware_version,
             )
 
-            device = MiotSensor(miio_device, config, device_info, hass, main_mi_type)
-            devices = [device]
-            # for item in config['mapping']:
-            #     devices.append(MiotSubSensor(device, item))
         except DeviceException as de:
-            _LOGGER.warn(de)
-
-            raise PlatformNotReady
+            if not config.get(CONF_CLOUD):
+                _LOGGER.warn(de)
+                raise PlatformNotReady
+            else:
+                try:
+                    devinfo = await get_dev_info(hass, config.get(CONF_CLOUD)['did'])
+                    device_info = dev_info(
+                        devinfo['result'][1]['value'],
+                        token,
+                        devinfo['result'][3]['value'],
+                        ""
+                    )
+                except Exception as ex:
+                    _LOGGER.error(f"Failed to get device info for {config.get(CONF_NAME)}")
+                    device_info = dev_info(host,token,"","")
+        device = MiotSensor(miio_device, config, device_info, hass, main_mi_type)
 
         _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
         hass.data[DOMAIN]['miot_main_entity'][host] = device
         hass.data[DOMAIN]['entities'][device.unique_id] = device
-        async_add_devices(devices, update_before_add=True)
+        async_add_devices([device], update_before_add=True)
     if other_mi_type:
 
         parent_device = None
@@ -151,10 +161,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 class MiotSensor(GenericMiotDevice):
     def __init__(self, device, config, device_info, hass = None, mi_type = None):
-        GenericMiotDevice.__init__(self, device, config, device_info, mi_type)
+        GenericMiotDevice.__init__(self, device, config, device_info, hass, mi_type)
         self._state = None
-        self._sensor_property = config.get(CONF_SENSOR_PROPERTY) or \
-            list(config['mapping'].keys())[0]
+        self._sensor_property = config.get(CONF_SENSOR_PROPERTY)
         self._unit_of_measurement = config.get(CONF_SENSOR_UNIT)
 
     @property
@@ -169,8 +178,9 @@ class MiotSensor(GenericMiotDevice):
             self._state = state.get(self._sensor_property)
         else:
             try:
-                self._state = state.get(self._mapping.keys()[0])
-            except:
+                self._state = state.get(list(self._mapping.keys())[0])
+            except Exception as ex:
+                _LOGGER.error(ex)
                 self._state = None
 
     @property

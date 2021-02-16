@@ -299,13 +299,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     )
                 else:
                     if cloud := self.hass.data[DOMAIN].get('cloud_instance'):
-                        did = self._did
-                        for dev in self.hass.data[DOMAIN]['micloud_devices']:
-                            if dev.get('localip') == self._input2[CONF_HOST]:
-                                did = dev['did']
-                        if did:
+                        if not self._did:
+                            for dev in self.hass.data[DOMAIN]['micloud_devices']:
+                                if dev.get('localip') == self._input2[CONF_HOST]:
+                                    self._did = dev['did']
+                        if self._did:
                             self._input2['update_from_cloud'] = {
-                                'did': did,
+                                'did': self._did,
                                 'userId': cloud.auth['user_id'],
                                 'serviceToken': cloud.auth['service_token'],
                                 'ssecurity': cloud.auth['ssecurity'],

@@ -60,6 +60,7 @@ MAP = {
         "filter_2",
         "filter_3",
         "filter_4",
+        "temperature_humidity_sensor",
     },
     "switch": {
         "switch",
