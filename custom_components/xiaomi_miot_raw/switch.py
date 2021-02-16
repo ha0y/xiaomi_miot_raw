@@ -82,6 +82,8 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         else:
             miio_device = MiotDevice(ip=host, token=token, mapping=mappingnew)
         try:
+            if host == DUMMY_IP and token == DUMMY_TOKEN:
+                raise DeviceException
             device_info = miio_device.info()
             model = device_info.model
             _LOGGER.info(

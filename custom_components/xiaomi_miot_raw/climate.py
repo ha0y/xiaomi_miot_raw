@@ -35,6 +35,8 @@ from .deps.const import (
     ATTR_HARDWARE_VERSION,
     SCHEMA,
     MAP,
+    DUMMY_IP,
+    DUMMY_TOKEN,
 )
 
 TYPE = 'climate'
@@ -94,6 +96,8 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         else:
             miio_device = MiotDevice(ip=host, token=token, mapping=mappingnew)
         try:
+            if host == DUMMY_IP and token == DUMMY_TOKEN:
+                raise DeviceException
             device_info = miio_device.info()
             model = device_info.model
             _LOGGER.info(
@@ -242,7 +246,7 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
     @property
     def hvac_modes(self):
         """Return the list of available operation modes."""
-        return [mode for mode in HVAC_MODES]
+        return [next(a[0] for a in HVAC_MAPPING.items() if b in a[1]) for b in self._ctrl_params['mode']] + [HVAC_MODE_OFF]
 
     @property
     def preset_mode(self):
@@ -286,6 +290,7 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
             result = await self.set_property_new(self._did_prefix + "target_temperature", kwargs.get(ATTR_TEMPERATURE))
             if result:
                 self._target_temperature = kwargs.get(ATTR_TEMPERATURE)
+                self.async_write_ha_state()
         # if (
         #     kwargs.get(ATTR_TARGET_TEMP_HIGH) is not None
         #     and kwargs.get(ATTR_TARGET_TEMP_LOW) is not None
@@ -328,6 +333,7 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
             result = await self.set_property_new(self._did_prefix + "mode", modevalue)
             if result:
                 self._hvac_mode = hvac_mode
+                self.async_write_ha_state()
 
     async def async_set_preset_mode(self, preset_mode):
         """Update preset_mode on."""

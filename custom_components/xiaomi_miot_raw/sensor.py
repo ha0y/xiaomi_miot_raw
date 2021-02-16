@@ -29,6 +29,8 @@ from .deps.const import (
     ATTR_HARDWARE_VERSION,
     SCHEMA,
     MAP,
+    DUMMY_IP,
+    DUMMY_TOKEN,
     UNIT_MAPPING,
 )
 from collections import OrderedDict
