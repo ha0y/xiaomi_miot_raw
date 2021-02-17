@@ -193,33 +193,24 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
         if ATTR_EFFECT in kwargs:
             modes = self._ctrl_params['mode']
             parameters.append({**{'did': self._did_prefix + "mode", 'value': self._ctrl_params['mode'].get(kwargs[ATTR_EFFECT])}, **(self._mapping[self._did_prefix + 'mode'])})
-        else:
-            if ATTR_BRIGHTNESS in kwargs:
-                self._effect = None
-                parameters.append({**{'did': self._did_prefix + "brightness", 'value': self.convert_value(kwargs[ATTR_BRIGHTNESS],"brightness", True, self._ctrl_params['brightness']['value_range'])}, **(self._mapping[self._did_prefix + 'brightness'])})
-            if ATTR_COLOR_TEMP in kwargs:
-                self._effect = None
-                valuerange = self._ctrl_params['color_temperature']['value_range']
-                ct = self.convert_value(kwargs[ATTR_COLOR_TEMP], "color_temperature")
-                ct = valuerange[0] if ct < valuerange[0] else valuerange[1] if ct > valuerange[1] else ct
-                parameters.append({**{'did': self._did_prefix + "color_temperature", 'value': ct}, **(self._mapping[self._did_prefix + 'color_temperature'])})
-            if ATTR_HS_COLOR in kwargs:
-                self._effect = None
-                intcolor = self.convert_value(kwargs[ATTR_HS_COLOR],'color')
-                parameters.append({**{'did': self._did_prefix + "color", 'value': intcolor}, **(self._mapping[self._did_prefix + 'color'])})
+        if ATTR_BRIGHTNESS in kwargs:
+            self._effect = None
+            parameters.append({**{'did': self._did_prefix + "brightness", 'value': self.convert_value(kwargs[ATTR_BRIGHTNESS],"brightness", True, self._ctrl_params['brightness']['value_range'])}, **(self._mapping[self._did_prefix + 'brightness'])})
+        if ATTR_COLOR_TEMP in kwargs:
+            self._effect = None
+            valuerange = self._ctrl_params['color_temperature']['value_range']
+            ct = self.convert_value(kwargs[ATTR_COLOR_TEMP], "color_temperature")
+            ct = valuerange[0] if ct < valuerange[0] else valuerange[1] if ct > valuerange[1] else ct
+            parameters.append({**{'did': self._did_prefix + "color_temperature", 'value': ct}, **(self._mapping[self._did_prefix + 'color_temperature'])})
+        if ATTR_HS_COLOR in kwargs:
+            self._effect = None
+            intcolor = self.convert_value(kwargs[ATTR_HS_COLOR],'color')
+            parameters.append({**{'did': self._did_prefix + "color", 'value': intcolor}, **(self._mapping[self._did_prefix + 'color'])})
 
-
-        # result = await self._try_command(
-        #     "Turning the miio device on failed.",
-        #     self._device.send,
-        #     "set_properties",
-        #     parameters,
-        # )
         result = await self.set_property_new(multiparams = parameters)
 
         if result:
             self._state = True
-            # self._skip_update = True
 
     @property
     def color_temp(self):
@@ -315,35 +306,26 @@ class MiotSubLight(MiotSubToggleableDevice, LightEntity):
         if ATTR_EFFECT in kwargs:
             modes = self._ctrl_params['mode']
             parameters.append({**{'did': self._did_prefix + "mode", 'value': self._ctrl_params['mode'].get(kwargs[ATTR_EFFECT])}, **(self._mapping['mode'])})
-        else:
-            if ATTR_BRIGHTNESS in kwargs:
-                self._effect = None
-                parameters.append({**{'did': self._did_prefix + "brightness", 'value': self.convert_value(kwargs[ATTR_BRIGHTNESS],"brightness", True, self._ctrl_params['brightness']['value_range'])}, **(self._mapping['brightness'])})
-            if ATTR_COLOR_TEMP in kwargs:
-                self._effect = None
-                valuerange = self._ctrl_params['color_temperature']['value_range']
-                ct = self.convert_value(kwargs[ATTR_COLOR_TEMP], "color_temperature")
-                ct = valuerange[0] if ct < valuerange[0] else valuerange[1] if ct > valuerange[1] else ct
-                parameters.append({**{'did': self._did_prefix + "color_temperature", 'value': ct}, **(self._mapping['color_temperature'])})
-            if ATTR_HS_COLOR in kwargs:
-                self._effect = None
-                intcolor = self.convert_value(kwargs[ATTR_HS_COLOR],'color')
-                parameters.append({**{'did': self._did_prefix + "color", 'value': intcolor}, **(self._mapping['color'])})
+        if ATTR_BRIGHTNESS in kwargs:
+            self._effect = None
+            parameters.append({**{'did': self._did_prefix + "brightness", 'value': self.convert_value(kwargs[ATTR_BRIGHTNESS],"brightness", True, self._ctrl_params['brightness']['value_range'])}, **(self._mapping['brightness'])})
+        if ATTR_COLOR_TEMP in kwargs:
+            self._effect = None
+            valuerange = self._ctrl_params['color_temperature']['value_range']
+            ct = self.convert_value(kwargs[ATTR_COLOR_TEMP], "color_temperature")
+            ct = valuerange[0] if ct < valuerange[0] else valuerange[1] if ct > valuerange[1] else ct
+            parameters.append({**{'did': self._did_prefix + "color_temperature", 'value': ct}, **(self._mapping['color_temperature'])})
+        if ATTR_HS_COLOR in kwargs:
+            self._effect = None
+            intcolor = self.convert_value(kwargs[ATTR_HS_COLOR],'color')
+            parameters.append({**{'did': self._did_prefix + "color", 'value': intcolor}, **(self._mapping['color'])})
 
-
-        # result = await self._try_command(
-        #     "Turning the miio device on failed.",
-        #     self._device.send,
-        #     "set_properties",
-        #     parameters,
-        # )
         result = await self._parent_device.set_property_new(multiparams = parameters)
 
         if result:
             self._state = True
             self._state_attrs[f"{self._did_prefix}switch_status"] = True
             self._parent_device.schedule_update_ha_state(force_refresh=True)
-            # self._skip_update = True
 
     @property
     def color_temp(self):

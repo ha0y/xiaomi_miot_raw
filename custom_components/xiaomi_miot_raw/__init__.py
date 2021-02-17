@@ -133,7 +133,8 @@ async def async_unload_entry(hass, entry):
         entry_id = entry.entry_id
         unique_id = entry.unique_id
         hass.data[DOMAIN]['configs'].pop(entry_id)
-        hass.data[DOMAIN]['configs'].pop(unique_id)
+        if unique_id:
+            hass.data[DOMAIN]['configs'].pop(unique_id)
         return True
 
 async def _setup_micloud_entry(hass, config_entry):
