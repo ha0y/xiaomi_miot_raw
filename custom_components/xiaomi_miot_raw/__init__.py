@@ -261,11 +261,11 @@ class GenericMiotDevice(Entity):
         self._model = device_info.model
         self._unique_id = "{}-{}-{}".format(
             device_info.model, device_info.mac_address, self._name
-        ) if not config['ett_id_migrated'] else (
+        ) if not config.get('ett_id_migrated') else (
             f"{device_info.model.split('.')[-1]}-cloud-{config.get(CONF_CLOUD)['did'][-6:]}" if config.get(CONF_CLOUD) else
                 f"{device_info.model.split('.')[-1]}-{device_info.mac_address.replace(':','')}"
         )
-        if config['ett_id_migrated']:
+        if config.get('ett_id_migrated'):
             self._entity_id = self._unique_id
         else:
             self._entity_id = None
