@@ -105,17 +105,16 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
                 _LOGGER.warn(de)
                 raise PlatformNotReady
             else:
-                try:
-                    devinfo = await get_dev_info(hass, config.get(CONF_CLOUD)['did'])
+                if not (di := config.get('cloud_device_info')):
+                    _LOGGER.error(f"未能获取到设备信息，请删除 {config.get(CONF_NAME)} 重新配置。")
+                    raise PlatformNotReady
+                else:
                     device_info = dev_info(
-                        devinfo['result'][1]['value'],
-                        token,
-                        devinfo['result'][3]['value'],
+                        di['model'],
+                        di['mac'],
+                        di['fw_version'],
                         ""
                     )
-                except Exception as ex:
-                    _LOGGER.error(f"Failed to get device info for {config.get(CONF_NAME)}")
-                    device_info = dev_info(host,token,"","")
         device = MiotCover(miio_device, config, device_info, hass, main_mi_type)
 
         _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
@@ -223,6 +222,9 @@ class MiotCover(GenericMiotDevice, CoverEntity):
             self._skip_update = True
 
     async def _async_update(self):
+        if self._update_instant is False or self._skip_update:
+            self._skip_update = False
+            return
         await super().async_update()
         self._current_position = self._state_attrs.get(self._did_prefix + 'current_position')
         self._action = self._state_attrs.get(self._did_prefix + 'motor_status')

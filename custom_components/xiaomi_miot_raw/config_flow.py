@@ -137,7 +137,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._info = None
         self._model = None
         self._did = None
+        self._cloud_device = None
         self._input2 = {}
+        self._input2.update({"ett_id_migrated": True}) # 新的实体ID格式，相对稳定，为避免已有ID变化，灰度选项
         self._actions = {
             'xiaomi_account': "登录小米账号",
             'localinfo': "接入设备"
@@ -152,6 +154,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 device = next(d for d in self.hass.data[DOMAIN]['micloud_devices']
                               if d['did'] == user_input['action'])
+                self._cloud_device = device
                 self._model = device.get('model')
                 self._did = device.get('did')
                 if get_conn_type(device) == 0:
@@ -310,6 +313,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                                 'userId': cloud.auth['user_id'],
                                 'serviceToken': cloud.auth['service_token'],
                                 'ssecurity': cloud.auth['ssecurity'],
+                            }
+                            self._input2['cloud_device_info'] = {
+                                'name': self._cloud_device.get('name'),
+                                'mac': self._cloud_device.get('mac'),
+                                'did': self._cloud_device.get('did'),
+                                'model': self._cloud_device.get('model'),
+                                'fw_version': self._cloud_device['extra'].get('fw_version'),
                             }
                             return self.async_create_entry(
                                 title=self._input2[CONF_NAME],

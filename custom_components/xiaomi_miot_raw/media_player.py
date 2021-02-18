@@ -282,6 +282,9 @@ class MiotMediaPlayer(GenericMiotDevice, MediaPlayerEntity):
 
     async def async_update(self):
         """Fetch state from the device."""
+        if self._update_instant is False or self._skip_update:
+            self._skip_update = False
+            return
         await super().async_update()
     #     player_state = self._state_attrs.get(self._did_prefix + 'playing_state')
     #     if player_state is not None and self._ctrl_params.get('playing_state'):

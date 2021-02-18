@@ -60,6 +60,10 @@ CONFIG_SCHEMA = vol.Schema(
     },
     extra=vol.ALLOW_EXTRA,
 )
+
+SHORT_DELAY = 3
+LONG_DELAY = 5
+
 async def async_setup(hass, hassconfig):
     """Setup Component."""
     hass.data.setdefault(DOMAIN, {})
@@ -91,6 +95,8 @@ async def async_setup_entry(hass, entry):
                  CONF_CLOUD,
                  'cloud_write',
                  'devtype',
+                 'ett_id_migrated',
+                 'cloud_device_info',
                  ]:
         config[item] = entry.data.get(item)
     for item in [CONF_MAPPING,
@@ -187,18 +193,6 @@ async def _setup_micloud_entry(hass, config_entry):
     else:
         hass.data[DOMAIN]['micloud_devices'] += devices
 
-    # default_devices = hass.data[DOMAIN]['config']['devices']
-    # gw_list = []
-    # for device in devices:
-    #     default_devices[device['did']] = {'device_name': device['name']}
-    #     if device['model'] == 'lumi.gateway.mgl03':
-    #         gw_list.append(device)
-
-    # hass.data[DOMAIN]['gateway_list'] = gw_list
-    # if gw_list:
-    #     hass.async_create_task(hass.config_entries.async_forward_entry_setup(
-    #             config_entry, 'alarm_control_panel'))
-
     return True
 
 class GenericMiotDevice(Entity):
@@ -262,12 +256,20 @@ class GenericMiotDevice(Entity):
         self._name = config.get(CONF_NAME)
         self._update_instant = config.get(CONF_UPDATE_INSTANT)
         self._skip_update = False
-        self._delay_update = False
+        self._delay_update = 0
 
         self._model = device_info.model
         self._unique_id = "{}-{}-{}".format(
             device_info.model, device_info.mac_address, self._name
+        ) if not config['ett_id_migrated'] else (
+            f"{device_info.model.split('.')[-1]}-cloud-{config.get(CONF_CLOUD)['did'][-6:]}" if config.get(CONF_CLOUD) else
+                f"{device_info.model.split('.')[-1]}-{device_info.mac_address.replace(':','')}"
         )
+        if config['ett_id_migrated']:
+            self._entity_id = self._unique_id
+        else:
+            self._entity_id = None
+        self.entity_id = f"{DOMAIN}.{self._entity_id}"
         # self._icon = "mdi:flask-outline"
 
         self._hass = hass
@@ -284,7 +286,6 @@ class GenericMiotDevice(Entity):
             ATTR_MODEL: self._model,
             ATTR_FIRMWARE_VERSION: device_info.firmware_version,
             ATTR_HARDWARE_VERSION: device_info.hardware_version,
-            # ATTR_STATE_PROPERTY: self._state_property,
         }
         self._notified = False
         self._callbacks = set()
@@ -382,10 +383,12 @@ class GenericMiotDevice(Entity):
                     if results:
                         if r := results.get('result'):
                             for item in r:
-                                if item['code'] != 0:
+                                if item['code'] == 1:
+                                    self._delay_update = LONG_DELAY
+                                elif item['code'] != 0:
                                     _LOGGER.error(f"Control {self._name} by cloud failed: {r}")
                                     return False
-                            self._delay_update = True
+                            self._skip_update = True
                             return True
                     return False
                 else:
@@ -400,10 +403,12 @@ class GenericMiotDevice(Entity):
                     if results:
                         if r := results.get('result'):
                             for item in r:
-                                if item['code'] != 0:
+                                if item['code'] == 1:
+                                    self._delay_update = LONG_DELAY
+                                elif item['code'] != 0:
                                     _LOGGER.error(f"Control {self._name} by cloud failed: {r}")
                                     return False
-                            self._delay_update = True
+                            self._skip_update = True
                             return True
                     return False
 
@@ -448,9 +453,9 @@ class GenericMiotDevice(Entity):
         if self._update_instant is False or self._skip_update:
             self._skip_update = False
             return
-        if self._delay_update:
-            await asyncio.sleep(3)
-            self._delay_update = False
+        if self._delay_update != 0:
+            await asyncio.sleep(self._delay_update)
+            self._delay_update = 0
         try:
             if not self._cloud:
                 response = await self.hass.async_add_job(
@@ -625,6 +630,9 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
 
     async def async_update(self):
         # _LOGGER.error("Update!!!!!!!")
+        if self._update_instant is False or self._skip_update:
+            self._skip_update = False
+            return
         await super().async_update()
         state = self._state_attrs.get(self._did_prefix + 'switch_status')
         _LOGGER.debug("%s 's new state: %s", self._name, state)
@@ -665,6 +673,8 @@ class MiotSubDevice(Entity):
     # should_poll = False
     def __init__(self, parent_device, mapping, params, mitype):
         self._unique_id = f'{parent_device.unique_id}-{mitype}'
+        self._entity_id = f"{parent_device._entity_id}-{mitype}"
+        self.entity_id = f"{DOMAIN}.{self._entity_id}"
         self._name = f'{parent_device.name} {mitype.capitalize()}'
         self._state = STATE_UNKNOWN
         self._available = True
@@ -788,6 +798,6 @@ async def get_dev_info(hass, did):
 @dataclass
 class dev_info:
     model             : str
-    mac_address       : str
+    mac_address       : str     # Not available for cloud
     firmware_version  : str
-    hardware_version  : str
+    hardware_version  : str     # Not available for cloud
