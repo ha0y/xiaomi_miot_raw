@@ -65,5 +65,11 @@
             }
         },
         "title": "MIoT"
+    },
+    "system_health": {
+        "info": {
+            "logged_in": "Logged in to Xiaomi Account",
+            "can_reach_micloud_server": "Reach Xiaomi Cloud Server"
+        }
     }
 }

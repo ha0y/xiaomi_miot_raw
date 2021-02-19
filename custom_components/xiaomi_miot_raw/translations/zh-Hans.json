@@ -65,5 +65,11 @@
             }
         },
         "title": "MIoT"
+    },
+    "system_health": {
+        "info": {
+            "logged_in": "已登录小米账号",
+            "can_reach_micloud_server": "可访问米家服务器"
+        }
     }
 }
