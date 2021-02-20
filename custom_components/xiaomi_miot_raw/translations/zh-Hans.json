@@ -69,12 +69,30 @@
     "system_health": {
         "info": {
             "logged_in": "已登录小米账号",
-            "can_reach_micloud_server": "可访问米家服务器"
+            "can_reach_micloud_server": "可访问米家服务器",
+            "account_devices_count": "账号米家设备数",
+            "added_devices": "插件接入设备数"
         }
     },
     "options": {
         "abort": {
             "no_configurable_options": "没有可配置的选项"
+        },
+        "step": {
+            "sensor": {
+                "data": {
+                    "show_individual_sensor": "每个属性作为单独的实体"
+                },
+                "description": "勾选后，每个属性都会作为一个传感器实体出现。",
+                "title": "传感器设置"
+            },
+            "climate": {
+                "data": {
+                    "current_temp_source": "环境温度传感器实体 ID"
+                },
+                "description": "如果您的空调没有环境温度传感器，空调实体的环境温度会显示为和目标温度一致。\n您可以在此处输入其他温度传感器的实体 ID，这样就可以把它作为环境温度来源。",
+                "title": "空调设置"
+            }
         }
     }
 }

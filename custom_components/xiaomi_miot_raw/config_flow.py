@@ -31,6 +31,7 @@ from .deps.const import (
     DEFAULT_NAME,
     DUMMY_IP,
     DUMMY_TOKEN,
+    MAP,
 )
 from .deps.miot_device_adapter import MiotAdapter
 from .deps.special_devices import SPECIAL_DEVICES
@@ -470,8 +471,62 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     def __init__(self, config_entry: config_entries.ConfigEntry):
         """Initialize options flow."""
         self.config_entry = config_entry
+        self._input2 = config_entry.data.copy()
+        self._steps = []
 
     async def async_step_init(self, user_input=None):
         """Handle options flow."""
         print(self.config_entry.data)
-        return self.async_abort(reason="no_configurable_options")
+        if self._input2['devtype'] == ['sensor']:
+            self._steps.append(self.async_step_sensor())
+        if 'climate' in self._input2['devtype']:
+            self._steps.append(self.async_step_climate())
+
+        if self._steps:
+            self._steps.append(self.async_finish())
+            return await self._steps[0]
+        else:
+            return self.async_abort(reason="no_configurable_options")
+
+    async def async_step_sensor(self, user_input=None):
+        if user_input is not None:
+            prm = json.loads(self._input2[CONF_CONTROL_PARAMS])
+            for device,p in prm.items():
+                if device in MAP['sensor']:
+                    p.update(user_input)
+            self._input2[CONF_CONTROL_PARAMS] = json.dumps(prm,separators=(',', ':'))
+            self._steps.pop(0)
+            return await self._steps[0]
+
+        return self.async_show_form(
+            step_id='sensor',
+            data_schema=vol.Schema({
+                vol.Optional('show_individual_sensor'): bool,
+            }),
+        )
+
+    async def async_step_climate(self, user_input=None):
+        if user_input is not None:
+            prm = json.loads(self._input2[CONF_CONTROL_PARAMS])
+            for device,p in prm.items():
+                if device in MAP['climate']:
+                    p.update(user_input)
+            self._input2[CONF_CONTROL_PARAMS] = json.dumps(prm,separators=(',', ':'))
+            self._steps.pop(0)
+            return await self._steps[0]
+
+        return self.async_show_form(
+            step_id='climate',
+            data_schema=vol.Schema({
+                vol.Optional('current_temp_source', default=""): str,
+            }),
+        )
+
+    async def async_finish(self):
+        self.hass.config_entries.async_update_entry(
+            self.config_entry, data=self._input2
+        )
+        await self.hass.config_entries.async_reload(
+            self.config_entry.entry_id
+        )
+        return self.async_create_entry(title="", data=None)

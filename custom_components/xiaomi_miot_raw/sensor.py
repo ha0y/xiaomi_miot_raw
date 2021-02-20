@@ -161,6 +161,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     config = hass.data[DOMAIN]['configs'].get(config_entry.entry_id, dict(config_entry.data))
     await async_setup_platform(hass, config, async_add_entities)
 
+async def async_unload_entry(hass, config_entry, async_add_entities):
+    return True
+
 class MiotSensor(GenericMiotDevice):
     def __init__(self, device, config, device_info, hass = None, mi_type = None):
         GenericMiotDevice.__init__(self, device, config, device_info, hass, mi_type)

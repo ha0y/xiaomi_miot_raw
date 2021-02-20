@@ -69,12 +69,23 @@
     "system_health": {
         "info": {
             "logged_in": "Logged in to Xiaomi Account",
-            "can_reach_micloud_server": "Reach Xiaomi Cloud Server"
+            "can_reach_micloud_server": "Reach Xiaomi Cloud Server",
+            "account_devices_count": "Devices in account",
+            "added_devices": "Devices added"
         }
     },
     "options": {
         "abort": {
             "no_configurable_options": "No options available."
+        },
+        "step": {
+            "sensor": {
+                "data": {
+                    "show_individual_sensor": "Each attribute as an entity"
+                },
+                "description": "",
+                "title": "Sensor options"
+            }
         }
     }
 }

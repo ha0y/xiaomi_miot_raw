@@ -141,6 +141,12 @@ async def async_unload_entry(hass, entry):
         hass.data[DOMAIN]['configs'].pop(entry_id)
         if unique_id:
             hass.data[DOMAIN]['configs'].pop(unique_id)
+        if type(entry.data.get('devtype')) == str:
+            hass.async_create_task(hass.config_entries.async_forward_entry_unload(entry, entry.data.get('devtype')))
+        else:
+            for t in entry.data.get('devtype'):
+                hass.async_create_task(hass.config_entries.async_forward_entry_unload(entry, t))
+
         return True
 
 async def _setup_micloud_entry(hass, config_entry):
@@ -547,7 +553,7 @@ class GenericMiotDevice(Entity):
             return None
 
     def convert_value(self, value, param, dir = True, valuerange = None):
-        if not type(value) == int and not type(value) == float and not type(value) == tuple:
+        if not type(value) == int and not type(value) == float:
             _LOGGER.debug(f"Converting {param} value ({value}) is not a number but {type(value)}, trying to convert to number")
             try:
                 value = float(value)

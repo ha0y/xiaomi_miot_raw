@@ -135,6 +135,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     config = hass.data[DOMAIN]['configs'].get(config_entry.entry_id, dict(config_entry.data))
     await async_setup_platform(hass, config, async_add_entities)
 
+async def async_unload_entry(hass, config_entry, async_add_entities):
+    return True
+
 class MiotClimate(ToggleableMiotDevice, ClimateEntity):
     def __init__(self, device, config, device_info, hass, main_mi_type):
         ToggleableMiotDevice.__init__(self, device, config, device_info, hass, main_mi_type)
@@ -360,8 +363,18 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
             pass
         try:
             self._current_temperature = self._state_attrs.get('environmen_temperature')
-        except:
-            pass
+            if not self._current_temperature:
+                if src := self._ctrl_params.get('current_temp_source'):
+                    try:
+                        state = self.hass.states.get(src)
+                        self._current_temperature = float(state.state)
+                    except Exception as ex:
+                        _LOGGER.error(f"{self._name} 's temperature source ({src}) is invalid! Expect a number, got {state.state if state else None}. {ex}")
+                        self._current_temperature = -1
+                else:
+                    self._current_temperature = self._target_temperature
+        except Exception as ex:
+            _LOGGER.error(ex)
         try:
             self._current_fan_mode = self.get_key_by_value(self._ctrl_params['speed'], self._state_attrs.get(self._did_prefix + 'speed'))
         except:
