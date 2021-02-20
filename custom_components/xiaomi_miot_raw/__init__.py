@@ -553,7 +553,7 @@ class GenericMiotDevice(Entity):
             return None
 
     def convert_value(self, value, param, dir = True, valuerange = None):
-        if not type(value) == int and not type(value) == float:
+        if not type(value) == int and not type(value) == float and not type(value) == tuple:
             _LOGGER.debug(f"Converting {param} value ({value}) is not a number but {type(value)}, trying to convert to number")
             try:
                 value = float(value)
