@@ -11,6 +11,7 @@ from homeassistant.components import persistent_notification
 from homeassistant.const import *
 from homeassistant.helpers import aiohttp_client, discovery
 from homeassistant.helpers.device_registry import format_mac
+from homeassistant.core import callback
 from miio import Device as MiioDevice
 from miio import DeviceException
 from miio.miot_device import MiotDevice
@@ -455,3 +456,22 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             }),
             errors={'base': 'no_connect_warning'}
         )
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry):
+        """Get the options flow for this handler."""
+        return OptionsFlowHandler(config_entry)
+
+
+class OptionsFlowHandler(config_entries.OptionsFlow):
+    """Handle a option flow for tado."""
+
+    def __init__(self, config_entry: config_entries.ConfigEntry):
+        """Initialize options flow."""
+        self.config_entry = config_entry
+
+    async def async_step_init(self, user_input=None):
+        """Handle options flow."""
+        print(self.config_entry.data)
+        return self.async_abort(reason="no_configurable_options")

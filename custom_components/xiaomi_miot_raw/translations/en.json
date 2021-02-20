@@ -71,5 +71,10 @@
             "logged_in": "Logged in to Xiaomi Account",
             "can_reach_micloud_server": "Reach Xiaomi Cloud Server"
         }
+    },
+    "options": {
+        "abort": {
+            "no_configurable_options": "No options available."
+        }
     }
 }
