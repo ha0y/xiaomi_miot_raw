@@ -87,7 +87,10 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         for k,v in mapping.items():
             for kk,vv in v.items():
                 mappingnew[f"{k[:10]}_{kk}"] = vv
-
+        for k,v in params.items():
+            if k in MAP[TYPE]:
+                for kk,vv in v.items():
+                    paramsnew[f"{k[:10]}_{kk}"] = vv
         _LOGGER.info("Initializing %s with host %s (token %s...)", config.get(CONF_NAME), host, token[:5])
 
         if type(params) == OrderedDict:
@@ -122,11 +125,23 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
                         ""
                     )
         device = MiotSensor(miio_device, config, device_info, hass, main_mi_type)
-
+        devices = [device]
         _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
         hass.data[DOMAIN]['miot_main_entity'][host] = device
         hass.data[DOMAIN]['entities'][device.unique_id] = device
-        async_add_devices([device], update_before_add=True)
+        if params[main_mi_type].get('show_individual_sensor'):
+            for k in mappingnew.keys():
+                try:
+                    unit = paramsnew[k].get('unit')
+                except Exception as ex:
+                    unit = None
+                    _LOGGER.error(ex)
+                devices.append(MiotSubSensor(
+                    device, mappingnew, paramsnew, main_mi_type,
+                    {'sensor_property': k, CONF_SENSOR_UNIT: unit}
+                ))
+        async_add_devices(devices, update_before_add=True)
+
     if other_mi_type:
         retry_time = 1
         while True:
@@ -202,7 +217,10 @@ class MiotSubSensor(MiotSubDevice):
         self._sensor_property = others.get('sensor_property')
         self.entity_id = f"{DOMAIN}.{parent_device._entity_id}-{others.get('sensor_property').split('_')[-1]}"
         try:
-            self._unit_of_measurement = UNIT_MAPPING[params[self._sensor_property]['unit']]
+            if u := others.get(CONF_SENSOR_UNIT):
+                self._unit_of_measurement = UNIT_MAPPING.get(u) or u
+            else:
+                self._unit_of_measurement = UNIT_MAPPING.get(params[self._sensor_property]['unit']) or params[self._sensor_property]['unit']
         except:
             self._unit_of_measurement = None
 

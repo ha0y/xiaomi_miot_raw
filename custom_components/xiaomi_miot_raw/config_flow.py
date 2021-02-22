@@ -493,10 +493,15 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             self._steps.pop(0)
             return await self._steps[0]
 
+        d = False
+        for device,p in json.loads(self._input2[CONF_CONTROL_PARAMS]).items():
+            if device in MAP['sensor'] and p.get('show_individual_sensor'):
+                d = True
+                break
         return self.async_show_form(
             step_id='sensor',
             data_schema=vol.Schema({
-                vol.Optional('show_individual_sensor'): bool,
+                vol.Optional('show_individual_sensor', default=d): bool,
             }),
         )
 
