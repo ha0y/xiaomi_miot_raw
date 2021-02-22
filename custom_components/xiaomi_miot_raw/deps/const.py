@@ -61,6 +61,7 @@ MAP = {
         "filter_3",
         "filter_4",
         "temperature_humidity_sensor",
+        "magnet_sensor",
     },
     "switch": {
         "switch",

@@ -133,9 +133,8 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
             for k in mappingnew.keys():
                 try:
                     unit = paramsnew[k].get('unit')
-                except Exception as ex:
+                except:
                     unit = None
-                    _LOGGER.error(ex)
                 devices.append(MiotSubSensor(
                     device, mappingnew, paramsnew, main_mi_type,
                     {'sensor_property': k, CONF_SENSOR_UNIT: unit}
