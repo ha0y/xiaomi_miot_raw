@@ -21,7 +21,7 @@
                     "host": "IP",
                     "token": "token"
                 },
-                "description": "登录小米账号以后，可以更快捷地添加设备。\n并非所有列表中的设备都支持。\n接入非 WiFi 设备功能仍在测试中，可能不稳定。",
+                "description": "登录小米账号以后，可以更快捷地添加设备。\n并非所有列表中的设备都支持。",
                 "title": "选择操作"
             },
             "xiaomi_account": {
@@ -76,7 +76,8 @@
     },
     "options": {
         "abort": {
-            "no_configurable_options": "没有可配置的选项"
+            "no_configurable_options": "没有可配置的选项",
+            "no_configurable_account": "小米账号没有可配置的选项。\n如需退出登录，删除此配置项即可。\n删除后不影响已添加的设备。"
         },
         "step": {
             "sensor": {

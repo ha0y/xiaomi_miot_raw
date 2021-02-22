@@ -476,7 +476,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input=None):
         """Handle options flow."""
-        print(self.config_entry.data)
+        if 'password' in self._input2:
+            return self.async_abort(reason="no_configurable_account")
         if self._input2['devtype'] == ['sensor']:
             self._steps.append(self.async_step_sensor())
         if 'climate' in self._input2['devtype']:

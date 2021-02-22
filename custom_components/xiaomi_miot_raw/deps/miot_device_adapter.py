@@ -89,7 +89,7 @@ class MiotAdapter:
 
     @property
     def devtype(self):
-        return get_type_by_mitype(name_by_type(self.spec.get('type')))
+        return get_type_by_mitype(self.mitype)
 
     def get_service_by_id(self, id:int):
         for s in self.spec['services']:
@@ -101,6 +101,8 @@ class MiotAdapter:
         if siid:
             service = self.get_service_by_id(siid)
         if not service :
+            return None
+        if 'properties' not in service:
             return None
         props = {}
         for p in service['properties']:
@@ -145,6 +147,11 @@ class MiotAdapter:
             if devtype == 'humidifier' and 'mode' not in ret and 'speed' in ret:
                 # deerma.humidifier.mjjsq
                 ret['mode'] = ret.pop('speed')
+            if devtype == 'cover':
+                if 'current_position' in ret and 'target_position' not in ret:
+                    ret['target_position'] = ret['current_position']
+                elif 'target_position' in ret and 'current_position' not in ret:
+                    ret['current_position'] = ret['target_position']
             return ret
         except Exception as ex:
             _LOGGER.error(ex)
@@ -237,12 +244,14 @@ class MiotAdapter:
                         for item in vl:
                             if 'pause' in item['description'].lower() or \
                                 'stop' in item['description'].lower() or \
-                                    '停' in item['description']:
+                                '停' in item['description']:
                                         dct['stop'] = item['value']
                             if 'up' in item['description'].lower() or \
+                                'open' in item['description'].lower() or \
                                 '升' in item['description']:
                                     dct['open'] = item['value']
                             if 'down' in item['description'].lower() or \
+                                'close' in item['description'].lower() or \
                                 '降' in item['description']:
                                     dct['close'] = item['value']
                         ret['motor_control'] = dct
