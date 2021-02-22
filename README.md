@@ -71,8 +71,11 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 - **mode** (*Optional* 适用于 light fan)：灯、加湿器等设备的运行模式。
 
 ## 更新日志
+### 2 月 22 日
+1. 空调支持更多功能。
+
 ### 2 月 21 日
-1. 支持空调设备指定其他实体作为环境温度来源。  
+1. 支持空调设备指定其他实体作为环境温度来源。
 <img src="https://github.com/ha0y/xiaomi_miot_raw/raw/master/images/flow/climate.png" width="500"/>
 
 ### 2 月 18 日

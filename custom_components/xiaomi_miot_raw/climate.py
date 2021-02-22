@@ -60,6 +60,13 @@ HVAC_MAPPING = {
     HVAC_MODE_HEAT_COOL:['HeatCool'],
 }
 
+SWING_MAPPING = [
+    "Off",
+    "Vertical",
+    "Horizontal",
+    "Both"
+]
+
 SCAN_INTERVAL = timedelta(seconds=10)
 # pylint: disable=unused-argument
 @asyncio.coroutine
@@ -154,13 +161,19 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
         self._hvac_mode = None
         self._aux = None
         self._current_swing_mode = None
-        self._fan_modes = ["On Low", "On High", "Auto Low", "Auto High", "Off"]
+        self._fan_modes = []
         self._hvac_modes = None
-        self._swing_modes = ["Auto", "1", "2", "3", "Off"]
-        try:
-            self._state_attrs.update({"min_temp":self._ctrl_params['target_temperature']['value_range'][0], "max_temp":self._ctrl_params['target_temperature']['value_range'][1]})
-        except:
-            pass
+        self._swing_modes = []
+        if self._did_prefix + 'vertical_swing' in self._mapping and \
+            self._did_prefix + 'horizontal_swing' in self._mapping:
+                self._swing_modes = ["Off", "Vertical", "Horizontal", "Both"]
+        elif self._did_prefix + 'vertical_swing' in self._mapping and \
+            not self._did_prefix + 'horizontal_swing' in self._mapping:
+                self._swing_modes = ["Off", "Horizontal"]
+        elif not self._did_prefix + 'vertical_swing' in self._mapping and \
+            self._did_prefix + 'horizontal_swing' in self._mapping:
+                self._swing_modes = ["Off", "Vertical"]
+
         try:
             self._target_temperature_step = self._ctrl_params['target_temperature']['value_range'][2]
         except:
@@ -178,8 +191,8 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
             s |= SUPPORT_PRESET_MODE
         if self._did_prefix + 'target_humidity' in self._mapping:
             s |= SUPPORT_TARGET_HUMIDITY
-        # if self._did_prefix + 'vertical_swing' in self._mapping or 'horizontal_swing' in self._mapping:
-        #     s |= SUPPORT_SWING_MODE
+        if self._swing_modes:
+            s |= SUPPORT_SWING_MODE
         # if 'aux_heat' in self._mapping:
         #     s |= SUPPORT_AUX_HEAT
         # if 'temprature_range' in self._mapping:
@@ -217,6 +230,16 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
     def target_temperature_low(self):
         """Return the lowbound target temperature we try to reach."""
         return self._ctrl_params['target_temperature']['value_range'][0]
+
+    @property
+    def min_temp(self):
+        """Return the lowbound target temperature we try to reach."""
+        return self._ctrl_params['target_temperature']['value_range'][0]
+
+    @property
+    def max_temp(self):
+        """Return the lowbound target temperature we try to reach."""
+        return self._ctrl_params['target_temperature']['value_range'][1]
 
     @property
     def current_humidity(self):
@@ -293,13 +316,6 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
             if result:
                 self._target_temperature = kwargs.get(ATTR_TEMPERATURE)
                 self.async_write_ha_state()
-        # if (
-        #     kwargs.get(ATTR_TARGET_TEMP_HIGH) is not None
-        #     and kwargs.get(ATTR_TARGET_TEMP_LOW) is not None
-        # ):
-        #     self._target_temperature_high = kwargs.get(ATTR_TARGET_TEMP_HIGH)
-        #     self._target_temperature_low = kwargs.get(ATTR_TARGET_TEMP_LOW)
-        # self.async_write_ha_state()
 
     async def async_set_humidity(self, humidity):
         """Set new humidity level."""
@@ -308,8 +324,21 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
 
     async def async_set_swing_mode(self, swing_mode):
         """Set new swing mode."""
-        self._current_swing_mode = swing_mode
-        self.async_write_ha_state()
+        swm = SWING_MAPPING.index(swing_mode)
+        parameters = [
+            {
+                **{'did': self._did_prefix + "vertical_swing", 'value': swm & 1},
+                **(self._mapping[self._did_prefix + 'vertical_swing'])
+            },
+            {
+                **{'did': self._did_prefix + "horizontal_swing", 'value': swm >> 1},
+                **(self._mapping[self._did_prefix + 'horizontal_swing'])
+            }
+        ]
+        result = await self.set_property_new(multiparams = parameters)
+        if result:
+            self._current_swing_mode = swing_mode
+            self.async_write_ha_state()
 
     async def async_set_fan_mode(self, fan_mode):
         """Set new fan mode."""
@@ -320,8 +349,10 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
         if hvac_mode == HVAC_MODE_OFF:
             result = await self.async_turn_off()
         else:
-            if not self.is_on:
-                await self.async_turn_on()
+            parameters = [{
+                **{'did': self._did_prefix + "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},
+                **(self._mapping[self._did_prefix + 'switch_status'])
+            }]
 
             modevalue = None
             for item in HVAC_MAPPING[hvac_mode]:
@@ -332,7 +363,11 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
                 _LOGGER.error(f"Failed to set {self._name} to mode {hvac_mode} because cannot find it in params.")
                 return False
 
-            result = await self.set_property_new(self._did_prefix + "mode", modevalue)
+            parameters.append({
+                **{'did': self._did_prefix + "mode", 'value': modevalue},
+                **(self._mapping[self._did_prefix + 'mode'])
+            })
+            result = await self.set_property_new(multiparams = parameters)
             if result:
                 self._hvac_mode = hvac_mode
                 self.async_write_ha_state()
@@ -386,3 +421,7 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
                     self._hvac_mode = k
         except:
             pass
+        if self._swing_modes:
+            ver = self._state_attrs.get(self._did_prefix + 'vertical_swing') or 0
+            hor = self._state_attrs.get(self._did_prefix + 'horizontal_swing') or 0
+            self._current_swing_mode = SWING_MAPPING[hor << 1 or ver]

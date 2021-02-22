@@ -47,12 +47,14 @@ def name_by_type(typ):
 SUPPORTED = {vv for v in MAP.values() for vv in v}
 
 def get_type_by_mitype(mitype:str):
+    if mitype == "fan_control":
+        return "fan_control"
     for k,v in MAP.items():
         if mitype in v:
             return k
     return None
 
-translate = {"on":"switch_status", "fan_level":"speed", "horizontal_swing":"oscillate"}
+translate = {"on":"switch_status", "fan_level":"speed"}
 
 class MiotAdapter:
     def __init__(self, spec: dict):
@@ -142,8 +144,13 @@ class MiotAdapter:
                     "siid": p.siid,
                     "piid": p.piid
                 }
-            if devtype == 'fan' and 'speed' not in ret and 'mode' in ret:
-                ret['speed'] = ret.pop('mode')
+            if devtype == 'fan':
+                if 'speed' not in ret and 'mode' in ret:
+                    ret['speed'] = ret.pop('mode')
+                if 'horizontal_swing' in ret:
+                    ret['oscillate'] = ret.pop('horizontal_swing')
+                elif 'vertical_swing' in ret:
+                    ret['oscillate'] = ret.pop('vertical_swing')
             if devtype == 'humidifier' and 'mode' not in ret and 'speed' in ret:
                 # deerma.humidifier.mjjsq
                 ret['mode'] = ret.pop('speed')
@@ -275,7 +282,7 @@ class MiotAdapter:
                         if not ret.get('speed'):
                             ret['speed'] = ret.pop('mode')
 
-            #TODO zhimi.fan.fa1 has both fan_level and mode
+                #TODO zhimi.fan.fa1 has both fan_level and mode
                 if p := propdict.get('horizontal_swing'):
                     ret['oscillate'] = {
                         True: True,

@@ -90,11 +90,10 @@ async def guess_mp_from_model(hass,model):
         if s:
             spec = await s.json()
             ad = MiotAdapter(spec)
-            mt = ad.mitype
 
-            dt = ad.get_all_devtype()
             mp = ad.get_all_mapping()
             prm = ad.get_all_params()
+            dt = ad.get_all_devtype() # 这一行必须在下面
             return {
                 'device_type': dt or ['switch'],
                 'mapping': json.dumps(mp,separators=(',', ':')),
@@ -203,18 +202,14 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._host = user_input[CONF_HOST]
             self._token = user_input[CONF_TOKEN]
             self._input2 = {**self._input2, **user_input}
-            # self._mapping = user_input[CONF_MAPPING]
-            # self._params = user_input[CONF_CONTROL_PARAMS]
 
             device = MiioDevice(self._host, self._token)
             try:
                 self._info = device.info()
             except DeviceException:
-                # print("DeviceException!!!!!!")
                 errors['base'] = 'cannot_connect'
             # except ValueError:
             #     errors['base'] = 'value_error'
-
 
             if self._info is not None:
                 unique_id = format_mac(self._info.mac_address)
@@ -439,7 +434,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_show_form(
                 step_id="devinfo",
                 data_schema=vol.Schema({
-                    # vol.Required('devtype', default=devtype_default): vol.In(SUPPORTED_DOMAINS),
                     vol.Required('devtype', default=devtype_default): cv.multi_select(SUPPORTED_DOMAINS),
                     vol.Required(CONF_MAPPING, default=mapping_default): str,
                     vol.Required(CONF_CONTROL_PARAMS, default=params_default): str,
