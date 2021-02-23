@@ -425,4 +425,4 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
         if self._swing_modes:
             ver = self._state_attrs.get(self._did_prefix + 'vertical_swing') or 0
             hor = self._state_attrs.get(self._did_prefix + 'horizontal_swing') or 0
-            self._current_swing_mode = SWING_MAPPING[hor << 1 or ver]
+            self._current_swing_mode = SWING_MAPPING[hor << 1 | ver]
