@@ -51,6 +51,21 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 ATTR_PROPERTIES = "properties"
 ATTR_SENSOR_PROPERTY = "sensor_property"
 SCAN_INTERVAL = timedelta(seconds=5)
+
+DEVCLASS_MAPPING = {
+    "battery"         : ["battery"],
+    "humidity"        : ["humidity"],
+    "illuminance"     : ["illuminance"],
+    "signal_strength" : ["signal_strength"],
+    "temperature"     : ["temperature"],
+    "timestamp"       : ["timestamp"],
+    "power"           : ["electric_power"],
+    "pressure"        : ["pressure"],
+    "current"         : ["electric_current"],
+    "energy"          : ["power_consumption"],
+    "power_factor"    : ["power_factor"],
+    "voltage"         : ["voltage"],
+}
 # pylint: disable=unused-argument
 @asyncio.coroutine
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
@@ -246,6 +261,13 @@ class MiotSubSensor(MiotSubDevice):
         """Return the unit of measurement of this entity, if any."""
         return self._unit_of_measurement
 
+    @property
+    def device_class(self):
+        """Return the device class of the sensor."""
+        try:
+            return next(k for k,v in DEVCLASS_MAPPING.items() for item in v if item in self._sensor_property)
+        except StopIteration:
+            return None
 
     @property
     def unique_id(self):

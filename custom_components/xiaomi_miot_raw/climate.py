@@ -169,10 +169,10 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
                 self._swing_modes = ["Off", "Vertical", "Horizontal", "Both"]
         elif self._did_prefix + 'vertical_swing' in self._mapping and \
             not self._did_prefix + 'horizontal_swing' in self._mapping:
-                self._swing_modes = ["Off", "Horizontal"]
+                self._swing_modes = ["Off", "Vertical"]
         elif not self._did_prefix + 'vertical_swing' in self._mapping and \
             self._did_prefix + 'horizontal_swing' in self._mapping:
-                self._swing_modes = ["Off", "Vertical"]
+                self._swing_modes = ["Off", "Horizontal"]
 
         try:
             self._target_temperature_step = self._ctrl_params['target_temperature']['value_range'][2]
@@ -325,16 +325,17 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
     async def async_set_swing_mode(self, swing_mode):
         """Set new swing mode."""
         swm = SWING_MAPPING.index(swing_mode)
-        parameters = [
-            {
-                **{'did': self._did_prefix + "vertical_swing", 'value': swm & 1},
+        parameters = []
+        if 'Vertical' in self._swing_modes:
+            parameters.append({
+                **{'did': self._did_prefix + "vertical_swing", 'value': bool(swm & 1)},
                 **(self._mapping[self._did_prefix + 'vertical_swing'])
-            },
-            {
-                **{'did': self._did_prefix + "horizontal_swing", 'value': swm >> 1},
+            })
+        if 'Horizontal' in self._swing_modes:
+            parameters.append({
+                **{'did': self._did_prefix + "horizontal_swing", 'value': bool(swm >> 1)},
                 **(self._mapping[self._did_prefix + 'horizontal_swing'])
-            }
-        ]
+            })
         result = await self.set_property_new(multiparams = parameters)
         if result:
             self._current_swing_mode = swing_mode
