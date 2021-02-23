@@ -52,11 +52,11 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 
 HVAC_MAPPING = {
     HVAC_MODE_OFF:  ['Off', 'Idle', 'None'],
-    HVAC_MODE_AUTO: ['Auto'],
+    HVAC_MODE_AUTO: ['Auto', 'Auto-tempature'],
     HVAC_MODE_COOL: ['Cool'],
     HVAC_MODE_HEAT: ['Heat'],
     HVAC_MODE_DRY:  ['Dry'],
-    HVAC_MODE_FAN_ONLY: ['Fan'],
+    HVAC_MODE_FAN_ONLY: ['Fan', 'Fan-tempature'],
     HVAC_MODE_HEAT_COOL:['HeatCool'],
 }
 
@@ -271,7 +271,10 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
     @property
     def hvac_modes(self):
         """Return the list of available operation modes."""
-        return [next(a[0] for a in HVAC_MAPPING.items() if b in a[1]) for b in self._ctrl_params['mode']] + [HVAC_MODE_OFF]
+        try:
+            return [next(a[0] for a in HVAC_MAPPING.items() if b in a[1]) for b in self._ctrl_params['mode']] + [HVAC_MODE_OFF]
+        except:
+            _LOGGER.error(f"Modes {self._ctrl_params['mode']} contains unsupported ones. Please report this message to the developer.")
 
     @property
     def preset_mode(self):
