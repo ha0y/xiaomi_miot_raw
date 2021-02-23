@@ -144,16 +144,17 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
         hass.data[DOMAIN]['miot_main_entity'][host] = device
         hass.data[DOMAIN]['entities'][device.unique_id] = device
-        if params[main_mi_type].get('show_individual_sensor'):
-            for k in mappingnew.keys():
-                try:
-                    unit = paramsnew[k].get('unit')
-                except:
-                    unit = None
-                devices.append(MiotSubSensor(
-                    device, mappingnew, paramsnew, main_mi_type,
-                    {'sensor_property': k, CONF_SENSOR_UNIT: unit}
-                ))
+        if main_mi_type:
+            if params[main_mi_type].get('show_individual_sensor'):
+                for k in mappingnew.keys():
+                    try:
+                        unit = paramsnew[k].get('unit')
+                    except:
+                        unit = None
+                    devices.append(MiotSubSensor(
+                        device, mappingnew, paramsnew, main_mi_type,
+                        {'sensor_property': k, CONF_SENSOR_UNIT: unit}
+                    ))
         async_add_devices(devices, update_before_add=True)
 
     if other_mi_type:
