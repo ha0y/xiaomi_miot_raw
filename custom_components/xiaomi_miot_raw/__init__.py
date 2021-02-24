@@ -273,9 +273,9 @@ class GenericMiotDevice(Entity):
         )
         if config.get('ett_id_migrated'):
             self._entity_id = self._unique_id
+            self.entity_id = f"{DOMAIN}.{self._entity_id}"
         else:
             self._entity_id = None
-        self.entity_id = f"{DOMAIN}.{self._entity_id}"
         # self._icon = "mdi:flask-outline"
 
         self._hass = hass
