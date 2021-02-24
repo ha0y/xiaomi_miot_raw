@@ -642,18 +642,20 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
         await super().async_update()
         state = self._state_attrs.get(self._did_prefix + 'switch_status')
         _LOGGER.debug("%s 's new state: %s", self._name, state)
-
-        if state == self._ctrl_params['switch_status']['power_on']:
-            self._state = True
-        elif state == self._ctrl_params['switch_status']['power_off']:
-            self._state = False
-        elif not self.assumed_state:
-            _LOGGER.warning(
-                "New state (%s) of %s doesn't match expected values: %s/%s",
-                state, self._name,
-                self._ctrl_params['switch_status']['power_on'],
-                self._ctrl_params['switch_status']['power_off'],
-            )
+        if 'switch_status' in self._ctrl_params:
+            if state == self._ctrl_params['switch_status']['power_on']:
+                self._state = True
+            elif state == self._ctrl_params['switch_status']['power_off']:
+                self._state = False
+            elif not self.assumed_state:
+                _LOGGER.warning(
+                    "New state (%s) of %s doesn't match expected values: %s/%s",
+                    state, self._name,
+                    self._ctrl_params['switch_status']['power_on'],
+                    self._ctrl_params['switch_status']['power_off'],
+                )
+                self._state = None
+        else:
             self._state = None
 
         self._state_attrs.update({ATTR_STATE_VALUE: state})
