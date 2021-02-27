@@ -86,6 +86,7 @@ MAP = {
         "hood",
         "fan_control",
         "dryer",
+        "toilet",
     },
     "cover": {
         "curtain",
