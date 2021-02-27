@@ -127,7 +127,10 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
                         di['fw_version'],
                         ""
                     )
-        device = MiotFan(miio_device, config, device_info, hass, main_mi_type)
+        if main_mi_type == 'washer':
+            device = MiotWasher(miio_device, config, device_info, hass, main_mi_type)
+        else:
+            device = MiotFan(miio_device, config, device_info, hass, main_mi_type)
 
         _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
         hass.data[DOMAIN]['miot_main_entity'][host] = device
@@ -399,15 +402,8 @@ class MiotActionList(MiotSubDevice, FanEntity):
         """Return the current speed."""
         return None
 
-    @property
-    def preset_modes(self) -> list:
-        """Get the list of available speeds."""
-        return self._action_list
-
-    @property
-    def preset_mode(self):
-        """Return the current speed."""
-        return None
+    preset_modes = speed_list
+    preset_mode = speed
 
     @property
     def speed_count(self) -> int:
@@ -450,3 +446,92 @@ class MiotActionList(MiotSubDevice, FanEntity):
     async def async_update(self):
         await asyncio.sleep(1)
         self._state2 = STATE_ON
+
+class MiotWasher(ToggleableMiotDevice, FanEntity):
+    def __init__(self, device, config, device_info, hass, main_mi_type):
+        ToggleableMiotDevice.__init__(self, device, config, device_info, hass, main_mi_type)
+        self._speed = None
+        self._oscillation = None
+        if 'switch_status' in self._ctrl_params:
+            self._assumed_state = False
+        else:
+            self._assumed_state = True
+
+    @property
+    def supported_features(self):
+        """Return the supported features."""
+        return SUPPORT_SET_SPEED if not NEW_FAN else SUPPORT_PRESET_MODE
+
+    @property
+    def speed_list(self) -> list:
+        """Get the list of available speeds."""
+        if NEW_FAN:
+            return None
+        else:
+            return list(self._ctrl_params['speed'].keys())
+
+    @property
+    def speed(self):
+        """Return the current speed."""
+        return self._speed if not NEW_FAN else None
+
+    @property
+    def preset_modes(self) -> list:
+        """Get the list of available preset_modes."""
+        return list(self._ctrl_params['speed'].keys())
+
+    @property
+    def preset_mode(self):
+        """Return the current speed."""
+        try:
+            self._speed = self.get_key_by_value(self._ctrl_params['speed'],self.device_state_attributes[self._did_prefix + 'speed'])
+        except KeyError:
+            self._speed = None
+        return self._speed
+
+    @property
+    def percentage(self):
+        return None
+
+    @property
+    def speed_count(self):
+        return len(self.preset_modes)
+
+    @property
+    def oscillating(self):
+        """Return the oscillation state."""
+        return self._oscillation
+
+    @property
+    def assumed_state(self):
+        """Return true if unable to access real state of entity."""
+        return self._assumed_state
+
+    async def async_turn_on(self, speed: str = None, **kwargs):
+        """Turn on."""
+        if 'switch_status' in self._ctrl_params:
+            await super().async_turn_on()
+        else:
+            try:
+                result = await self.call_action_new(*(self._mapping['a_l_' + self._did_prefix + 'start_wash'].values()))
+            except Exception as ex:
+                _LOGGER.error(ex)
+        if speed:
+            await self.async_set_preset_mode(speed)
+
+    async def async_turn_off(self, **kwargs):
+        """Turn off."""
+        if 'switch_status' in self._ctrl_params:
+            await super().async_turn_off()
+        else:
+            try:
+                result = await self.call_action_new(*(self._mapping['a_l_' + self._did_prefix + 'pause'].values()))
+            except Exception as ex:
+                raise NotImplementedError(ex)
+
+    async def async_set_preset_mode(self, preset_mode: str) -> None:
+        """Set new preset mode."""
+        result = await self.set_property_new(self._did_prefix + "speed", self._ctrl_params['speed'][preset_mode])
+        if result:
+            self._speed = preset_mode
+            self._skip_update = True
