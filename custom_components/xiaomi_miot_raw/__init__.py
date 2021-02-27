@@ -152,15 +152,17 @@ async def async_unload_entry(hass, entry):
 async def _setup_micloud_entry(hass, config_entry):
     """Thanks to @AlexxIT """
     data: dict = config_entry.data.copy()
+    server_location = data.get('server_location') or 'cn'
 
     session = aiohttp_client.async_create_clientsession(hass)
     cloud = MiCloud(session)
+    cloud.svr = server_location
     hass.data[DOMAIN]['cloud_instance'] = cloud
 
     if 'service_token' in data:
         # load devices with saved MiCloud auth
         cloud.auth = data
-        devices = await cloud.get_total_devices(['cn'])
+        devices = await cloud.get_total_devices([server_location])
     else:
         devices = None
 
@@ -171,7 +173,7 @@ async def _setup_micloud_entry(hass, config_entry):
             data.update(cloud.auth)
             hass.config_entries.async_update_entry(config_entry, data=data)
 
-            devices = await cloud.get_total_devices(['cn'])
+            devices = await cloud.get_total_devices([server_location])
 
             if devices is None:
                 _LOGGER.error("Can't load devices from MiCloud")
@@ -384,7 +386,7 @@ class GenericMiotDevice(Entity):
                     p = {'params': [p]}
                     pp = json.dumps(p,separators=(',', ':'))
                     _LOGGER.info(f"Control {self._name} params: {pp}")
-                    results = await self._cloud_instance.set_props(pp)
+                    results = await self._cloud_instance.set_props(pp, self._cloud.get("server_location"))
                     if results:
                         if r := results.get('result'):
                             for item in r:
@@ -404,7 +406,7 @@ class GenericMiotDevice(Entity):
                     pp = {'params': p}
                     ppp = json.dumps(pp,separators=(',', ':'))
                     _LOGGER.info(f"Control {self._name} params: {ppp}")
-                    results = await self._cloud_instance.set_props(ppp)
+                    results = await self._cloud_instance.set_props(ppp, self._cloud.get("server_location"))
                     if results:
                         if r := results.get('result'):
                             for item in r:
@@ -443,7 +445,7 @@ class GenericMiotDevice(Entity):
                 result = await self._cloud_instance.call_action(
                     json.dumps({
                         'params': params or []
-                    })
+                    }, self._cloud.get("server_location"))
                 )
                 if result:
                     return True
@@ -514,7 +516,7 @@ class GenericMiotDevice(Entity):
                         data1['params'].append({**{'did':self._cloud.get("did")},**value})
                 data2 = json.dumps(data1,separators=(',', ':'))
 
-                a = await self._cloud_instance.get_props(data2)
+                a = await self._cloud_instance.get_props(data2, self._cloud.get("server_location"))
 
                 dict1 = {}
                 statedict = {}

@@ -47,6 +47,7 @@ UA = "Android-7.1.1-1.0.0-ONEPLUS A3010-136-%s APP/xiaomi.smarthome APPV/62830"
 
 class MiCloud:
     auth = None
+    svr = None
 
     def __init__(self, session: ClientSession):
         self.session = session
@@ -161,8 +162,10 @@ class MiCloud:
 
         return None
 
-    async def request_miot_api(self, api, params = None):
-        api_base = "https://api.io.mi.com/app"
+    async def request_miot_api(self, api, params = None, server: str = None):
+        server = server or self.svr or 'cn'
+        api_base = 'https://api.io.mi.com/app' if server == 'cn' \
+            else f"https://{server}.api.io.mi.com/app"
         url2 = "/miotspec/"
         url = api_base+url2+api
 
@@ -207,14 +210,14 @@ class MiCloud:
         except:
             _LOGGER.exception(f"Can't load devices list")
 
-    async def get_props(self, params: str = ""):
-        return await self.request_miot_api('prop/get', params)
+    async def get_props(self, params: str = "", server: str = None):
+        return await self.request_miot_api('prop/get', params, server)
 
-    async def set_props(self, params: str = ""):
-        return await self.request_miot_api('prop/set', params)
+    async def set_props(self, params: str = "", server: str = None):
+        return await self.request_miot_api('prop/set', params, server)
 
-    async def call_action(self, params: str = ""):
-        return await self.request_miot_api('action', params)
+    async def call_action(self, params: str = "", server: str = None):
+        return await self.request_miot_api('action', params, server)
 
 
 def get_random_string(length: int):

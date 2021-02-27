@@ -37,6 +37,14 @@ from .deps.miot_device_adapter import MiotAdapter
 from .deps.special_devices import SPECIAL_DEVICES
 from .deps.xiaomi_cloud_new import MiCloud
 
+SERVERS = {
+    'cn': "China",
+    'de': "Europe",
+    'i2': "India",
+    'ru': "Russia",
+    'sg': "Singapore",
+    'us': "United States"
+}
 
 async def async_get_mp_from_net(hass, model):
     cs = aiohttp_client.async_get_clientsession(hass)
@@ -311,6 +319,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                                 'serviceToken': cloud.auth['service_token'],
                                 'ssecurity': cloud.auth['ssecurity'],
                             }
+                            if c := self.hass.data[DOMAIN]['cloud_instance']:
+                                if s := c.svr:
+                                    self._input2['update_from_cloud']['server_location'] = s
                             self._input2['cloud_device_info'] = {
                                 'name': self._cloud_device.get('name'),
                                 'mac': self._cloud_device.get('mac'),
@@ -371,6 +382,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._input2['update_from_cloud']['userId'] = user_input['userId']
             self._input2['update_from_cloud']['serviceToken'] = user_input['serviceToken']
             self._input2['update_from_cloud']['ssecurity'] = user_input['ssecurity']
+            if c := self.hass.data[DOMAIN]['cloud_instance']:
+                if s := c.svr:
+                    self._input2['update_from_cloud']['server_location'] = s
 
             return self.async_create_entry(
                 title=self._input2[CONF_NAME],
@@ -471,17 +485,31 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_init(self, user_input=None):
         """Handle options flow."""
         if 'password' in self._input2:
-            return self.async_abort(reason="no_configurable_account")
-        if self._input2['devtype'] == ['sensor']:
-            self._steps.append(self.async_step_sensor())
-        if 'climate' in self._input2['devtype']:
-            self._steps.append(self.async_step_climate())
+            self._steps.append(self.async_step_account())
+        else:
+            if self._input2['devtype'] == ['sensor']:
+                self._steps.append(self.async_step_sensor())
+            if 'climate' in self._input2['devtype']:
+                self._steps.append(self.async_step_climate())
 
         if self._steps:
             self._steps.append(self.async_finish())
             return await self._steps[0]
         else:
             return self.async_abort(reason="no_configurable_options")
+
+    async def async_step_account(self, user_input=None):
+        if user_input is not None:
+            self._input2.update(user_input)
+            self._steps.pop(0)
+            return await self._steps[0]
+
+        return self.async_show_form(
+            step_id='account',
+            data_schema=vol.Schema({
+                vol.Required('server_location', default=self._input2.get('server_location') or 'cn'): vol.In(SERVERS),
+            })
+        )
 
     async def async_step_sensor(self, user_input=None):
         if user_input is not None:

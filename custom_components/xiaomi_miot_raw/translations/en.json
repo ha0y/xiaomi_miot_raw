@@ -12,7 +12,8 @@
             "value_error": "Wrong value",
             "bad_params": "Bad params",
             "no_local_access": "Possible reasons:\n(1) Wrong siid or piid\n(2) Local access is not supported by device. Try Cloud Access.",
-            "no_connect_warning": "Failed to discover your device. If it is a Xiaomi Speaker, it is normal and you need to enter its model manually above. If not, please check your input."
+            "no_connect_warning": "Failed to discover your device. If it is a Xiaomi Speaker, it is normal and you need to enter its model manually above. If not, please check your input.",
+            "cant_login": "Cannot login"
         },
         "step": {
             "user": {
@@ -80,6 +81,13 @@
             "no_configurable_account": "No options available for the account.\nTo log out, use **Delete**. This will not affect added devices.\nTo refresh devices list, use **Reload**."
         },
         "step": {
+            "account": {
+                "data": {
+                    "server_location": "Server location"
+                },
+                "description": "Select which server are your devices in.\nTo log out, use **Delete**. This will not affect added devices.\nTo refresh devices list, use **Reload**.",
+                "title": "Account options"
+            },
             "sensor": {
                 "data": {
                     "show_individual_sensor": "Each attribute as an entity"
