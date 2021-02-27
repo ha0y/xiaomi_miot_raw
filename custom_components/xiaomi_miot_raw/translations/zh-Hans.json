@@ -77,7 +77,7 @@
     "options": {
         "abort": {
             "no_configurable_options": "没有可配置的选项",
-            "no_configurable_account": "小米账号没有可配置的选项。\n如需退出登录，删除此配置项即可。\n删除后不影响已添加的设备。"
+            "no_configurable_account": "小米账号没有可配置的选项。\n如需退出登录，删除此配置项即可。删除后不影响已添加的设备。\n如需刷新设备列表，请点击“重载”。"
         },
         "step": {
             "sensor": {

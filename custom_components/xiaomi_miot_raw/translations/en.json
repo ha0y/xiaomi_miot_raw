@@ -21,14 +21,14 @@
                     "host": "IP",
                     "token": "token"
                 },
-                "description": "Log in your Xiaomi account for a faster way to add devices.\nNot all devices in the list are supported yet.\nAdding non-WiFi devices is in beta and unstable. Use it at your own risk.",
+                "description": "Log in your Xiaomi account for a faster way to add devices.\nNot all devices in the list are supported yet.",
                 "title": "Select Operation"
             },
             "xiaomi_account": {
 				"title": "Log in Xiaomi Account",
 				"description": "",
 				"data": {
-					"username": "Emali/Xiaomi ID",
+					"username": "Email/Xiaomi ID",
 					"password": "Password"
 				}
 			},
@@ -76,15 +76,23 @@
     },
     "options": {
         "abort": {
-            "no_configurable_options": "No options available."
+            "no_configurable_options": "No options available.",
+            "no_configurable_account": "No options available for the account.\nTo log out, use **Delete**. This will not affect added devices.\nTo refresh devices list, use **Reload**."
         },
         "step": {
             "sensor": {
                 "data": {
                     "show_individual_sensor": "Each attribute as an entity"
                 },
-                "description": "",
+                "description": "If checked, there will be a sensor entity for each attribule.",
                 "title": "Sensor options"
+            },
+            "climate": {
+                "data": {
+                    "current_temp_source": "Environment temperature sensor entity ID"
+                },
+                "description": "Enter a entity ID of temperature sensor here to use it as the current temperature sensor.",
+                "title": "Climate options"
             }
         }
     }
