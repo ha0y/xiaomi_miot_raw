@@ -276,7 +276,6 @@ class GenericMiotDevice(Entity):
             self.entity_id = f"{DOMAIN}.{self._entity_id}"
         else:
             self._entity_id = None
-        # self._icon = "mdi:flask-outline"
 
         self._hass = hass
         self._cloud = config.get(CONF_CLOUD)
@@ -453,7 +452,6 @@ class GenericMiotDevice(Entity):
             return False
 
     async def async_update(self):
-        # _LOGGER.error(self._hass.data[DOMAIN])
         """Fetch state from the device."""
         # On state change some devices doesn't provide the new state immediately.
         if self._update_instant is False or self._skip_update:
@@ -635,7 +633,6 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
             self.async_write_ha_state()
 
     async def async_update(self):
-        # _LOGGER.error("Update!!!!!!!")
         if self._update_instant is False or self._skip_update:
             self._skip_update = False
             return
@@ -715,7 +712,6 @@ class MiotSubDevice(Entity):
 
     @property
     def device_state_attributes(self):
-        # return self._state_attrs
         try:
             return self._parent_device.device_state_attributes or {}
         except:
@@ -774,7 +770,6 @@ class MiotSubToggleableDevice(MiotSubDevice):
 
     @property
     def state(self):
-        # return STATE_ON if self._state else STATE_OFF
         try:
             return STATE_ON if self.device_state_attributes.get(f"{self._did_prefix}switch_status") else STATE_OFF
         except:
@@ -785,23 +780,6 @@ def sanitize_filename(s: str):
     filename = ''.join(c for c in s if c in valid_chars)
     filename = filename.replace(' ','_')
     return filename
-
-async def get_dev_info(hass, did):
-    cloud = hass.data[DOMAIN].get('cloud_instance')
-    if not cloud:
-        return None
-    data1 = {}
-    data1['datasource'] = 1
-    data1['params'] = [
-        {"did": str(did), "siid": 1, "piid": 1},
-        {"did": str(did), "siid": 1, "piid": 2},
-        {"did": str(did), "siid": 1, "piid": 3},
-        {"did": str(did), "siid": 1, "piid": 4},
-    ]
-
-    data2 = json.dumps(data1,separators=(',', ':'))
-
-    return await cloud.get_props(data2)
 
 @dataclass
 class dev_info:

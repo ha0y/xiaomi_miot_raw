@@ -25,7 +25,7 @@ from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
 
 import copy
-from . import GenericMiotDevice, get_dev_info, dev_info
+from . import GenericMiotDevice, dev_info
 from .deps.const import (
     DOMAIN,
     CONF_UPDATE_INSTANT,

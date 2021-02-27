@@ -27,7 +27,7 @@ from miio.device import Device
 from miio.exceptions import DeviceException
 from miio.miot_device import MiotDevice
 
-from . import GenericMiotDevice, ToggleableMiotDevice, MiotSubToggleableDevice, MiotSubDevice, get_dev_info, dev_info
+from . import GenericMiotDevice, ToggleableMiotDevice, MiotSubToggleableDevice, MiotSubDevice, dev_info
 from .deps.const import (
     DOMAIN,
     CONF_UPDATE_INSTANT,
@@ -58,7 +58,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 
 SCAN_INTERVAL = timedelta(seconds=10)
 
-NEW_FAN = True if StrictVersion(current_version.replace(".dev","a")) >= StrictVersion("2021.4.0") else False
+NEW_FAN = True if StrictVersion(current_version.replace(".dev","a")) >= StrictVersion("2021.2.9") else False
 SUPPORT_PRESET_MODE = 8
 
 # pylint: disable=unused-argument
@@ -168,6 +168,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     await async_setup_platform(hass, config, async_add_entities)
 
 class MiotFan(ToggleableMiotDevice, FanEntity):
+    """ The new fan @home-assistant/core#45407 sucks!!!!!! """
+
     def __init__(self, device, config, device_info, hass, main_mi_type):
         ToggleableMiotDevice.__init__(self, device, config, device_info, hass, main_mi_type)
         self._speed = None
@@ -192,22 +194,31 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
             return list(self._ctrl_params['speed'].keys())
 
     @property
+    def speed(self):
+        """Return the current speed."""
+        return self._speed if not NEW_FAN else None
+
+    @property
     def preset_modes(self) -> list:
         """Get the list of available preset_modes."""
         return list(self._ctrl_params['speed'].keys())
 
     @property
-    def speed(self):
+    def preset_mode(self):
         """Return the current speed."""
-        if NEW_FAN:
-            return None
-        else:
-            return self._speed
+        try:
+            self._speed = self.get_key_by_value(self._ctrl_params['speed'],self.device_state_attributes[self._did_prefix + 'speed'])
+        except KeyError:
+            self._speed = None
+        return self._speed
 
     @property
-    def preset_mode(self) -> str:
-        """Return the current preset mode."""
-        return self._speed
+    def percentage(self):
+        return None
+
+    @property
+    def speed_count(self):
+        return len(self.preset_modes)
 
     @property
     def oscillating(self):
@@ -230,20 +241,23 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
         if speed:
             parameters.append({**{'did': self._did_prefix + "speed", 'value': self._ctrl_params['speed'][speed]}, **(self._mapping[self._did_prefix + 'speed'])})
 
-        # result = await self._try_command(
-        #     "Turning the miio device on failed.",
-        #     self._device.send,
-        #     "set_properties",
-        #     parameters,
-        # )
         result = await self.set_property_new(multiparams = parameters)
         if result:
             self._state = True
+            self._speed = speed
             self._skip_update = True
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
-        await self.async_turn_on(speed=preset_mode)
+        result = await self.set_property_new(self._did_prefix + "speed", self._ctrl_params['speed'][preset_mode])
+        if result:
+            self._state = True
+            self._speed = preset_mode
+            self._skip_update = True
+
+    async def async_set_percentage(self, percentage: int) -> None:
+        """Set the speed percentage of the fan."""
+        pass
 
     async def async_update(self):
         if self._update_instant is False or self._skip_update:
@@ -308,6 +322,14 @@ class MiotSubFan(MiotSubToggleableDevice, FanEntity):
         return self._speed
 
     @property
+    def percentage(self):
+        return 0
+
+    @property
+    def speed_count(self):
+        return 1
+
+    @property
     def oscillating(self):
         """Return the oscillation state."""
         return self.device_state_attributes.get(self._did_prefix + 'oscillate')
@@ -323,7 +345,16 @@ class MiotSubFan(MiotSubToggleableDevice, FanEntity):
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
-        await self.async_turn_on(speed=preset_mode)
+        result = await self.set_property_new(self._did_prefix + "speed", self._ctrl_params['speed'][preset_mode])
+        if result:
+            self._state = True
+            self._speed = preset_mode
+            self._skip_update = True
+
+    async def async_set_percentage(self, percentage: int) -> None:
+        """Set the speed percentage of the fan."""
+        pass
+
 
     async def async_turn_on(self, speed: str = None, **kwargs) -> None:
         """Turn on the entity."""
@@ -335,6 +366,7 @@ class MiotSubFan(MiotSubToggleableDevice, FanEntity):
         result = await self._parent_device.set_property_new(multiparams = parameters)
         if result:
             self._state = True
+            self._speed = speed
             self._skip_update = True
 
 class MiotActionList(MiotSubDevice, FanEntity):
@@ -357,14 +389,34 @@ class MiotActionList(MiotSubDevice, FanEntity):
         """Get the list of available speeds."""
         return self._action_list
 
-    preset_modes = speed_list
-
     @property
     def speed(self):
         """Return the current speed."""
         return None
 
-    preset_mode = speed
+    @property
+    def percentage(self) -> str:
+        """Return the current speed."""
+        return None
+
+    @property
+    def preset_modes(self) -> list:
+        """Get the list of available speeds."""
+        return self._action_list
+
+    @property
+    def preset_mode(self):
+        """Return the current speed."""
+        return None
+
+    @property
+    def speed_count(self) -> int:
+        """Return the number of speeds the fan supports."""
+        return len(self._action_list)
+
+        # @property
+        # def _speed_list_without_preset_modes(self) -> list:
+        #     return []
 
     async def async_turn_on(self, speed: str = None, **kwargs) -> None:
         result = await self._parent_device.call_action_new(*self._mapping[speed].values())
@@ -378,6 +430,10 @@ class MiotActionList(MiotSubDevice, FanEntity):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         await self.async_turn_on(speed=preset_mode)
+
+    async def async_set_percentage(self, percentage: int) -> None:
+        """Set the speed percentage of the fan."""
+        pass
 
     @property
     def is_on(self):
