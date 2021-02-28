@@ -458,6 +458,7 @@ class GenericMiotDevice(Entity):
         # On state change some devices doesn't provide the new state immediately.
         if self._update_instant is False or self._skip_update:
             self._skip_update = False
+            self._delay_update = 0
             return
         if self._delay_update != 0:
             await asyncio.sleep(self._delay_update)

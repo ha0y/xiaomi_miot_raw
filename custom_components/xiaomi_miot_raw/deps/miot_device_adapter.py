@@ -275,6 +275,20 @@ class MiotAdapter:
                         ret['target_position'] = {
                             'value_range': vr
                         }
+                if p := propdict.get('status'):
+                    dct = {}
+                    if vl := p.vlist:
+                        for item in vl:
+                            if 'up' in item['description'].lower() or \
+                                'open' in item['description'].lower() or \
+                                '升' in item['description']:
+                                    dct['open'] = item['value']
+                            if 'down' in item['description'].lower() or \
+                                'close' in item['description'].lower() or \
+                                'dowm' in item['description'].lower() or \
+                                '降' in item['description']:
+                                    dct['close'] = item['value']
+                        ret['motor_status'] = dct
 
             if devtype == 'fan':
                 if p := propdict.get('mode'):
@@ -325,6 +339,10 @@ class MiotAdapter:
                         if k not in ret:
                             ret[k] = {}
                         ret[k]['unit'] = u
+                    if f := v.format_:
+                        if k not in ret:
+                            ret[k] = {}
+                        ret[k]['format'] = f
 
             return ret
         except Exception as ex:

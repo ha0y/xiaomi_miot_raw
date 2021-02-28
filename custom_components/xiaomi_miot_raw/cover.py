@@ -189,9 +189,9 @@ class MiotCover(GenericMiotDevice, CoverEntity):
             # self._skip_update = True
             try:
                 self._action = self._ctrl_params['motor_status']['open']
-            except KeyError:
-                return None
-
+            except KeyError as ex:
+                _LOGGER.error(ex)
+            self.async_write_ha_state()
             self.async_update = self._throttle1
             self.schedule_update_ha_state(force_refresh=True)
 
@@ -201,9 +201,9 @@ class MiotCover(GenericMiotDevice, CoverEntity):
         if result:
             try:
                 self._action = self._ctrl_params['motor_status']['close']
-            except KeyError:
-                return None
-            # self._skip_update = True
+            except KeyError as ex:
+                _LOGGER.error(ex)
+            self.async_write_ha_state()
             self.async_update = self._throttle1
             self.schedule_update_ha_state(force_refresh=True)
 
@@ -211,8 +211,7 @@ class MiotCover(GenericMiotDevice, CoverEntity):
         """Close the cover."""
         result = await self.set_property_new(self._did_prefix + "motor_control",self._ctrl_params['motor_control']['stop'])
         if result:
-            # self._skip_update = True
-            pass
+            self.async_write_ha_state()
 
     async def async_set_cover_position(self, **kwargs):
         """Set the cover."""
@@ -227,8 +226,8 @@ class MiotCover(GenericMiotDevice, CoverEntity):
             return
         await super().async_update()
         self._current_position = self._state_attrs.get(self._did_prefix + 'current_position')
-        self._action = self._state_attrs.get(self._did_prefix + 'motor_status')
         if self.is_closing or self.is_opening:
             self.async_update = self._throttle1
         else:
             self.async_update = self._throttle10
+        self._action = self._state_attrs.get(self._did_prefix + 'motor_status')

@@ -147,10 +147,12 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         if main_mi_type:
             if params[main_mi_type].get('show_individual_sensor'):
                 for k in mappingnew.keys():
-                    try:
+                    if k in paramsnew:
                         unit = paramsnew[k].get('unit')
-                    except:
-                        unit = None
+                        format_ = paramsnew[k].get('format')
+                    else:
+                        unit = format_ = None
+
                     devices.append(MiotSubSensor(
                         device, mappingnew, paramsnew, main_mi_type,
                         {'sensor_property': k, CONF_SENSOR_UNIT: unit}
@@ -279,3 +281,4 @@ class MiotSubSensor(MiotSubDevice):
     def name(self):
         """Return the name of this entity, if any."""
         return f"{self._parent_device.name} {self._sensor_property.replace('_', ' ').capitalize()}"
+
