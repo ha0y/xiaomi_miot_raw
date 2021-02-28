@@ -201,8 +201,8 @@ class MiotCover(GenericMiotDevice, CoverEntity):
         if result:
             try:
                 self._action = self._ctrl_params['motor_status']['close']
-            except KeyError as ex:
-                _LOGGER.error(ex)
+            except KeyError:
+                pass
             self.async_write_ha_state()
             self.async_update = self._throttle1
             self.schedule_update_ha_state(force_refresh=True)
