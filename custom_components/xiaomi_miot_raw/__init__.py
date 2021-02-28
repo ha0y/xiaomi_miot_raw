@@ -445,7 +445,7 @@ class GenericMiotDevice(Entity):
                 result = await self._cloud_instance.call_action(
                     json.dumps({
                         'params': params or []
-                    }, self._cloud.get("server_location"))
+                    }), self._cloud.get("server_location")
                 )
                 if result:
                     return True
