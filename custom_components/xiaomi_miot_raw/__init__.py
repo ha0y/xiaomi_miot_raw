@@ -73,6 +73,8 @@ async def async_setup(hass, hassconfig):
     hass.data[DOMAIN].setdefault('entities', {})
     hass.data[DOMAIN].setdefault('configs', {})
     hass.data[DOMAIN].setdefault('miot_main_entity', {})
+    hass.data[DOMAIN].setdefault('micloud_devices', [{}])
+    hass.data[DOMAIN].setdefault('cloud_instance_list', [])
 
     component = EntityComponent(_LOGGER, DOMAIN, hass, SCAN_INTERVAL)
     hass.data[DOMAIN]['component'] = component
@@ -132,9 +134,17 @@ async def async_setup_entry(hass, entry):
 
 async def async_unload_entry(hass, entry):
     if 'username' in entry.data:
-        hass.data[DOMAIN]['cloud_instance'] = None
-        hass.data[DOMAIN].pop('micloud_devices')
-        return True
+        # TODO
+        try:
+            hass.data[DOMAIN]['micloud_devices'] = []
+            for item in hass.data[DOMAIN]['cloud_instance_list']:
+                if item['username'] == entry.data['username']:
+                    del item
+                    return True
+            return False
+        except Exception as ex:
+            _LOGGER.error(ex)
+            return False
     else:
         entry_id = entry.entry_id
         unique_id = entry.unique_id
@@ -157,7 +167,6 @@ async def _setup_micloud_entry(hass, config_entry):
     session = aiohttp_client.async_create_clientsession(hass)
     cloud = MiCloud(session)
     cloud.svr = server_location
-    hass.data[DOMAIN]['cloud_instance'] = cloud
 
     if 'service_token' in data:
         # load devices with saved MiCloud auth
@@ -180,6 +189,13 @@ async def _setup_micloud_entry(hass, config_entry):
 
         else:
             _LOGGER.error("Can't login to MiCloud")
+    if userid := cloud.auth.get('user_id'):
+        # TODO don't allow login the same account twice
+        hass.data[DOMAIN]['cloud_instance_list'].append({
+            "user_id": userid,
+            "username": data['username'],
+            "cloud_instance": cloud
+        })
 
     # load devices from or save to .storage
     filename = sanitize_filename(data['username'])
@@ -210,21 +226,25 @@ class GenericMiotDevice(Entity):
         """Initialize the entity."""
 
         def setup_cloud(self, hass):
-            if cloud := hass.data[DOMAIN].get('cloud_instance'):
-                if cloud.auth.get('user_id') == self._cloud.get('userId'):
-                    _LOGGER.info(f"Xiaomi account was already logged in for {self._name}.")
-                    return cloud
-
-            _LOGGER.info(f"Setting up xiaomi account for {self._name}...")
-            mc = MiCloud(
-                aiohttp_client.async_get_clientsession(self._hass)
-            )
-            mc.login_by_credientals(
-                self._cloud.get('userId'),
-                self._cloud.get('serviceToken'),
-                self._cloud.get('ssecurity')
-            )
-            return mc
+            try:
+                return next(cloud['cloud_instance'] for cloud in hass.data[DOMAIN]['cloud_instance_list']
+                            if cloud['user_id'] == self._cloud.get('userId'))
+            except StopIteration:
+                _LOGGER.info(f"Setting up xiaomi account for {self._name}...")
+                mc = MiCloud(
+                    aiohttp_client.async_get_clientsession(self._hass)
+                )
+                mc.login_by_credientals(
+                    self._cloud.get('userId'),
+                    self._cloud.get('serviceToken'),
+                    self._cloud.get('ssecurity')
+                )
+                hass.data[DOMAIN]['cloud_instance_list'].append({
+                    "user_id": self._cloud.get('userId'),
+                    "username": None,  # 不是从UI配置的用户，没有用户名
+                    "cloud_instance": mc
+                })
+                return mc
 
         self._device = device
         self._mi_type = mi_type

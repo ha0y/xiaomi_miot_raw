@@ -17,7 +17,7 @@ def async_register(
 
 async def system_health_info(hass):
     """Get info for the info page."""
-    is_logged_in = hass.data[DOMAIN].get('cloud_instance') is not None
+    is_logged_in = bool(hass.data[DOMAIN]['cloud_instance_list'])
 
     data = {
         "logged_in": is_logged_in,
@@ -27,6 +27,7 @@ async def system_health_info(hass):
         data["can_reach_micloud_server"] = system_health.async_check_can_reach_url(
             hass, "https://api.io.mi.com"
         )
+        data["accounts_count"] = len(hass.data[DOMAIN]['cloud_instance_list'])
         data["account_devices_count"] = len(hass.data[DOMAIN]['micloud_devices'])
 
     if hass.data[DOMAIN].get('configs'):

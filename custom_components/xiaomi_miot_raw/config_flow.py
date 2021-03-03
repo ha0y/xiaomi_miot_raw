@@ -179,7 +179,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         CONF_TOKEN: DUMMY_TOKEN,
                     })
 
-        if DOMAIN in self.hass.data and 'micloud_devices' in self.hass.data[DOMAIN]:
+        if DOMAIN in self.hass.data and self.hass.data[DOMAIN]['micloud_devices']:
             for device in self.hass.data[DOMAIN]['micloud_devices']:
                 if device['did'] not in self._actions:
                     dt = get_conn_type(device)
@@ -307,7 +307,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         data=self._input2,
                     )
                 else:
-                    if cloud := self.hass.data[DOMAIN].get('cloud_instance'):
+                    for item in self.hass.data[DOMAIN]['cloud_instance_list']:
+                        if item['username']:
+                            cloud = item['cloud_instance']
+                    if cloud:
                         if not self._did:
                             for dev in self.hass.data[DOMAIN]['micloud_devices']:
                                 if dev.get('localip') == self._input2[CONF_HOST]:
@@ -319,9 +322,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                                 'serviceToken': cloud.auth['service_token'],
                                 'ssecurity': cloud.auth['ssecurity'],
                             }
-                            if c := self.hass.data[DOMAIN]['cloud_instance']:
-                                if s := c.svr:
-                                    self._input2['update_from_cloud']['server_location'] = s
+                            if s := cloud.svr:
+                                self._input2['update_from_cloud']['server_location'] = s
                             self._input2['cloud_device_info'] = {
                                 'name': self._cloud_device.get('name'),
                                 'mac': self._cloud_device.get('mac'),
@@ -382,8 +384,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._input2['update_from_cloud']['userId'] = user_input['userId']
             self._input2['update_from_cloud']['serviceToken'] = user_input['serviceToken']
             self._input2['update_from_cloud']['ssecurity'] = user_input['ssecurity']
-            if c := self.hass.data[DOMAIN]['cloud_instance']:
-                if s := c.svr:
+            cloud = None
+            for item in self.hass.data[DOMAIN]['cloud_instance_list']:
+                if item['username']:
+                    cloud = item['cloud_instance']
+            if cloud:
+                if s := cloud.svr:
                     self._input2['update_from_cloud']['server_location'] = s
 
             return self.async_create_entry(

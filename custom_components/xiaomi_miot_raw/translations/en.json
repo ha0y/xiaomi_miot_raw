@@ -72,7 +72,8 @@
             "logged_in": "Logged in to Xiaomi Account",
             "can_reach_micloud_server": "Reach Xiaomi Cloud Server",
             "account_devices_count": "Devices in account",
-            "added_devices": "Devices added"
+            "added_devices": "Devices added",
+            "accounts_count": "Xiaomi accounts"
         }
     },
     "options": {

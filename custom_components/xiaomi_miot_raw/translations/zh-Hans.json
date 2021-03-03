@@ -72,7 +72,8 @@
             "logged_in": "已登录小米账号",
             "can_reach_micloud_server": "可访问米家服务器",
             "account_devices_count": "账号米家设备数",
-            "added_devices": "插件接入设备数"
+            "added_devices": "插件接入设备数",
+            "accounts_count": "云端接入账号数"
         }
     },
     "options": {
