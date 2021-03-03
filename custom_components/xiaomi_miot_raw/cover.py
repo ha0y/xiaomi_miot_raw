@@ -143,6 +143,11 @@ class MiotCover(GenericMiotDevice, CoverEntity):
         self.async_update = self._throttle10
 
     @property
+    def should_poll(self):
+        """The cover should always be pulled."""
+        return True
+
+    @property
     def available(self):
         """Return true when state is known."""
         return True
@@ -220,14 +225,17 @@ class MiotCover(GenericMiotDevice, CoverEntity):
         if result:
             self._skip_update = True
 
-    async def _async_update(self):
-        if self._update_instant is False or self._skip_update:
-            self._skip_update = False
-            return
-        await super().async_update()
+    def _handle_platform_specific_attrs(self):
+        super()._handle_platform_specific_attrs()
         self._current_position = self._state_attrs.get(self._did_prefix + 'current_position')
         if self.is_closing or self.is_opening:
             self.async_update = self._throttle1
         else:
             self.async_update = self._throttle10
         self._action = self._state_attrs.get(self._did_prefix + 'motor_status')
+
+    async def _async_update(self):
+        if self._update_instant is False or self._skip_update:
+            self._skip_update = False
+            return
+        await super().async_update()

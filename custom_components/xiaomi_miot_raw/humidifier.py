@@ -194,10 +194,7 @@ class MiotHumidifier(ToggleableMiotDevice, HumidifierEntity):
         if result:
             self._mode = mode
 
-    async def async_update(self):
-        if self._update_instant is False or self._skip_update:
-            self._skip_update = False
-            return
-        await super().async_update()
+    def _handle_platform_specific_attrs(self):
+        super()._handle_platform_specific_attrs()
         self._target_humidity = self._state_attrs.get(self._did_prefix + 'target_humidity')
         self._mode = self.get_key_by_value(self._ctrl_params['mode'], self._state_attrs.get(self._did_prefix + 'mode'))

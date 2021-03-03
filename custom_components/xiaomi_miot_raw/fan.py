@@ -171,7 +171,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     await async_setup_platform(hass, config, async_add_entities)
 
 class MiotFan(ToggleableMiotDevice, FanEntity):
-    """ The new fan @home-assistant/core#45407 sucks!!!!!! """
+    """ TODO stepless speed """
 
     def __init__(self, device, config, device_info, hass, main_mi_type):
         ToggleableMiotDevice.__init__(self, device, config, device_info, hass, main_mi_type)
@@ -262,12 +262,8 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
         """Set the speed percentage of the fan."""
         pass
 
-    async def async_update(self):
-        if self._update_instant is False or self._skip_update:
-            self._skip_update = False
-            return
-        await super().async_update()
-        # self._speed = self._ctrl_params['speed'].get(self._state_attrs.get('speed_'))
+    def _handle_platform_specific_attrs(self):
+        super()._handle_platform_specific_attrs()
         try:
             self._speed = self.get_key_by_value(self._ctrl_params['speed'],self._state_attrs.get(self._did_prefix + 'speed'))
         except KeyError:

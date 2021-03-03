@@ -391,11 +391,8 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
         self._aux = False
         self.async_write_ha_state()
 
-    async def async_update(self):
-        if self._update_instant is False or self._skip_update:
-            self._skip_update = False
-            return
-        await super().async_update()
+    def _handle_platform_specific_attrs(self):
+        super()._handle_platform_specific_attrs()
         try:
             self._target_temperature = self._state_attrs.get(self._did_prefix + 'target_temperature')
         except:

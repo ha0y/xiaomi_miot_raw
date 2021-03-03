@@ -208,11 +208,13 @@ class MiotSensor(GenericMiotDevice):
         """Return the state of the device."""
         return self._state
 
-    async def async_update(self):
-        if self._update_instant is False or self._skip_update:
-            self._skip_update = False
-            return
-        await super().async_update()
+    @property
+    def unit_of_measurement(self):
+        """Return the unit of measurement of this entity, if any."""
+        return self._unit_of_measurement
+
+    def _handle_platform_specific_attrs(self):
+        super()._handle_platform_specific_attrs()
         state = self._state_attrs
         if self._sensor_property is not None:
             self._state = state.get(self._sensor_property)
@@ -222,11 +224,6 @@ class MiotSensor(GenericMiotDevice):
             except Exception as ex:
                 _LOGGER.error(ex)
                 self._state = None
-
-    @property
-    def unit_of_measurement(self):
-        """Return the unit of measurement of this entity, if any."""
-        return self._unit_of_measurement
 
 class MiotSubSensor(MiotSubDevice):
     def __init__(self, parent_device, mapping, params, mitype, others={}):

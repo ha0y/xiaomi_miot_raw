@@ -41,6 +41,7 @@ from .deps.const import (
 
 from .deps.xiaomi_cloud_new import *
 from .deps.xiaomi_cloud_new import MiCloud
+from .deps.miot_coordinator import MiotCloudCoordinator
 from asyncio.exceptions import CancelledError
 
 _LOGGER = logging.getLogger(__name__)
@@ -64,6 +65,8 @@ CONFIG_SCHEMA = vol.Schema(
 SHORT_DELAY = 3
 LONG_DELAY = 5
 
+UPDATE_BETA_FLAG = False
+
 async def async_setup(hass, hassconfig):
     """Setup Component."""
     hass.data.setdefault(DOMAIN, {})
@@ -73,7 +76,7 @@ async def async_setup(hass, hassconfig):
     hass.data[DOMAIN].setdefault('entities', {})
     hass.data[DOMAIN].setdefault('configs', {})
     hass.data[DOMAIN].setdefault('miot_main_entity', {})
-    hass.data[DOMAIN].setdefault('micloud_devices', [{}])
+    hass.data[DOMAIN].setdefault('micloud_devices', [])
     hass.data[DOMAIN].setdefault('cloud_instance_list', [])
 
     component = EntityComponent(_LOGGER, DOMAIN, hass, SCAN_INTERVAL)
@@ -194,7 +197,8 @@ async def _setup_micloud_entry(hass, config_entry):
         hass.data[DOMAIN]['cloud_instance_list'].append({
             "user_id": userid,
             "username": data['username'],
-            "cloud_instance": cloud
+            "cloud_instance": cloud,
+            "coordinator": MiotCloudCoordinator(hass, cloud)
         })
 
     # load devices from or save to .storage
@@ -225,9 +229,9 @@ class GenericMiotDevice(Entity):
     def __init__(self, device, config, device_info, hass = None, mi_type = None):
         """Initialize the entity."""
 
-        def setup_cloud(self, hass):
+        def setup_cloud(self, hass) -> tuple:
             try:
-                return next(cloud['cloud_instance'] for cloud in hass.data[DOMAIN]['cloud_instance_list']
+                return next((cloud['cloud_instance'], cloud['coordinator']) for cloud in hass.data[DOMAIN]['cloud_instance_list']
                             if cloud['user_id'] == self._cloud.get('userId'))
             except StopIteration:
                 _LOGGER.info(f"Setting up xiaomi account for {self._name}...")
@@ -239,12 +243,14 @@ class GenericMiotDevice(Entity):
                     self._cloud.get('serviceToken'),
                     self._cloud.get('ssecurity')
                 )
+                co = MiotCloudCoordinator(hass, mc)
                 hass.data[DOMAIN]['cloud_instance_list'].append({
                     "user_id": self._cloud.get('userId'),
                     "username": None,  # 不是从UI配置的用户，没有用户名
-                    "cloud_instance": mc
+                    "cloud_instance": mc,
+                    "coordinator": co
                 })
-                return mc
+                return (mc, co)
 
         self._device = device
         self._mi_type = mi_type
@@ -303,8 +309,12 @@ class GenericMiotDevice(Entity):
         self._cloud = config.get(CONF_CLOUD)
         self._cloud_write = config.get('cloud_write')
         self._cloud_instance = None
+        self.coordinator = None
         if self._cloud:
-            self._cloud_instance = setup_cloud(self, hass)
+            c = setup_cloud(self, hass)
+            self._cloud_instance = c[0]
+            self.coordinator = c[1]
+            self.coordinator.add_fixed_by_mapping(self._cloud, self._mapping)
 
         self._available = None
         self._state = None
@@ -320,7 +330,7 @@ class GenericMiotDevice(Entity):
     @property
     def should_poll(self):
         """Poll the miio device."""
-        return True
+        return True if (not UPDATE_BETA_FLAG or not self._cloud) else False
 
     @property
     def unique_id(self):
@@ -560,7 +570,8 @@ class GenericMiotDevice(Entity):
                     pass
 
             self._state_attrs.update(statedict)
-            await self.publish_updates()
+            self._handle_platform_specific_attrs()
+            self.publish_updates()
 
         except DeviceException as ex:
             self._available = False
@@ -630,10 +641,49 @@ class GenericMiotDevice(Entity):
         """Remove previously registered callback."""
         self._callbacks.discard(callback)
 
-    async def publish_updates(self):
+    def publish_updates(self):
         """Schedule call all registered callbacks."""
         for callback in self._callbacks:
             callback()
+
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass."""
+        if UPDATE_BETA_FLAG and self.coordinator:
+            self.async_on_remove(
+                self.coordinator.async_add_listener(self._handle_coordinator_update)
+            )
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        dict1 = {}
+        statedict = {}
+        if self._cloud['did'] in self.coordinator.data:
+            self._available = True
+            for item in self.coordinator.data[self._cloud['did']]:
+                if dict1.get(item['siid']):
+                    dict1[item['siid']][item['piid']] = item.get('value')
+                else:
+                    dict1[item['siid']] = {}
+                    dict1[item['siid']][item['piid']] = item.get('value')
+
+            for key, value in self._mapping.items():
+                try:
+                    statedict[key] = dict1[value['siid']][value['piid']]
+                except KeyError:
+                    statedict[key] = None
+        else:
+            pass
+
+        self._state_attrs.update(statedict)
+        _LOGGER.error(self._handle_platform_specific_attrs)
+        self._handle_platform_specific_attrs()
+        self.async_write_ha_state()
+        self.publish_updates()
+
+    def _handle_platform_specific_attrs(self):
+        pass
+
 
 class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
     def __init__(self, device, config, device_info, hass = None, mi_type = None):
@@ -655,11 +705,21 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
             self._state = False
             self.async_write_ha_state()
 
-    async def async_update(self):
-        if self._update_instant is False or self._skip_update:
-            self._skip_update = False
-            return
-        await super().async_update()
+    @property
+    def assumed_state(self):
+        """Return true if unable to access real state of entity."""
+        return self._assumed_state
+
+    @property
+    def state(self):
+        return STATE_ON if self._state else STATE_OFF
+
+    @property
+    def is_on(self):
+        return self._state
+
+    def _handle_platform_specific_attrs(self):
+        super()._handle_platform_specific_attrs()
         state = self._state_attrs.get(self._did_prefix + 'switch_status')
         _LOGGER.debug("%s 's new state: %s", self._name, state)
         if 'switch_status' in self._ctrl_params:
@@ -679,21 +739,7 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
             self._state = None
 
         self._state_attrs.update({ATTR_STATE_VALUE: state})
-
-        await self.publish_updates()
-
-    @property
-    def assumed_state(self):
-        """Return true if unable to access real state of entity."""
-        return self._assumed_state
-
-    @property
-    def state(self):
-        return STATE_ON if self._state else STATE_OFF
-
-    @property
-    def is_on(self):
-        return self._state
+        # await self.publish_updates()
 
 
 class MiotSubDevice(Entity):

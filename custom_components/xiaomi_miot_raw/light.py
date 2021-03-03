@@ -246,13 +246,8 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
         """Return the hs color value."""
         return self._color
 
-    async def async_update(self):
-        """Fetch state from the device."""
-        # On state change some devices doesn't provide the new state immediately.
-        if self._update_instant is False or self._skip_update:
-            self._skip_update = False
-            return
-        await super().async_update()
+    def _handle_platform_specific_attrs(self):
+        super()._handle_platform_specific_attrs()
         try:
             self._brightness = self.convert_value(self._state_attrs[self._did_prefix + 'brightness'],"brightness",False,self._ctrl_params['brightness']['value_range'])
         except KeyError: pass
