@@ -208,6 +208,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             self._name = user_input[CONF_NAME]
             self._host = user_input[CONF_HOST]
+            if user_input[CONF_TOKEN] == '0':
+                user_input[CONF_TOKEN] = '0'*32
             self._token = user_input[CONF_TOKEN]
             self._input2 = {**self._input2, **user_input}
 
@@ -324,13 +326,23 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             }
                             if s := cloud.svr:
                                 self._input2['update_from_cloud']['server_location'] = s
-                            self._input2['cloud_device_info'] = {
-                                'name': self._cloud_device.get('name'),
-                                'mac': self._cloud_device.get('mac'),
-                                'did': self._cloud_device.get('did'),
-                                'model': self._cloud_device.get('model'),
-                                'fw_version': self._cloud_device['extra'].get('fw_version'),
-                            }
+                            if self._cloud_device:
+                                self._input2['cloud_device_info'] = {
+                                    'name': self._cloud_device.get('name'),
+                                    'mac': self._cloud_device.get('mac'),
+                                    'did': self._cloud_device.get('did'),
+                                    'model': self._cloud_device.get('model'),
+                                    'fw_version': self._cloud_device['extra'].get('fw_version'),
+                                }
+                            else:
+                                # 3rd party device and Manually added device doesn't have one
+                                self._input2['cloud_device_info'] = {
+                                    'name': self._input2[CONF_NAME],
+                                    'mac': "",
+                                    'did': self._did,
+                                    'model': self._input2[CONF_MODEL],
+                                    'fw_version': "",
+                                }
                             return self.async_create_entry(
                                 title=self._input2[CONF_NAME],
                                 data=self._input2,

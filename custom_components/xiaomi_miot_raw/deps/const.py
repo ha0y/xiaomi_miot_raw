@@ -62,6 +62,7 @@ MAP = {
         "filter_4",
         "temperature_humidity_sensor",
         "magnet_sensor",
+        "motion_sensor",
     },
     "switch": {
         "switch",
@@ -87,6 +88,8 @@ MAP = {
         "fan_control",
         "dryer",
         "toilet",
+        "settings",
+        "settings_2",
     },
     "cover": {
         "curtain",
