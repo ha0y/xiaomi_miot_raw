@@ -353,10 +353,12 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
         if hvac_mode == HVAC_MODE_OFF:
             result = await self.async_turn_off()
         else:
-            parameters = [{
-                **{'did': self._did_prefix + "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},
-                **(self._mapping[self._did_prefix + 'switch_status'])
-            }]
+            parameters = []
+            if not self.is_on:
+                parameters.append({
+                    **{'did': self._did_prefix + "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},
+                    **(self._mapping[self._did_prefix + 'switch_status'])
+                })
 
             modevalue = None
             for item in HVAC_MAPPING[hvac_mode]:
