@@ -676,7 +676,6 @@ class GenericMiotDevice(Entity):
             pass
 
         self._state_attrs.update(statedict)
-        _LOGGER.error(self._handle_platform_specific_attrs)
         self._handle_platform_specific_attrs()
         self.async_write_ha_state()
         self.publish_updates()

@@ -27,7 +27,7 @@
             },
             "xiaomi_account": {
 				"title": "Log in Xiaomi Account",
-				"description": "",
+				"description": "This is to facilitate adding devices. \nAfter logging in, come back here to select devices to add.",
 				"data": {
 					"username": "Email/Xiaomi ID",
 					"password": "Password"

@@ -27,7 +27,7 @@
             },
             "xiaomi_account": {
 				"title": "小米账号登录",
-				"description": "",
+				"description": "登录账号是为了方便您添加设备，而不会自动添加所有设备。\n登录后再次添加此集成，即可选择要添加的设备。",
 				"data": {
 					"username": "邮箱/小米 ID",
 					"password": "密码"
