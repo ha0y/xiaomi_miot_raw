@@ -316,6 +316,7 @@ class GenericMiotDevice(Entity):
             self.coordinator = c[1]
             self.coordinator.add_fixed_by_mapping(self._cloud, self._mapping)
 
+        self._fail_count = 0
         self._available = None
         self._state = None
         self._assumed_state = False
@@ -569,13 +570,19 @@ class GenericMiotDevice(Entity):
                 else:
                     pass
 
+            self._fail_count = 0
             self._state_attrs.update(statedict)
             self._handle_platform_specific_attrs()
             self.publish_updates()
 
         except DeviceException as ex:
-            self._available = False
-            _LOGGER.error("Got exception while fetching %s 's state: %s", self._name, ex)
+            if self._fail_count < 3:
+                self._fail_count += 1
+                self._available = False
+                _LOGGER.info("Got exception while fetching %s 's state: %s. Count %d", self._name, ex, self._fail_count)
+            else:
+                self._available = False
+                _LOGGER.error("Got exception while fetching %s 's state: %s", self._name, ex)
 
     def get_key_by_value(self, d:dict, value):
         try:

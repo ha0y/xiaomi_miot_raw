@@ -48,6 +48,7 @@ UA = "Android-7.1.1-1.0.0-ONEPLUS A3010-136-%s APP/xiaomi.smarthome APPV/62830"
 class MiCloud:
     auth = None
     svr = None
+    _fail_count = 0
 
     def __init__(self, session: ClientSession):
         self.session = session
@@ -192,6 +193,7 @@ class MiCloud:
                 'data': params
             }, timeout=5)
 
+            self._fail_count = 0
             resp = await r.json(content_type=None)
             if resp.get('message') == 'auth err':
                 _LOGGER.error("小米账号登录信息失效")
@@ -206,9 +208,13 @@ class MiCloud:
                 return resp
 
         except asyncio.TimeoutError:
-            _LOGGER.error(f"Timeout while requesting MIoT api: {api}")
+            if self._fail_count < 3 and api == "prop/get":
+                self._fail_count += 1
+                _LOGGER.info(f"Timeout while requesting MIoT api: {api}")
+            else:
+                _LOGGER.error(f"Timeout while requesting MIoT api: {api}")
         except:
-            _LOGGER.exception(f"Can't load devices list")
+            _LOGGER.exception(f"Can't request MIoT api")
 
     async def get_props(self, params: str = "", server: str = None):
         return await self.request_miot_api('prop/get', params, server)
