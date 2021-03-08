@@ -37,7 +37,7 @@ import random
 import string
 import time
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientConnectorError
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -207,12 +207,12 @@ class MiCloud:
                 _LOGGER.info(f"Response of {api} from cloud: {resp}")
                 return resp
 
-        except asyncio.TimeoutError:
+        except (asyncio.TimeoutError, ClientConnectorError) as ex:
             if self._fail_count < 3 and api == "prop/get":
                 self._fail_count += 1
-                _LOGGER.info(f"Timeout while requesting MIoT api: {api}")
+                _LOGGER.info(f"Error while requesting MIoT api {api} : {ex} ({self._fail_count})")
             else:
-                _LOGGER.error(f"Timeout while requesting MIoT api: {api}")
+                _LOGGER.error(f"Error while requesting MIoT api {api} : {ex}")
         except:
             _LOGGER.exception(f"Can't request MIoT api")
 
