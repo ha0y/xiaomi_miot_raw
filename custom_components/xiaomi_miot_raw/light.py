@@ -145,6 +145,9 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         devices = []
 
         for item in other_mi_type:
+            if item == "indicator_light":
+                if not params[item].get('enabled'):
+                    continue
             devices.append(MiotSubLight(parent_device, mapping.get(item), params.get(item), item))
         async_add_devices(devices, update_before_add=True)
 

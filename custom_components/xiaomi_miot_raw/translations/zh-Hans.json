@@ -102,6 +102,14 @@
                 },
                 "description": "如果您的空调没有环境温度传感器，空调实体的环境温度会显示为和目标温度一致。\n您可以在此处输入其他温度传感器的实体 ID，这样就可以把它作为环境温度来源。",
                 "title": "空调设置"
+            },
+            "light_and_lock": {
+                "data": {
+                    "show_indicator_light": "显示指示灯开关",
+                    "show_physical_controls_locked": "显示童锁开关"
+                },
+                "description": "",
+                "title": "指示灯和童锁设置"
             }
         }
     }

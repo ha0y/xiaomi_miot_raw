@@ -755,7 +755,7 @@ class MiotSubDevice(Entity):
         self._unique_id = f'{parent_device.unique_id}-{mitype}'
         self._entity_id = f"{parent_device._entity_id}-{mitype}"
         self.entity_id = f"{DOMAIN}.{self._entity_id}"
-        self._name = f'{parent_device.name} {mitype.capitalize()}'
+        self._name = f'{parent_device.name} {mitype.replace("_", " ").title()}'
         self._state = STATE_UNKNOWN
         self._available = True
         self._parent_device = parent_device
@@ -763,7 +763,7 @@ class MiotSubDevice(Entity):
         self._mapping = mapping
         self._ctrl_params = params
         self._mitype = mitype
-        self._did_prefix= f"{mitype}_" if mitype else ""
+        self._did_prefix= f"{mitype[:10]}_" if mitype else ""
         self._skip_update = False
 
         self.convert_value = parent_device.convert_value

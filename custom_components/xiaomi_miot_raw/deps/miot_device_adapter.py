@@ -344,6 +344,11 @@ class MiotAdapter:
                             ret[k] = {}
                         ret[k]['format'] = f
 
+            if p := propdict.get('physical_controls_locked'):
+                ret['enabled'] = False
+            if p := propdict.get('indicator_light'):
+                ret['enabled'] = False
+
             return ret
         except Exception as ex:
             _LOGGER.error(ex)

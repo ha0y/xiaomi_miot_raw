@@ -102,6 +102,14 @@
                 },
                 "description": "Enter a entity ID of temperature sensor here to use it as the current temperature sensor.",
                 "title": "Climate options"
+            },
+            "light_and_lock": {
+                "data": {
+                    "show_indicator_light": "Enable switch for indicator light",
+                    "show_physical_controls_locked": "Enable switch for child lock"
+                },
+                "description": "",
+                "title": "Indicator light / child lock options"
             }
         }
     }

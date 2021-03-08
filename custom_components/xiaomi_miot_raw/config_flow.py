@@ -499,12 +499,17 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self.config_entry = config_entry
         self._input2 = config_entry.data.copy()
         self._steps = []
+        self._prm = {}
+        if 'password' not in self._input2:
+            self._prm = json.loads(self._input2[CONF_CONTROL_PARAMS])
 
     async def async_step_init(self, user_input=None):
         """Handle options flow."""
         if 'password' in self._input2:
             self._steps.append(self.async_step_account())
         else:
+            if 'indicator_light' in self._prm or 'physical_controls_locked' in self._prm:
+                self._steps.append(self.async_step_light_and_lock())
             if self._input2['devtype'] == ['sensor']:
                 self._steps.append(self.async_step_sensor())
             if 'climate' in self._input2['devtype']:
@@ -529,18 +534,36 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             })
         )
 
+    async def async_step_light_and_lock(self, user_input=None):
+        if user_input is not None:
+            if 'show_indicator_light' in user_input:
+                self._prm['indicator_light']['enabled'] = user_input['show_indicator_light']
+            if 'show_physical_controls_locked' in user_input:
+                self._prm['physical_controls_locked']['enabled'] = user_input['show_physical_controls_locked']
+
+            self._steps.pop(0)
+            return await self._steps[0]
+        data_schema = vol.Schema({})
+        if a := self._prm.get('indicator_light'):
+            data_schema = data_schema.extend({vol.Optional('show_indicator_light', default=a.get('enabled', False)): bool})
+        if a := self._prm.get('physical_controls_locked'):
+            data_schema = data_schema.extend({vol.Optional('show_physical_controls_locked', default=a.get('enabled', False)): bool})
+
+        return self.async_show_form(
+            step_id='light_and_lock',
+            data_schema=data_schema,
+        )
+
     async def async_step_sensor(self, user_input=None):
         if user_input is not None:
-            prm = json.loads(self._input2[CONF_CONTROL_PARAMS])
-            for device,p in prm.items():
+            for device,p in self._prm.items():
                 if device in MAP['sensor']:
                     p.update(user_input)
-            self._input2[CONF_CONTROL_PARAMS] = json.dumps(prm,separators=(',', ':'))
             self._steps.pop(0)
             return await self._steps[0]
 
         d = False
-        for device,p in json.loads(self._input2[CONF_CONTROL_PARAMS]).items():
+        for device,p in self._prm.items():
             if device in MAP['sensor'] and p.get('show_individual_sensor'):
                 d = True
                 break
@@ -553,11 +576,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_climate(self, user_input=None):
         if user_input is not None:
-            prm = json.loads(self._input2[CONF_CONTROL_PARAMS])
-            for device,p in prm.items():
+            for device,p in self._prm.items():
                 if device in MAP['climate']:
                     p.update(user_input)
-            self._input2[CONF_CONTROL_PARAMS] = json.dumps(prm,separators=(',', ':'))
             self._steps.pop(0)
             return await self._steps[0]
 
@@ -569,6 +590,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         )
 
     async def async_finish(self):
+        if self._prm:
+            self._input2[CONF_CONTROL_PARAMS] = json.dumps(self._prm,separators=(',', ':'))
         self.hass.config_entries.async_update_entry(
             self.config_entry, data=self._input2
         )

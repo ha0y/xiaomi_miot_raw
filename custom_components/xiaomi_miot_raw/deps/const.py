@@ -26,6 +26,7 @@ SUPPORTED_DOMAINS = [
     "humidifier",
     "media_player",
     "climate",
+    "lock",
 ]
 DEFAULT_NAME = "Xiaomi MIoT Device"
 
@@ -76,6 +77,7 @@ MAP = {
         "light_2",
         "light_3",
         "light_4",
+        "indicator_light",
     },
     "fan": {
         "a_l",
@@ -106,6 +108,9 @@ MAP = {
     },
     "climate": {
         "air_conditioner",
+    },
+    "lock": {
+        "physical_controls_locked",
     },
 }
 
