@@ -64,6 +64,7 @@ MAP = {
         "temperature_humidity_sensor",
         "magnet_sensor",
         "motion_sensor",
+        "submersion_sensor",
     },
     "switch": {
         "switch",
