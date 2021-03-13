@@ -65,6 +65,7 @@ MAP = {
         "magnet_sensor",
         "motion_sensor",
         "submersion_sensor",
+        "tds_sensor",
     },
     "switch": {
         "switch",
