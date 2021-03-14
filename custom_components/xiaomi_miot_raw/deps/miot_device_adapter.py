@@ -225,6 +225,11 @@ class MiotAdapter:
                     lst = {item['description']: item['value'] for item in vl}
                     ret['drying_level'] = lst
 
+            if p := propdict.get('status'):
+                if vl := p.vlist:
+                    lst = {item['description']: item['value'] for item in vl}
+                    ret['status'] = lst
+
             # print(devtype)
             if devtype == 'light':
                 if p := propdict.get('brightness'):
