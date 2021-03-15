@@ -74,6 +74,7 @@ MAP = {
         "switch_2",
         "switch_3",
         "switch_4",
+        "coffee_machine",
     },
     "light": {
         "light",
