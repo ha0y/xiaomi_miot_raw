@@ -166,16 +166,6 @@ class MiotWaterHeater(ToggleableMiotDevice, WaterHeaterEntity):
         return self._target_temperature
 
     @property
-    def target_temperature_high(self):
-        """Return the highbound target temperature we try to reach."""
-        return self._ctrl_params['target_temperature']['value_range'][1]
-
-    @property
-    def target_temperature_low(self):
-        """Return the lowbound target temperature we try to reach."""
-        return self._ctrl_params['target_temperature']['value_range'][0]
-
-    @property
     def min_temp(self):
         """Return the lowbound target temperature we try to reach."""
         return self._ctrl_params['target_temperature']['value_range'][0]
