@@ -96,6 +96,7 @@ MAP = {
         "toilet",
         "settings",
         "settings_2",
+        "air_fresh_heater",
     },
     "cover": {
         "curtain",
@@ -112,6 +113,7 @@ MAP = {
     },
     "climate": {
         "air_conditioner",
+        "heater",
     },
     "lock": {
         "physical_controls_locked",

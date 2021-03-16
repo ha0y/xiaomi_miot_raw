@@ -189,9 +189,18 @@ class MiotAdapter:
                         'power_off': False
                     }
 
+            # 把某个 service 里的 property 单独提出来
+            # 例如：晾衣架的烘干，新风机的辅热
             if p := propdict.get('dryer'):
                 if p.format_ == 'bool':
                     ret['dryer'] = {
+                        'power_on': True,
+                        'power_off': False
+                    }
+
+            if p := propdict.get('heater'):
+                if p.format_ == 'bool':
+                    ret['heater'] = {
                         'power_on': True,
                         'power_off': False
                     }
@@ -387,15 +396,22 @@ class MiotAdapter:
         if 'speaker' in ret and 'play_control' in ret:
             ret['speaker'] = {**ret['speaker'], **ret.pop('play_control')}
 
+        # 把某个 service 里的 property 单独提出来
+        # 例如：晾衣架的烘干，新风机的辅热
         if 'airer' in ret:
             if 'dryer' in ret['airer']:
-                if 'dryer' not in ret: ret['dryer'] = {}
+                ret.setdefault('dryer', {})
                 ret['dryer'].update({'switch_status': ret['airer'].pop('dryer')})
                 self.devtypeset.add('fan')
             if 'drying_level' in ret['airer']:
-                if 'dryer' not in ret: ret['dryer'] = {}
+                ret.setdefault('dryer', {})
                 ret['dryer'].update({'speed': ret['airer'].pop('drying_level')})
 
+        if 'air_fresh' in ret:
+            if 'heater' in ret['air_fresh']:
+                ret.setdefault('air_fresh_heater', {})
+                ret['air_fresh_heater'].update({'switch_status': ret['air_fresh'].pop('heater')})
+                self.devtypeset.add('fan')
         return ret
 
     def get_all_params(self):
@@ -417,13 +433,20 @@ class MiotAdapter:
         if 'speaker' in ret and 'play_control' in ret:
             ret['speaker'] = {**ret['speaker'], **ret.pop('play_control')}
 
+        # 把某个 service 里的 property 单独提出来
+        # 例如：晾衣架的烘干，新风机的辅热
         if 'airer' in ret:
             if 'dryer' in ret['airer']:
-                if 'dryer' not in ret: ret['dryer'] = {}
+                ret.setdefault('dryer', {})
                 ret['dryer'].update({'switch_status': ret['airer'].pop('dryer')})
             if 'drying_level' in ret['airer']:
-                if 'dryer' not in ret: ret['dryer'] = {}
+                ret.setdefault('dryer', {})
                 ret['dryer'].update({'speed': ret['airer'].pop('drying_level')})
+
+        if 'air_fresh' in ret:
+            if 'heater' in ret['air_fresh']:
+                ret.setdefault('air_fresh_heater', {})
+                ret['air_fresh_heater'].update({'switch_status': ret['air_fresh'].pop('heater')})
 
         if not has_main:
             try:
