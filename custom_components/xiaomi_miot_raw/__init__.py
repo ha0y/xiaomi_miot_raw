@@ -1,5 +1,6 @@
 import asyncio
 import json
+import time
 import logging
 from datetime import timedelta
 from functools import partial
@@ -64,7 +65,9 @@ CONFIG_SCHEMA = vol.Schema(
 
 SHORT_DELAY = 3
 LONG_DELAY = 5
+NOTIFY_INTERVAL = 60 * 10
 
+OFFLINE_NOTIFY = False
 UPDATE_BETA_FLAG = False
 
 async def async_setup(hass, hassconfig):
@@ -325,7 +328,7 @@ class GenericMiotDevice(Entity):
             ATTR_FIRMWARE_VERSION: device_info.firmware_version,
             ATTR_HARDWARE_VERSION: device_info.hardware_version,
         }
-        self._notified = False
+        self._last_notified = 0
         self._callbacks = set()
 
     @property
@@ -423,6 +426,18 @@ class GenericMiotDevice(Entity):
                             for item in r:
                                 if item['code'] == 1:
                                     self._delay_update = LONG_DELAY
+                                elif item['code'] == -704042011:
+                                    if self._available == True or self._available == None:
+                                        if OFFLINE_NOTIFY:
+                                            persistent_notification.async_create(
+                                                self._hass,
+                                                f"请注意，云端接入设备 **{self._name}** 已离线。",
+                                                "Xiaomi MIoT - 设备离线")
+                                        else:
+                                            _LOGGER.warn(f"请注意，云端接入设备 **{self._name}** 已离线。")
+                                    self._available = False
+                                    self._skip_update = True
+                                    return False
                                 elif item['code'] != 0:
                                     _LOGGER.error(f"Control {self._name} by cloud failed: {r}")
                                     return False
@@ -443,6 +458,18 @@ class GenericMiotDevice(Entity):
                             for item in r:
                                 if item['code'] == 1:
                                     self._delay_update = LONG_DELAY
+                                elif item['code'] == -704042011:
+                                    if self._available == True or self._available == None:
+                                        if OFFLINE_NOTIFY:
+                                            persistent_notification.async_create(
+                                                self._hass,
+                                                f"请注意，云端接入设备 **{self._name}** 已离线。",
+                                                "Xiaomi MIoT - 设备离线")
+                                        else:
+                                            _LOGGER.warn(f"请注意，云端接入设备 **{self._name}** 已离线。")
+                                    self._available = False
+                                    self._skip_update = True
+                                    return False
                                 elif item['code'] != 0:
                                     _LOGGER.error(f"Control {self._name} by cloud failed: {r}")
                                     return False
@@ -528,7 +555,7 @@ class GenericMiotDevice(Entity):
                     self._assumed_state = True
                     self._skip_update = True
                     # _LOGGER.warn("设备不支持状态反馈")
-                    if not self._notified:
+                    if time.time() - self._last_notified > NOTIFY_INTERVAL:
                         persistent_notification.async_create(
                             self._hass,
                             f"您添加的设备: **{self._name}** ，\n"
@@ -536,7 +563,7 @@ class GenericMiotDevice(Entity):
                             f"全部返回 **-4004** 错误。\n"
                             "请考虑通过云端接入此设备来解决此问题。",
                             "设备可能不受支持")
-                        self._notified = True
+                        self._last_notified = time.time()
 
             else:
                 _LOGGER.info(f"{self._name} is updating from cloud.")
@@ -553,13 +580,22 @@ class GenericMiotDevice(Entity):
                 dict1 = {}
                 statedict = {}
                 if a:
-                    self._available = True
+                    if all(item['code'] == -704042011 for item in a['result']):
+                        if self._available == True or self._available == None:
+                            if OFFLINE_NOTIFY:
+                                persistent_notification.async_create(
+                                    self._hass,
+                                    f"请注意，云端接入设备 **{self._name}** 已离线。",
+                                    "Xiaomi MIoT - 设备离线")
+                            else:
+                                _LOGGER.warn(f"请注意，云端接入设备 **{self._name}** 已离线。")
+                        self._available = False
+                    else:
+                        self._available = True
+
                     for item in a['result']:
-                        if dict1.get(item['siid']):
-                            dict1[item['siid']][item['piid']] = item.get('value')
-                        else:
-                            dict1[item['siid']] = {}
-                            dict1[item['siid']][item['piid']] = item.get('value')
+                        dict1.setdefault(item['siid'], {})
+                        dict1[item['siid']][item['piid']] = item.get('value')
 
                     for key, value in self._mapping.items():
                         try:
@@ -666,7 +702,18 @@ class GenericMiotDevice(Entity):
         dict1 = {}
         statedict = {}
         if self._cloud['did'] in self.coordinator.data:
-            self._available = True
+            if all(item['code'] == -704042011 for item in self.coordinator.data[self._cloud['did']]):
+                if self._available == True or self._available == None:
+                    if OFFLINE_NOTIFY:
+                        persistent_notification.async_create(
+                            self._hass,
+                            f"请注意，云端接入设备 **{self._name}** 已离线。",
+                            "Xiaomi MIoT - 设备离线")
+                    else:
+                        _LOGGER.warn(f"请注意，云端接入设备 **{self._name}** 已离线。")
+                self._available = False
+            else:
+                self._available = True
             for item in self.coordinator.data[self._cloud['did']]:
                 if dict1.get(item['siid']):
                     dict1[item['siid']][item['piid']] = item.get('value')
