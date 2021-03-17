@@ -120,6 +120,7 @@ MAP = {
     },
     "water_heater": {
         "water_heater",
+        "kettle",
     },
 }
 
