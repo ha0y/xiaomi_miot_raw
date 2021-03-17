@@ -142,7 +142,7 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         device = MiotSensor(miio_device, config, device_info, hass, main_mi_type)
         devices = [device]
         _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
-        hass.data[DOMAIN]['miot_main_entity'][host] = device
+        hass.data[DOMAIN]['miot_main_entity'][f'{host}-{config.get(CONF_NAME)}'] = device
         hass.data[DOMAIN]['entities'][device.unique_id] = device
         if main_mi_type:
             if params[main_mi_type].get('show_individual_sensor'):
@@ -162,7 +162,7 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
     if other_mi_type:
         retry_time = 1
         while True:
-            if parent_device := hass.data[DOMAIN]['miot_main_entity'].get(host):
+            if parent_device := hass.data[DOMAIN]['miot_main_entity'].get(f'{host}-{config.get(CONF_NAME)}'):
                 break
             else:
                 retry_time *= 2

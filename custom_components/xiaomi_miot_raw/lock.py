@@ -77,7 +77,7 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
     if other_mi_type:
         retry_time = 1
         while True:
-            if parent_device := hass.data[DOMAIN]['miot_main_entity'].get(host):
+            if parent_device := hass.data[DOMAIN]['miot_main_entity'].get(f'{host}-{config.get(CONF_NAME)}'):
                 break
             else:
                 retry_time *= 2
