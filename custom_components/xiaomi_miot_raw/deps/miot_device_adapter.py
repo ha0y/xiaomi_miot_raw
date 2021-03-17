@@ -396,6 +396,11 @@ class MiotAdapter:
         if 'speaker' in ret and 'play_control' in ret:
             ret['speaker'] = {**ret['speaker'], **ret.pop('play_control')}
 
+        if 'humidifier' in ret and 'environment' in ret:
+            # deerma.humidifier.mjjsq target_humidity misplaced
+            if 'target_humidity' in ret['environment']:
+                ret['humidifier']['target_humidity'] = (ret['environment'].pop('target_humidity'))
+
         # 把某个 service 里的 property 单独提出来
         # 例如：晾衣架的烘干，新风机的辅热
         if 'airer' in ret:
@@ -432,6 +437,11 @@ class MiotAdapter:
 
         if 'speaker' in ret and 'play_control' in ret:
             ret['speaker'] = {**ret['speaker'], **ret.pop('play_control')}
+
+        if 'humidifier' in ret and 'environment' in ret:
+            # deerma.humidifier.mjjsq target_humidity misplaced
+            if 'target_humidity' in ret['environment']:
+                ret['humidifier']['target_humidity'] = (ret['environment'].pop('target_humidity'))
 
         # 把某个 service 里的 property 单独提出来
         # 例如：晾衣架的烘干，新风机的辅热
