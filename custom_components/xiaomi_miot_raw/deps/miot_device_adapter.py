@@ -56,6 +56,21 @@ def get_type_by_mitype(mitype:str):
 
 translate = {"on":"switch_status", "fan_level":"speed"}
 
+def get_range_by_list(value_list: list):
+    l = [item['value'] for item in value_list]
+    l.sort()
+    if len(l) <= 1:
+        _LOGGER.error(f"Wrong value list: {value_list}")
+        return None
+    else:
+        d = l[1] - l[0]
+        for i in range(2, len(l)):
+            if l[i] - l[i-1] != d:
+                _LOGGER.error(f"Cannot convert value list {value_list} to range: Not a arithmetic progression!")
+                return None
+        return [l[0], l[-1], d]
+
+
 class MiotAdapter:
     def __init__(self, spec: dict):
         self.spec = spec
@@ -151,7 +166,7 @@ class MiotAdapter:
                     ret['oscillate'] = ret.pop('horizontal_swing')
                 elif 'vertical_swing' in ret:
                     ret['oscillate'] = ret.pop('vertical_swing')
-            if devtype == 'humidifier' and 'mode' not in ret and 'speed' in ret:
+            if devtype in ('humidifier', 'dehumidifier') and 'mode' not in ret and 'speed' in ret:
                 # deerma.humidifier.mjjsq
                 ret['mode'] = ret.pop('speed')
             if devtype == 'cover':
@@ -317,7 +332,7 @@ class MiotAdapter:
                         False: False
                     }
 
-            if devtype == 'humidifier':
+            if devtype in ('humidifier', 'dehumidifier'):
                 # deerma.humidifier.mjjsq
                 if p := propdict.get('fan_level'):
                     if vl := p.vlist:
@@ -345,6 +360,11 @@ class MiotAdapter:
                 if vr := p.vrange:
                     ret['target_humidity'] = {
                         'value_range': vr
+                    }
+                # nwt.derh.330ef uses value list instead of range, convert it
+                elif vl := p.vlist:
+                    ret['target_humidity'] = {
+                        'value_range': get_range_by_list(vl)
                     }
 
             if devtype == 'sensor':
