@@ -6,7 +6,7 @@
   "issue_tracker": "https://github.com/ha0y/xiaomi_miot_raw/issues",
   "requirements": [
     "construct==2.10.56",
-    "python-miio>=0.5.3"
+    "python-miio==0.5.4"
   ],
   "dependencies": [],
   "codeowners": [
