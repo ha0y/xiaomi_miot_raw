@@ -10,9 +10,8 @@ from homeassistant.const import (ATTR_ENTITY_ID, CONF_HOST, CONF_NAME,
                                  CONF_TOKEN)
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers.entity import Entity
-from miio.device import Device
 from miio.exceptions import DeviceException
-from miio.miot_device import MiotDevice
+from .deps.miio_new import MiotDevice
 
 from datetime import timedelta
 from . import GenericMiotDevice, MiotSubDevice, dev_info

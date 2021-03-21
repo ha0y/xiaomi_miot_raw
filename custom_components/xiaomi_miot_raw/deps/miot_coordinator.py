@@ -19,9 +19,8 @@ from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.helpers.storage import Store
 from homeassistant.util import color
-from miio.device import Device
 from miio.exceptions import DeviceException
-from miio.miot_device import MiotDevice
+from .miio_new import MiotDevice
 import copy
 import math
 from collections import OrderedDict

@@ -14,7 +14,7 @@ from homeassistant.helpers.device_registry import format_mac
 from homeassistant.core import callback
 from miio import Device as MiioDevice
 from miio import DeviceException
-from miio.miot_device import MiotDevice
+from .deps.miio_new import MiotDevice
 
 from .deps.const import (
     DOMAIN,

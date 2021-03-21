@@ -11,9 +11,8 @@ from homeassistant.components.media_player import *
 from homeassistant.components.media_player.const import *
 from homeassistant.const import *
 from homeassistant.exceptions import PlatformNotReady
-from miio.device import Device
 from miio.exceptions import DeviceException
-from miio.miot_device import MiotDevice
+from .deps.miio_new import MiotDevice
 from homeassistant.components import persistent_notification
 
 from . import GenericMiotDevice, ToggleableMiotDevice

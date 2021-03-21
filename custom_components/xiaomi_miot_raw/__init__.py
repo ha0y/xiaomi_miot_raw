@@ -19,9 +19,8 @@ from homeassistant.helpers.entity import Entity, ToggleEntity
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.storage import Store
 from homeassistant.util import color
-from miio.device import Device
 from miio.exceptions import DeviceException
-from miio.miot_device import MiotDevice
+from .deps.miio_new import MiotDevice
 import copy
 import math
 from collections import OrderedDict

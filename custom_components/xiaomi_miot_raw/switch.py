@@ -12,9 +12,8 @@ import voluptuous as vol
 from homeassistant.components.switch import PLATFORM_SCHEMA, SwitchEntity
 from homeassistant.const import *
 from homeassistant.exceptions import PlatformNotReady
-from miio.device import Device
 from miio.exceptions import DeviceException
-from miio.miot_device import MiotDevice
+from .deps.miio_new import MiotDevice
 
 from . import ToggleableMiotDevice, MiotSubToggleableDevice, dev_info
 from .deps.const import (

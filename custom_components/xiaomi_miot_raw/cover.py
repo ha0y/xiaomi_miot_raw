@@ -20,9 +20,8 @@ from homeassistant.const import *
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers import aiohttp_client
 from homeassistant.util import Throttle
-from miio.device import Device
 from miio.exceptions import DeviceException
-from miio.miot_device import MiotDevice
+from .deps.miio_new import MiotDevice
 
 import copy
 from . import GenericMiotDevice, dev_info
