@@ -67,6 +67,8 @@ MAP = {
         "motion_sensor",
         "submersion_sensor",
         "tds_sensor",
+        "air_fryer",
+        "remain_clean_time",
     },
     "switch": {
         "switch",
@@ -97,6 +99,8 @@ MAP = {
         "settings",
         "settings_2",
         "air_fresh_heater",
+        "bed",
+        "pet_drinking_fountain",
     },
     "cover": {
         "curtain",
