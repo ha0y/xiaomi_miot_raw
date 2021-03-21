@@ -13,7 +13,8 @@
             "bad_params": "Bad params",
             "no_local_access": "Possible reasons:\n(1) Wrong siid or piid\n(2) Local access is not supported by device. Try Cloud Access.",
             "no_connect_warning": "Failed to discover your device. If it is a Xiaomi Speaker, it is normal and you need to enter its model manually above. If not, please check your input.",
-            "cant_login": "Cannot login"
+            "cant_login": "Cannot login",
+            "account_tips": "This is to facilitate adding devices. \nAfter logging in, come back here to select devices to add."
         },
         "step": {
             "user": {
@@ -27,7 +28,7 @@
             },
             "xiaomi_account": {
 				"title": "Log in Xiaomi Account",
-				"description": "This is to facilitate adding devices. \nAfter logging in, come back here to select devices to add.",
+				"description": "",
 				"data": {
 					"username": "Email/Xiaomi ID",
 					"password": "Password"

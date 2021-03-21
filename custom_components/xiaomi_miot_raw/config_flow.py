@@ -437,7 +437,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 # vol.Required('servers', default=['cn']):
                     # cv.multi_select(SERVERS)
             }),
-            errors={'base': error} if error else None
+            errors={'base': error} if error else {'base': 'account_tips'}
         )
 
     async def async_step_xiaoai(self, user_input=None, error=None):
