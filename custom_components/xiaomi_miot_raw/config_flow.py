@@ -46,6 +46,70 @@ SERVERS = {
     'us': "United States"
 }
 
+class URN:
+    def __init__(self, urn : str):
+        if ':' not in urn:
+            raise TypeError("Not a valid urn.")
+        self.urnstr = urn
+        self.urn = urn.split(':')
+
+    def __repr__ (self):
+        return self.urnstr
+
+    def _cmp (self, other):
+        if isinstance(other, str):
+            other = URN(other)
+        elif not isinstance(other, URN):
+            return NotImplemented
+        if len(self.urn) != len(other.urn):
+            return NotImplemented
+        for i in range(len(self.urn)):
+            try:
+                s = int(self.urn[i])
+                o = int(other.urn[i])
+            except Exception:
+                s = self.urn[i]
+                o = other.urn[i]
+
+            if s == o:
+                continue
+            elif s < o:
+                return -1
+            elif s > o:
+                return 1
+        return 0
+
+    def __eq__(self, other):
+        c = self._cmp(other)
+        if c is NotImplemented:
+            return c
+        return c == 0
+
+    def __lt__(self, other):
+        c = self._cmp(other)
+        if c is NotImplemented:
+            return c
+        return c < 0
+
+    def __le__(self, other):
+        c = self._cmp(other)
+        if c is NotImplemented:
+            return c
+        return c <= 0
+
+    def __gt__(self, other):
+        c = self._cmp(other)
+        if c is NotImplemented:
+            return c
+        return c > 0
+
+    def __ge__(self, other):
+        c = self._cmp(other)
+        if c is NotImplemented:
+            return c
+        return c >= 0
+
+
 async def async_get_mp_from_net(hass, model):
     cs = aiohttp_client.async_get_clientsession(hass)
     url = "https://raw.githubusercontent.com/ha0y/miot-params/master/main.json"
@@ -83,13 +147,14 @@ async def guess_mp_from_model(hass,model):
         dev_list = dev_list.get('instances')
     else:
         dev_list = None
-    result = None
+    result = []
     if dev_list:
         for item in dev_list:
             if model == item['model']:
-                result = item
-        urn = result['type']
-        params = {'type': urn}
+                result.append(item)
+        urnlist = [URN(r['type']) for r in result]
+        urnlist.sort()
+        params = {'type': str(urnlist[0])}
         with async_timeout.timeout(10):
             try:
                 s = await cs.get(url_spec, params=params)
@@ -449,7 +514,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._info = await guess_mp_from_model(self.hass, self._model)
             hint = ""
             if self._info and self._info.get('mapping') != "{}":
-                hint += "\n根据您手动输入的 model，已经自动发现配置参数。\n如无特殊需要，无需修改下列内容。\n"
+                hint += f"\n根据 model (**{self._model}**)，已经自动发现配置参数。\n如无特殊需要，无需修改下列内容。\n"
                 devtype_default = self._info.get('device_type')
 
                 mp = self._info.get('mapping')
