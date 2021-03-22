@@ -1,0 +1,117 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "已設定過此裝置了"
+        },
+        "create_entry": {
+            "default": "如果新增的裝置包含子設備，至少需要等待 30 秒、才會顯示所有設備。"
+        },
+        "error": {
+            "unexpected_error": "發生錯誤，請參閱日誌",
+            "cannot_connect": "無法連線",
+            "value_error": "輸入錯誤",
+            "bad_params": "參數有誤",
+            "no_local_access": "發生錯誤，可能為以下原因：\n(1) 輸入的 siid 或 piid 有誤\n(2) 裝置不支援本地端接入，請使用雲端進行接入",
+            "no_connect_warning": "連接裝置失敗。如果新增的裝置為小愛音箱，此為正常現象；否則，請檢查裝置訊息是否有誤。請在下方輸入小愛音箱的型號 model。",
+            "cant_login": "登入失敗",
+            "account_tips": "登入帳號是為了方便後續添加裝置、並不會自動增加所有裝置。\n請於登入後再次於整合中添加此整合，即可於列表中選擇要添加的裝置。"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "name": "名稱",
+                    "host": "IP",
+                    "token": "Token"
+                },
+                "description": "登入小米帳號以後，可以更快速的新增裝置。\n注意：並非所有列表中的裝置都支持，請自行測試並進行回報。",
+                "title": "選擇操作"
+            },
+            "xiaomi_account": {
+				"title": "登入小米帳號",
+				"description": "",
+				"data": {
+					"username": "電子郵件/小米 ID",
+					"password": "密碼"
+				}
+			},
+            "localinfo": {
+                "data": {
+                    "name": "名稱",
+                    "host": "IP",
+                    "token": "Token"
+                },
+                "description": "本地端通訊需要獲取以下資訊",
+                "title": "設定"
+            },
+            "devinfo": {
+                "title": "裝置資訊",
+                "data": {
+                    "devtype": "請選擇裝置的類型",
+                    "mapping": "mapping",
+                    "params": "設定參數",
+                    "cloud_read": "自雲端獲取裝置狀態",
+                    "cloud_write": "通過雲端進行裝置控制"
+
+                },
+                "description": "{device_info}"
+            },
+            "cloudinfo": {
+                "title": "帳號資訊",
+                "data": {
+                    "did": "did",
+                    "userId": "userId",
+                    "serviceToken": "serviceToken",
+                    "ssecurity": "ssecurity"
+                },
+                "description": "雲端通訊需要獲取以下資訊"
+            }
+        },
+        "title": "MIoT"
+    },
+    "system_health": {
+        "info": {
+            "logged_in": "已登錄小米帳號",
+            "can_reach_micloud_server": "可訪問米家服務器",
+            "account_devices_count": "帳號米家裝置數",
+            "added_devices": "附加元件接入裝置數",
+            "accounts_count": "雲端接入帳號數"
+        }
+    },
+    "options": {
+        "abort": {
+            "no_configurable_options": "沒有可設定的選項",
+            "no_configurable_account": "小米帳號沒有可進行設定的選項。\n如需退出登入，請刪除此設定項即可。刪除後不影響已添加的裝置。\n如需更新裝置列表，請點選「重新載入」。"
+        },
+        "step": {
+            "account": {
+                "data": {
+                    "server_location": "裝置所在伺服器"
+                },
+                "description": "可選擇裝置所在的伺服器。\n如需退出登入，請點選「刪除」。刪除後不影響已添加的裝置。\n如需更新裝置列表，請點選「重新載入」。",
+                "title": "帳號設定"
+            },
+            "sensor": {
+                "data": {
+                    "show_individual_sensor": "每個屬性皆視為單獨之實體"
+                },
+                "description": "勾選後，每個屬性都會以單獨感測器實體顯示。",
+                "title": "感測器設定"
+            },
+            "climate": {
+                "data": {
+                    "current_temp_source": "環境溫度感測器實體 ID"
+                },
+                "description": "如果空調沒有內建環境溫度感測器，空調實體的環境溫度會顯示成和目標溫度一樣。\n可以於此處輸入其他溫度感測器的實體 ID，即能作為環境溫度來源。",
+                "title": "空調設定"
+            },
+            "light_and_lock": {
+                "data": {
+                    "show_indicator_light": "顯示指示燈開關",
+                    "show_physical_controls_locked": "顯示兒童鎖開關"
+                },
+                "description": "",
+                "title": "指示燈和兒童鎖設定"
+            }
+        }
+    }
+}
