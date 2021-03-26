@@ -105,6 +105,7 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
         self._fan_modes = []
         self._hvac_modes = None
         self._swing_modes = []
+        self._is_heater_without_mode = False
         if self._did_prefix + 'vertical_swing' in self._mapping and \
             self._did_prefix + 'horizontal_swing' in self._mapping:
                 self._swing_modes = ["Off", "Vertical", "Horizontal", "Both"]
@@ -212,10 +213,14 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
     @property
     def hvac_modes(self):
         """Return the list of available operation modes."""
-        try:
-            return [next(a[0] for a in HVAC_MAPPING.items() if b in a[1]) for b in self._ctrl_params['mode']] + [HVAC_MODE_OFF]
-        except:
-            _LOGGER.error(f"Modes {self._ctrl_params['mode']} contains unsupported ones. Please report this message to the developer.")
+        if 'mode' in self._ctrl_params:
+            try:
+                return [next(a[0] for a in HVAC_MAPPING.items() if b in a[1]) for b in self._ctrl_params['mode']] + [HVAC_MODE_OFF]
+            except:
+                _LOGGER.error(f"Modes {self._ctrl_params['mode']} contains unsupported ones. Please report this message to the developer.")
+        else:
+            self._is_heater_without_mode = True
+            return [HVAC_MODE_HEAT, HVAC_MODE_OFF]
 
     @property
     def preset_mode(self):
@@ -288,11 +293,16 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
     async def async_set_fan_mode(self, fan_mode):
         """Set new fan mode."""
         result = await self.set_property_new(self._did_prefix + "speed", self._ctrl_params['speed'][fan_mode])
+        if result:
+            self._current_fan_mode = fan_mode
+            self.async_write_ha_state()
 
     async def async_set_hvac_mode(self, hvac_mode):
         """Set new operation mode."""
         if hvac_mode == HVAC_MODE_OFF:
             result = await self.async_turn_off()
+            self._hvac_mode = hvac_mode
+            self.async_write_ha_state()
         else:
             parameters = []
             if not self.is_on:
@@ -301,19 +311,20 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
                     **(self._mapping[self._did_prefix + 'switch_status'])
                 })
 
-            modevalue = None
-            for item in HVAC_MAPPING[hvac_mode]:
-                if item in self._ctrl_params['mode']:
-                    modevalue = self._ctrl_params['mode'].get(item)
-                    break
-            if not modevalue:
-                _LOGGER.error(f"Failed to set {self._name} to mode {hvac_mode} because cannot find it in params.")
-                return False
+            if not self._is_heater_without_mode:
+                modevalue = None
+                for item in HVAC_MAPPING[hvac_mode]:
+                    if item in self._ctrl_params['mode']:
+                        modevalue = self._ctrl_params['mode'].get(item)
+                        break
+                if not modevalue:
+                    _LOGGER.error(f"Failed to set {self._name} to mode {hvac_mode} because cannot find it in params.")
+                    return False
 
-            parameters.append({
-                **{'did': self._did_prefix + "mode", 'value': modevalue},
-                **(self._mapping[self._did_prefix + 'mode'])
-            })
+                parameters.append({
+                    **{'did': self._did_prefix + "mode", 'value': modevalue},
+                    **(self._mapping[self._did_prefix + 'mode'])
+                })
             result = await self.set_property_new(multiparams = parameters)
             if result:
                 self._hvac_mode = hvac_mode
@@ -359,10 +370,13 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
         except:
             pass
         try:
-            hvac_mode2 = self.get_key_by_value(self._ctrl_params['mode'], self._state_attrs.get(self._did_prefix + 'mode'))
-            for k,v in HVAC_MAPPING.items():
-                if hvac_mode2 in v:
-                    self._hvac_mode = k
+            if not self._is_heater_without_mode:
+                hvac_mode2 = self.get_key_by_value(self._ctrl_params['mode'], self._state_attrs.get(self._did_prefix + 'mode'))
+                for k,v in HVAC_MAPPING.items():
+                    if hvac_mode2 in v:
+                        self._hvac_mode = k
+            else:
+                self._hvac_mode = HVAC_MODE_HEAT if self.is_on() else HVAC_MODE_OFF
         except:
             pass
         if self._swing_modes:
