@@ -220,6 +220,11 @@ class MiotAdapter:
                         'power_off': False
                     }
 
+            if p := propdict.get('fault'):
+                if vl := p.vlist:
+                    lst = {item['description']: item['value'] for item in vl}
+                    ret['fault'] = lst
+
             if p := propdict.get('fan_level'):
                 if vl := p.vlist:
                     lst = {item['description']: item['value'] for item in vl}

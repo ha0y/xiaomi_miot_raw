@@ -538,7 +538,8 @@ class GenericMiotDevice(Entity):
                             f = self._ctrl_params_new[r['did']]['value_ratio']
                             statedict[r['did']] = round(r['value'] * f , 3)
                         except (KeyError, TypeError, IndexError):
-                            if 'status' in r['did'] and 'switch_status' not in r['did'] \
+                            if (('status' in r['did'] and 'switch_status' not in r['did']) \
+                                or 'fault' in r['did']) \
                                 and type(r['value']) == int:
                                 if r['did'] in self._ctrl_params_new:
                                     if s := self.get_key_by_value(self._ctrl_params_new[r['did']], r['value']):
@@ -607,7 +608,8 @@ class GenericMiotDevice(Entity):
 
                     for key, value in self._mapping.items():
                         try:
-                            if 'status' in key and 'switch_status' not in key \
+                            if (('status' in key and 'switch_status' not in key) \
+                                or 'fault' in key) \
                                 and type(dict1[value['siid']][value['piid']]) == int:
                                 if key in self._ctrl_params_new:
                                     if s := self.get_key_by_value(self._ctrl_params_new[key], dict1[value['siid']][value['piid']]):
