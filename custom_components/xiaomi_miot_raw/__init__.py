@@ -1018,8 +1018,8 @@ async def async_generic_setup_platform(
                 break
             else:
                 retry_time *= 2
-                if retry_time > 120:
-                    _LOGGER.error(f"The main device of {config.get(CONF_NAME)}({host}) is still not ready after 120 seconds!")
+                if retry_time > 30:
+                    _LOGGER.error(f"The main device of {config.get(CONF_NAME)}({host}) is still not ready after 30 seconds!")
                     raise PlatformNotReady
                 else:
                     _LOGGER.debug(f"The main device of {config.get(CONF_NAME)}({host}) is still not ready after {retry_time - 1} seconds.")
