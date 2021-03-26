@@ -36,7 +36,10 @@ from .deps.const import (
     ATTR_MODEL,
     ATTR_FIRMWARE_VERSION,
     ATTR_HARDWARE_VERSION,
-    SUPPORTED_DOMAINS,
+    SCHEMA,
+    MAP,
+    DUMMY_IP,
+    DUMMY_TOKEN,
 )
 
 from .deps.xiaomi_cloud_new import *
@@ -920,3 +923,121 @@ class dev_info:
     mac_address       : str     # Not available for cloud
     firmware_version  : str
     hardware_version  : str     # Not available for cloud
+
+
+async def async_generic_setup_platform(
+    hass,
+    config,
+    async_add_devices,
+    discovery_info,
+    TYPE,           # 每个设备类型调用此函数时指定自己的类型，因此函数执行中只处理这个类型的设备
+    main_class_dict : dict,
+    sub_class_dict : dict = {},
+    *,
+    special_dict={}
+):
+    DATA_KEY = TYPE + '.' + DOMAIN
+    hass.data.setdefault(DATA_KEY, {})
+
+    host = config.get(CONF_HOST)
+    token = config.get(CONF_TOKEN)
+    mapping = config.get(CONF_MAPPING)
+    params = config.get(CONF_CONTROL_PARAMS)
+
+    mappingnew = {}
+
+    main_mi_type = None
+    other_mi_type = []
+
+    for t in MAP[TYPE]:
+        if mapping.get(t):
+            other_mi_type.append(t)
+        if 'main' in (params.get(t) or ""):
+            main_mi_type = t
+
+    try:
+        other_mi_type.remove(main_mi_type)
+    except:
+        pass
+
+    if main_mi_type or type(params) == OrderedDict:
+        for k,v in mapping.items():
+            for kk,vv in v.items():
+                mappingnew[f"{k[:10]}_{kk}"] = vv
+
+        _LOGGER.info("Initializing %s with host %s (token %s...)", config.get(CONF_NAME), host, token[:5])
+        if type(params) == OrderedDict:
+            miio_device = MiotDevice(ip=host, token=token, mapping=mapping)
+        else:
+            miio_device = MiotDevice(ip=host, token=token, mapping=mappingnew)
+        try:
+            if host == DUMMY_IP and token == DUMMY_TOKEN:
+                raise DeviceException
+            device_info = miio_device.info()
+            model = device_info.model
+            _LOGGER.info(
+                "%s %s %s detected",
+                model,
+                device_info.firmware_version,
+                device_info.hardware_version,
+            )
+        except DeviceException as de:
+            if not config.get(CONF_CLOUD):
+                _LOGGER.warn(de)
+                raise PlatformNotReady
+            else:
+                if not (di := config.get('cloud_device_info')):
+                    _LOGGER.error(f"未能获取到设备信息，请删除 {config.get(CONF_NAME)} 重新配置。")
+                    raise PlatformNotReady
+                else:
+                    device_info = dev_info(
+                        di['model'],
+                        di['mac'],
+                        di['fw_version'],
+                        ""
+                    )
+        if main_mi_type in main_class_dict:
+            device = main_class_dict[main_mi_type](miio_device, config, device_info, hass, main_mi_type)
+        else:
+            device = main_class_dict['default'](miio_device, config, device_info, hass, main_mi_type)
+
+        _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
+        hass.data[DOMAIN]['miot_main_entity'][f'{host}-{config.get(CONF_NAME)}'] = device
+        hass.data[DOMAIN]['entities'][device.unique_id] = device
+        async_add_devices([device], update_before_add=True)
+
+    elif not sub_class_dict:
+        _LOGGER.error(f"{TYPE}只能作为主设备！请检查{config.get(CONF_NAME)}配置")
+
+    if sub_class_dict:
+        retry_time = 1
+        while True:
+            if parent_device := hass.data[DOMAIN]['miot_main_entity'].get(f'{host}-{config.get(CONF_NAME)}'):
+                break
+            else:
+                retry_time *= 2
+                if retry_time > 120:
+                    _LOGGER.error(f"The main device of {config.get(CONF_NAME)}({host}) is still not ready after 120 seconds!")
+                    raise PlatformNotReady
+                else:
+                    _LOGGER.debug(f"The main device of {config.get(CONF_NAME)}({host}) is still not ready after {retry_time - 1} seconds.")
+                    await asyncio.sleep(retry_time)
+
+        for k,v in mapping.items():
+            if k in MAP[TYPE]:
+                for kk,vv in v.items():
+                    mappingnew[f"{k[:10]}_{kk}"] = vv
+
+        devices = []
+
+        for item in other_mi_type:
+            if item == "indicator_light":
+                if not params[item].get('enabled'):
+                    continue
+
+            if item in sub_class_dict:
+                devices.append(sub_class_dict[item](parent_device, mapping.get(item), params.get(item), item))
+            else:
+                devices.append(sub_class_dict['default'](parent_device, mapping.get(item), params.get(item), item))
+
+        async_add_devices(devices, update_before_add=True)
