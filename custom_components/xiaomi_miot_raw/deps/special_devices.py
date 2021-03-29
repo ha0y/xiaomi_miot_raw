@@ -12,6 +12,13 @@ SPECIAL_DEVICES={
     "lumi.sensor_motion.v2": {
         "device_type":['sensor'],
         "mapping":{"motion":{"key":"device_log","type":"prop"}},
-        "params":{"eb_type":"event_based_motion","event_based":True}
+        "params":{"event_based":True}
     },
+}
+
+
+LOCK_PRM = {
+    "device_type": ['sensor'],
+    "mapping":'{"door":{"key":7,"type":"event"},"lock":{"key":11,"type":"event"}}',
+    "params":'{"event_based":true}'
 }

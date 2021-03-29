@@ -34,7 +34,7 @@ from .deps.const import (
     MAP,
 )
 from .deps.miot_device_adapter import MiotAdapter
-from .deps.special_devices import SPECIAL_DEVICES
+from .deps.special_devices import SPECIAL_DEVICES, LOCK_PRM
 from .deps.xiaomi_cloud_new import MiCloud
 
 SERVERS = {
@@ -132,6 +132,8 @@ async def guess_mp_from_model(hass,model):
             "mapping": json.dumps(m["mapping"],separators=(',', ':')),
             "params": json.dumps(m["params"],separators=(',', ':')),
         }
+    if '.lock.' in model:
+        return LOCK_PRM
 
     cs = aiohttp_client.async_get_clientsession(hass)
     url_all = 'http://miot-spec.org/miot-spec-v2/instances?status=all'

@@ -537,7 +537,7 @@ class MiotEventBasedSubSensor(Entity):
     @property
     def name(self):
         """Return the name of this entity, if any."""
-        return f"{self._parent_sensor.name} {self._name}"
+        return f"{self._parent_sensor._name} {self._name}"
 
     @property
     def should_poll(self):
@@ -552,7 +552,6 @@ class MiotEventBasedSubSensor(Entity):
     @property
     def state(self):
         """Return the state attributes of the device."""
-        _LOGGER.error(self._parent_sensor.logs)
         if self._parent_sensor.logs:
             dt = self._parent_sensor.logs[0][1]
             return getattr(self._data_processor(dt), self._property)
