@@ -1,7 +1,7 @@
 import asyncio
 import json
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 from functools import partial
 from dataclasses import dataclass
 
@@ -56,7 +56,7 @@ class MiotCloudCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name=f"{DOMAIN}-{cloud.auth['user_id']}",
-            update_interval=timedelta(seconds=8),
+            update_interval=timedelta(seconds=6),
         )
         self._cloud_instance = cloud
         self._error_count = 0
@@ -94,3 +94,36 @@ class MiotCloudCoordinator(DataUpdateCoordinator):
                     results[item['did']].append(item)
             self._waiting_list = []
             return results
+
+class MiotEventCoordinator(DataUpdateCoordinator):
+    def __init__(self, hass, cloud: MiCloud, cloud_config, item):
+        """Initialize the data update coordinator."""
+        DataUpdateCoordinator.__init__(
+            self,
+            hass,
+            _LOGGER,
+            name=f"{DOMAIN}-{cloud.auth['user_id']}-event-{item[0]}",
+            update_interval=timedelta(seconds=6),
+        )
+        self._cloud_instance = cloud
+        self._cloud = cloud_config
+        # self._mapping = mapping
+        self._item = item
+        _LOGGER.error(item)
+        self._error_count = 0
+        self._results = {}
+
+    async def _async_update_data(self):
+        result = await self._cloud_instance.get_user_device_data(
+            self._cloud.get("did"),
+            self._item[1]['key'],
+            self._item[1]['type'],
+            self._cloud.get("server_location"),
+        )
+        if result['code'] != 0:
+            _LOGGER.error(result)
+            return result
+        else:
+            result2 = [(datetime.fromtimestamp(item['time']).isoformat(), item['value']) for item in result['result']]
+        # self._results[k] = result2
+            return result2

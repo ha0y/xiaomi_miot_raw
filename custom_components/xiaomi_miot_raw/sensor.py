@@ -8,10 +8,13 @@ import voluptuous as vol
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (ATTR_ENTITY_ID, CONF_HOST, CONF_NAME,
                                  CONF_TOKEN)
+from homeassistant.core import callback
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers.entity import Entity
+from homeassistant.helpers import aiohttp_client, discovery
 from miio.exceptions import DeviceException
 from .deps.miio_new import MiotDevice
+from .deps.xiaomi_cloud_new import MiCloud
 
 from datetime import timedelta
 from . import GenericMiotDevice, MiotSubDevice, dev_info
@@ -32,7 +35,14 @@ from .deps.const import (
     DUMMY_TOKEN,
     UNIT_MAPPING,
 )
+from .deps.ble_event_parser import (
+    BleEventParser,
+    BleDoorParser,
+    BleLockParser,
+    BleMotionParser,
+)
 from collections import OrderedDict
+from .deps.miot_coordinator import MiotEventCoordinator
 TYPE = 'sensor'
 
 _LOGGER = logging.getLogger(__name__)
@@ -69,14 +79,33 @@ DEVCLASS_MAPPING = {
 @asyncio.coroutine
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     """Set up the sensor from config."""
-    if DATA_KEY not in hass.data:
-        hass.data[DATA_KEY] = {}
+    hass.data.setdefault(DATA_KEY, {})
+    hass.data[DOMAIN].setdefault('add_handler', {})
+    hass.data[DOMAIN]['add_handler'].setdefault(TYPE, async_add_devices)
 
     host = config.get(CONF_HOST)
     token = config.get(CONF_TOKEN)
     mapping = config.get(CONF_MAPPING)
     params = config.get(CONF_CONTROL_PARAMS)
     if params is None: params = OrderedDict()
+
+    if 'event_based' in params:
+        di = config.get('cloud_device_info')
+        device_info = dev_info(
+            di['model'],
+            di['mac'],
+            di['fw_version'],
+            ""
+        )
+        devices = [MiotEventBasedSensor(None, config, device_info, hass, item) for item in mapping.items()]
+
+        # device = MiotEventBasedSensor(None, config, device_info, hass, params['eb_type'])
+        # devices = [device]
+        # _LOGGER.info(f"{params['eb_type']} is the main device of {host}.")
+        # hass.data[DOMAIN]['miot_main_entity'][f'{host}-{config.get(CONF_NAME)}'] = device
+        # hass.data[DOMAIN]['entities'][device.unique_id] = device
+        async_add_devices(devices, update_before_add=True)
+        return True
 
     mappingnew = {}
     paramsnew = {}
@@ -278,3 +307,272 @@ class MiotSubSensor(MiotSubDevice):
         """Return the name of this entity, if any."""
         return f"{self._parent_device.name} {self._sensor_property.replace('_', ' ').capitalize()}"
 
+class MiotEventBasedSensor(Entity):
+    def __init__(self, device, config, device_info, hass = None, event_item = None):
+        """event_item 形如: {'motion':{'key':1, 'type':'prop'}}"""
+        def setup_cloud_event(self, hass) -> tuple:
+            try:
+                mc = next(cloud['cloud_instance'] for cloud in hass.data[DOMAIN]['cloud_instance_list']
+                    if cloud['user_id'] == self._cloud.get('userId'))
+            except StopIteration:
+                _LOGGER.info(f"Setting up xiaomi account for {self._name}...")
+                mc = MiCloud(
+                    aiohttp_client.async_get_clientsession(self._hass)
+                )
+                mc.login_by_credientals(
+                    self._cloud.get('userId'),
+                    self._cloud.get('serviceToken'),
+                    self._cloud.get('ssecurity')
+                )
+
+            co = MiotEventCoordinator(hass, mc, self._cloud, self._event_item)
+            # hass.data[DOMAIN]['cloud_instance_list'].append({
+            #     "user_id": self._cloud.get('userId'),
+            #     "username": None,  # 不是从UI配置的用户，没有用户名
+            #     "cloud_instance": mc,
+            #     "coordinator": co
+            # })
+            return (mc, co)
+
+
+        self._ctrl_params = config.get(CONF_CONTROL_PARAMS) or {}
+        self._event_item = event_item
+        self._name = config.get(CONF_NAME)
+
+        self._model = device_info.model
+        self._unique_id = "{}-{}-{}".format(
+            device_info.model, device_info.mac_address, self._name
+        ) if not config.get('ett_id_migrated') else (
+            f"{device_info.model.split('.')[-1]}-cloud-{config.get(CONF_CLOUD)['did'][-6:]}" if config.get(CONF_CLOUD) else
+                f"{device_info.model.split('.')[-1]}-{device_info.mac_address.replace(':','')}"
+        )
+        if config.get('ett_id_migrated'):
+            self._entity_id = self._unique_id
+            self.entity_id = f"{DOMAIN}.{self._entity_id}"
+        else:
+            self._entity_id = None
+
+        self._hass = hass
+        self._cloud = config.get(CONF_CLOUD)
+
+        self._cloud_instance = None
+        self.coordinator = None
+        if self._cloud:
+            c = setup_cloud_event(self, hass)
+            self._cloud_instance = c[0]
+            self.coordinator = c[1]
+        self._available = True
+        self._state = None
+        self._response_data = {}
+        self._assumed_state = False
+        self._state_attrs = {
+            ATTR_MODEL: self._model,
+        }
+        self._last_notified = 0
+        self._callbacks = set()
+        self.logs = []
+
+        self.create_sub_entities()
+
+    @property
+    def should_poll(self):
+        """Poll the miio device."""
+        return False
+
+    @property
+    def unique_id(self):
+        """Return an unique ID."""
+        return self._unique_id
+
+    @property
+    def name(self):
+        """Return the name of this entity, if any."""
+        return f"{self._name} {self._event_item[0]}"
+
+    # @property
+    # def icon(self):
+    #     """Return the icon to use for device if any."""
+    #     return self._icon
+
+    @property
+    def available(self):
+        """Return true when state is known."""
+        return self._available
+
+    @property
+    def state(self):
+        """Return the state attributes of the device."""
+        if self.coordinator.data is None:
+            return None
+        return self.coordinator.data[0][0]
+
+    @property
+    def device_state_attributes(self):
+        """Return the state attributes of the device."""
+        return self._state_attrs
+
+    @property
+    def device_info(self):
+        return {
+            'identifiers': {(DOMAIN, self._unique_id)},
+            'name': self._name,
+            'model': self._model,
+            'manufacturer': (self._model or 'Xiaomi').split('.', 1)[0].capitalize(),
+            'sw_version': self._state_attrs.get(ATTR_FIRMWARE_VERSION),
+        }
+
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass."""
+        if self.coordinator:
+            self.async_on_remove(
+                self.coordinator.async_add_listener(self._handle_coordinator_update)
+            )
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        statedict = self.coordinator.data
+        self.logs = statedict
+
+        self._state_attrs = {
+            ATTR_MODEL: self._model,
+        }
+        self._state_attrs.update(statedict)
+        self.async_write_ha_state()
+        self.publish_updates()
+
+    def register_callback(self, callback):
+        """Register callback, called when Roller changes state."""
+        self._callbacks.add(callback)
+
+    def remove_callback(self, callback):
+        """Remove previously registered callback."""
+        self._callbacks.discard(callback)
+
+    def publish_updates(self):
+        """Schedule call all registered callbacks."""
+        for callback in self._callbacks:
+            callback()
+
+    def create_sub_entities(self):
+        k = list(self._event_item)[1]['key']
+        ett_to_add = []
+        if k == 'device_log':
+            ett_to_add.append(
+                MiotEventBasedSubSensor(self, {
+                    'id': 'last_triggered',
+                    'name': '上次触发',
+                    'data_processor': BleMotionParser,
+                    'property': 'friendly_time'
+                })
+            )
+        elif k == 7:
+            ett_to_add.append(
+                MiotEventBasedSubSensor(self, {
+                    'id': 'door_status',
+                    'name': '门状态',
+                    'data_processor': BleDoorParser,
+                    'property': 'event_name'
+                })
+            )
+            ett_to_add.append(
+                MiotEventBasedSubSensor(self, {
+                    'id': 'door_time',
+                    'name': '门状态时间',
+                    'data_processor': BleDoorParser,
+                    'property': 'friendly_time'
+                })
+            )
+        elif k == 11:
+            ett_to_add.append(
+                MiotEventBasedSubSensor(self, {
+                    'id': 'lock_action',
+                    'name': '锁状态',
+                    'data_processor': BleLockParser,
+                    'property': 'action_name'
+                })
+            )
+            ett_to_add.append(
+                MiotEventBasedSubSensor(self, {
+                    'id': 'lock_method',
+                    'name': '开锁方式',
+                    'data_processor': BleLockParser,
+                    'property': 'method_name'
+                })
+            )
+            ett_to_add.append(
+                MiotEventBasedSubSensor(self, {
+                    'id': 'lock_time',
+                    'name': '锁状态时间',
+                    'data_processor': BleLockParser,
+                    'property': 'friendly_time'
+                })
+            )
+            ett_to_add.append(
+                MiotEventBasedSubSensor(self, {
+                    'id': 'lock_operator_id',
+                    'name': '操作者ID',
+                    'data_processor': BleLockParser,
+                    'property': 'friendly_time'
+                })
+            )
+
+        self._hass.data[DOMAIN]['add_handler']['sensor'](ett_to_add, update_before_add=True)
+
+class MiotEventBasedSubSensor(Entity):
+    def __init__(self, parent_sensor, options):
+        self._parent_sensor = parent_sensor
+        self._options = options
+        self._id = self._options.get('id')
+        self._data_processor = self._options.get('data_processor')
+        self._property = self._options.get('property')
+        self._name = self._options.get('name')
+        self._model = parent_sensor._model
+        self._state_attrs = {}
+
+        self._unique_id = f'{parent_sensor.unique_id}-{self._id}'
+        self._entity_id = f"{parent_sensor._entity_id}-{self._id}"
+        self.entity_id = f"{DOMAIN}.{self._entity_id}"
+
+    @property
+    def name(self):
+        """Return the name of this entity, if any."""
+        return f"{self._parent_sensor.name} {self._name}"
+
+    @property
+    def should_poll(self):
+        """Poll the miio device."""
+        return False
+
+    @property
+    def unique_id(self):
+        """Return an unique ID."""
+        return self._unique_id
+
+    @property
+    def state(self):
+        """Return the state attributes of the device."""
+        _LOGGER.error(self._parent_sensor.logs)
+        if self._parent_sensor.logs:
+            dt = self._parent_sensor.logs[0][1]
+            return getattr(self._data_processor(dt), self._property)
+        else:
+            return None
+
+    @property
+    def device_state_attributes(self):
+        """Return the state attributes of the device."""
+        try:
+            return self._parent_sensor.device_state_attributes or {}
+        except:
+            return None
+
+    @property
+    def device_info(self):
+        return self._parent_sensor.device_info
+
+    async def async_added_to_hass(self):
+        self._parent_sensor.register_callback(self.async_write_ha_state)
+
+    async def async_will_remove_from_hass(self):
+        self._parent_sensor.remove_callback(self.async_write_ha_state)
