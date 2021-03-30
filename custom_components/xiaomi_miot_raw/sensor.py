@@ -340,12 +340,8 @@ class MiotEventBasedSensor(Entity):
         self._name = config.get(CONF_NAME)
 
         self._model = device_info.model
-        self._unique_id = "{}-{}-{}".format(
-            device_info.model, device_info.mac_address, self._name
-        ) if not config.get('ett_id_migrated') else (
-            f"{device_info.model.split('.')[-1]}-cloud-{config.get(CONF_CLOUD)['did'][-6:]}" if config.get(CONF_CLOUD) else
-                f"{device_info.model.split('.')[-1]}-{device_info.mac_address.replace(':','')}"
-        )
+        self._unique_id = f"{device_info.model.split('.')[-1]}-event-{config.get(CONF_CLOUD)['did'][-6:]}-{self._event_item[0]}"
+        self._device_identifier = f"{device_info.model.split('.')[-1]}-event-{config.get(CONF_CLOUD)['did'][-6:]}"
         if config.get('ett_id_migrated'):
             self._entity_id = self._unique_id
             self.entity_id = f"{DOMAIN}.{self._entity_id}"
@@ -414,7 +410,7 @@ class MiotEventBasedSensor(Entity):
     @property
     def device_info(self):
         return {
-            'identifiers': {(DOMAIN, self._unique_id)},
+            'identifiers': {(DOMAIN, self._device_identifier)},
             'name': self._name,
             'model': self._model,
             'manufacturer': (self._model or 'Xiaomi').split('.', 1)[0].capitalize(),

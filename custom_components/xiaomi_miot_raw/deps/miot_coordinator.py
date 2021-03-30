@@ -109,7 +109,6 @@ class MiotEventCoordinator(DataUpdateCoordinator):
         self._cloud = cloud_config
         # self._mapping = mapping
         self._item = item
-        _LOGGER.error(item)
         self._error_count = 0
         self._results = {}
 
