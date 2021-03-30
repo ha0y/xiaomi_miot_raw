@@ -81,7 +81,7 @@ class BleEventParser:
 
     @property
     def friendly_time(self):
-        return datetime.fromtimestamp(self.timestamp).isoformat()
+        return datetime.fromtimestamp(self.timestamp).isoformat(sep=' ')
 
 
 class BleDoorParser(BleEventParser):    #0x0007, 7

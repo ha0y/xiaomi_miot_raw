@@ -123,6 +123,6 @@ class MiotEventCoordinator(DataUpdateCoordinator):
             _LOGGER.error(result)
             return result
         else:
-            result2 = [(datetime.fromtimestamp(item['time']).isoformat(), item['value']) for item in result['result']]
+            result2 = [(datetime.fromtimestamp(item['time']).isoformat(sep=' '), item['value']) for item in result['result']]
         # self._results[k] = result2
             return result2
