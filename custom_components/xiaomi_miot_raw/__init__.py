@@ -83,6 +83,7 @@ async def async_setup(hass, hassconfig):
     hass.data[DOMAIN].setdefault('miot_main_entity', {})
     hass.data[DOMAIN].setdefault('micloud_devices', [])
     hass.data[DOMAIN].setdefault('cloud_instance_list', [])
+    hass.data[DOMAIN].setdefault('event_fetcher_list', [])
 
     component = EntityComponent(_LOGGER, DOMAIN, hass, SCAN_INTERVAL)
     hass.data[DOMAIN]['component'] = component
@@ -812,8 +813,6 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
 
 
 class MiotSubDevice(Entity):
-    """This part is modified from @al-one 's."""
-    # should_poll = False
     def __init__(self, parent_device, mapping, params, mitype):
         self._unique_id = f'{parent_device.unique_id}-{mitype}'
         self._entity_id = f"{parent_device._entity_id}-{mitype}"

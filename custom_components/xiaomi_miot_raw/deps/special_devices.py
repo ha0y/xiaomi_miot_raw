@@ -9,9 +9,16 @@ SPECIAL_DEVICES={
         "mapping":{"speaker": {"volume": {"siid": 4, "piid": 1}, "mute": {"siid": 4, "piid": 2}, "playing_state": {"siid": 2, "piid": 1},"mp_sound_mode":{"siid":3,"aiid":1}}, "a_l": {"play_control_pause": {"siid": 2, "aiid": 1}, "play_control_play": {"siid": 2, "aiid": 2}, "play_control_next": {"siid": 2, "aiid": 3}, "play_control_previous": {"siid": 2, "aiid": 4}, "intelligent_speaker_play_text": {"siid": 3, "aiid": 1}, "intelligent_speaker_wake_up": {"siid": 3, "aiid": 2}, "intelligent_speaker_play_radio": {"siid": 3, "aiid": 3}, "intelligent_speaker_play_music": {"siid": 3, "aiid": 4}, "intelligent_speaker_execute_text_directive": {"siid": 3, "aiid": 5}}},
         "params": {"speaker": {"volume": {"value_range": [5, 100, 5]}, "main": True, "mp_source":{"\u64ad\u653e\u79c1\u4eba\u7535\u53f0":{"siid":3,"aiid":3},"\u64ad\u653e\u97f3\u4e50":{"siid":3,"aiid":4},"\u505c\u6b62\u95f9\u949f":{"siid":6,"aiid":1}},"mp_sound_mode":{"\u4f60\u597d":0},"playing_state": {"pause": 0, "playing": 1}}}
     },
-    "lumi.motion.agl04": {
-        "device_type": ['sensor', 'fan'],
-        "mapping":{"motion_sensor":{"nobody_time":{"siid":6, "piid":1}}, "settings":{"speed":{"siid":8, "piid":1}}, "settings_2":{"speed":{"siid":10, "piid":1}}},
-        "params":{"motion_sensor":{"main":True}, "settings":{"speed":{"low":1, "medium":2, "high":3}}, "settings_2":{"speed":{"5s":5, "10s":10, "20s":20, "30s":30, "60s":60}}}
-    }
+    "lumi.sensor_motion.v2": {
+        "device_type":['sensor'],
+        "mapping":{"motion":{"key":"device_log","type":"prop"}},
+        "params":{"event_based":True}
+    },
+}
+
+
+LOCK_PRM = {
+    "device_type": ['sensor'],
+    "mapping":'{"door":{"key":7,"type":"event"},"lock":{"key":11,"type":"event"}}',
+    "params":'{"event_based":true}'
 }
