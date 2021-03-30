@@ -570,10 +570,7 @@ class MiotEventBasedSubSensor(Entity):
     @property
     def device_state_attributes(self):
         """Return the state attributes of the device."""
-        try:
-            return self._parent_sensor.device_state_attributes or {}
-        except:
-            return None
+        return self._state_attrs
 
     @property
     def device_info(self):
