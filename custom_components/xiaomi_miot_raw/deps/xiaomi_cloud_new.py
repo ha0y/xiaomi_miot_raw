@@ -228,7 +228,7 @@ class MiCloud:
         data = {
             "uid": self.auth['user_id'],
             "did": did,
-            "time_end": str(time.time()),
+            "time_end": 9999999999,
             "time_start": 0,
             "limit": limit,
             "key": key,
