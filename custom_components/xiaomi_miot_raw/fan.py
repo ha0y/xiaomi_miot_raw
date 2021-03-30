@@ -243,7 +243,7 @@ class MiotSubFan(MiotSubToggleableDevice, FanEntity):
     async def async_oscillate(self, oscillating: bool) -> None:
         """Set oscillation."""
         # result = await self.set_property_new(self._did_prefix + "oscillate",self._ctrl_params['oscillate'][oscillating])
-        result = await self.set_property_new(self._did_prefix + "oscillate", oscillating)
+        result = await self._parent_device.set_property_new(self._did_prefix + "oscillate", oscillating)
 
         if result:
             self._oscillation = True
@@ -251,7 +251,7 @@ class MiotSubFan(MiotSubToggleableDevice, FanEntity):
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
-        result = await self.set_property_new(self._did_prefix + "speed", self._ctrl_params['speed'][preset_mode])
+        result = await self._parent_device.set_property_new(self._did_prefix + "speed", self._ctrl_params['speed'][preset_mode])
         if result:
             self._state = True
             self._speed = preset_mode
