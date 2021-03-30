@@ -398,7 +398,7 @@ class MiotEventBasedSensor(Entity):
     @property
     def state(self):
         """Return the state attributes of the device."""
-        if self.coordinator.data is None:
+        if not self.coordinator.data:
             return None
         return self.coordinator.data[0][0]
 
@@ -459,7 +459,8 @@ class MiotEventBasedSensor(Entity):
                     'id': 'last_triggered',
                     'name': '上次触发',
                     'data_processor': BleMotionParser,
-                    'property': 'friendly_time'
+                    'property': 'friendly_time',
+                    'icon': 'mdi:history',
                 })
             )
         elif k == 7:
@@ -468,7 +469,8 @@ class MiotEventBasedSensor(Entity):
                     'id': 'door_status',
                     'name': '门状态',
                     'data_processor': BleDoorParser,
-                    'property': 'event_name'
+                    'property': 'event_name',
+                    'icon': 'mdi:door-closed',
                 })
             )
             ett_to_add.append(
@@ -476,7 +478,8 @@ class MiotEventBasedSensor(Entity):
                     'id': 'door_time',
                     'name': '门状态时间',
                     'data_processor': BleDoorParser,
-                    'property': 'friendly_time'
+                    'property': 'friendly_time',
+                    'icon': 'mdi:timeline-clock-outline',
                 })
             )
         elif k == 11:
@@ -485,7 +488,8 @@ class MiotEventBasedSensor(Entity):
                     'id': 'lock_action',
                     'name': '锁状态',
                     'data_processor': BleLockParser,
-                    'property': 'action_name'
+                    'property': 'action_name',
+                    'icon': 'mdi:lock-question',
                 })
             )
             ett_to_add.append(
@@ -493,7 +497,8 @@ class MiotEventBasedSensor(Entity):
                     'id': 'lock_method',
                     'name': '开锁方式',
                     'data_processor': BleLockParser,
-                    'property': 'method_name'
+                    'property': 'method_name',
+                    'icon': 'mdi:key-wireless',
                 })
             )
             ett_to_add.append(
@@ -501,7 +506,8 @@ class MiotEventBasedSensor(Entity):
                     'id': 'lock_time',
                     'name': '锁状态时间',
                     'data_processor': BleLockParser,
-                    'property': 'friendly_time'
+                    'property': 'friendly_time',
+                    'icon': 'mdi:lock-clock',
                 })
             )
             ett_to_add.append(
@@ -509,7 +515,8 @@ class MiotEventBasedSensor(Entity):
                     'id': 'lock_operator_id',
                     'name': '操作者ID',
                     'data_processor': BleLockParser,
-                    'property': 'key_id_short'
+                    'property': 'key_id_short',
+                    'icon': 'mdi:account-key',
                 })
             )
 
@@ -523,6 +530,7 @@ class MiotEventBasedSubSensor(Entity):
         self._data_processor = self._options.get('data_processor')
         self._property = self._options.get('property')
         self._name = self._options.get('name')
+        self._icon = self._options.get('icon')
         self._model = parent_sensor._model
         self._state_attrs = {}
 
@@ -553,6 +561,11 @@ class MiotEventBasedSubSensor(Entity):
             return getattr(self._data_processor(dt), self._property)
         else:
             return None
+
+    @property
+    def icon(self):
+        """Return the icon to use for device if any."""
+        return self._icon
 
     @property
     def device_state_attributes(self):
