@@ -509,7 +509,7 @@ class MiotEventBasedSensor(Entity):
                     'id': 'lock_operator_id',
                     'name': '操作者ID',
                     'data_processor': BleLockParser,
-                    'property': 'friendly_time'
+                    'property': 'key_id_short'
                 })
             )
 
