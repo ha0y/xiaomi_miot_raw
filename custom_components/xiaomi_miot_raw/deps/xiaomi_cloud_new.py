@@ -31,6 +31,7 @@ import base64
 import hashlib
 import hmac
 import json
+import locale
 import logging
 import os
 import random
@@ -137,12 +138,15 @@ class MiCloud:
         nonce = gen_nonce()
         signed_nonce = gen_signed_nonce(self.auth['ssecurity'], nonce)
         signature = gen_signature(url, signed_nonce, nonce, data)
-
+        try:
+            loc = locale.getdefaultlocale()[0] or "en_US"
+        except Exception:
+            loc = "en_US"
         try:
             r = await self.session.post(baseurl + url, cookies={
                 'userId': self.auth['user_id'],
                 'serviceToken': self.auth['service_token'],
-                'locale': 'en_US'
+                'locale': loc
             }, headers={
                 'User-Agent': UA,
                 'x-xiaomi-protocal-flag-cli': 'PROTOCAL-HTTP2'
