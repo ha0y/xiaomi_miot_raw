@@ -66,6 +66,7 @@ MAP = {
         "magnet_sensor",
         "motion_sensor",
         "submersion_sensor",
+        "illumination_sensor",
         "tds_sensor",
         "air_fryer",
         "remain_clean_time",
