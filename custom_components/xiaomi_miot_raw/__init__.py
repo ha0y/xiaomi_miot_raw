@@ -631,7 +631,6 @@ class GenericMiotDevice(Entity):
         except DeviceException as ex:
             if self._fail_count < 3:
                 self._fail_count += 1
-                self._available = False
                 _LOGGER.info("Got exception while fetching %s 's state: %s. Count %d", self._name, ex, self._fail_count)
             else:
                 self._available = False
