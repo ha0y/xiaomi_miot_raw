@@ -51,26 +51,35 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 ## 配置
 
 ### UI 配置法
-**登录账号**
+<details>
+<summary>登录账号</summary>
+
 ![HACS中不支持显示图片，请在浏览器中打开查看](images/flow/1.png)
 
-![2](images/flow/2.png)
+<img src="https://github.com/ha0y/xiaomi_miot_raw/raw/master/images/flow/2.png" width="500"/>
 
-![3](images/flow/3.png)
+<img src="https://github.com/ha0y/xiaomi_miot_raw/raw/master/images/flow/3.png" width="500"/>
 
-![4](images/flow/4.png)
+<img src="https://github.com/ha0y/xiaomi_miot_raw/raw/master/images/flow/4.png" width="500"/>
+</details>
 
-**逐一自动添加设备（推荐）**
+<details>
+<summary>逐一自动添加设备（推荐）</summary>
+
 ![1](images/flow/1.png)
 
-![8](images/flow/8.png)
+<img src="https://github.com/ha0y/xiaomi_miot_raw/raw/master/images/flow/8.png" width="500"/>
+</details>
 
-**批量添加设备（建议用来添加非 WiFi 设备）**
-![5](images/flow/5.png)
+<details>
+<summary>批量添加设备（建议用来添加非 WiFi 设备）</summary>
 
-![6](images/flow/6.png)
+<img src="https://github.com/ha0y/xiaomi_miot_raw/raw/master/images/flow/5.png" width="500"/>
 
-![7](images/flow/7.png)
+<img src="https://github.com/ha0y/xiaomi_miot_raw/raw/master/images/flow/6.png" width="500"/>
+
+<img src="https://github.com/ha0y/xiaomi_miot_raw/raw/master/images/flow/7.png" width="500"/>
+</details>
 
 
 ### 文件配置法
