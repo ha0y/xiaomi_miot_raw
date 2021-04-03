@@ -82,10 +82,14 @@
             "no_configurable_options": "No options available.",
             "no_configurable_account": "No options available for the account.\nTo log out, use **Delete**. This will not affect added devices.\nTo refresh devices list, use **Reload**."
         },
+        "error": {
+            "plz_agree": "Please read carefully"
+        },
         "step": {
             "account": {
                 "data": {
-                    "server_location": "Server location"
+                    "server_location": "Server location",
+                    "batch_add": "Batch add devices"
                 },
                 "description": "Select which server are your devices in.\nTo log out, use **Delete**. This will not affect added devices.\nTo refresh devices list, use **Reload**.",
                 "title": "Account options"
@@ -111,6 +115,20 @@
                 },
                 "description": "",
                 "title": "Indicator light / child lock options"
+            },
+            "select_devices": {
+                "data": {
+                    "devices": "Devices list"
+                },
+                "description": "Select devices to add.\n\nAfter submitting, devices will be added in background. Refresh to see them.",
+                "title": "Batch adding devices"
+            },
+            "batch_agreement": {
+                "data": {
+                    "iagree": "I have read and understand"
+                },
+                "description": "You can select multiple devices and add them with a single click.\nAfter submitting, devices will be added in background. This takes up to 1 minute.\nIf some devices doesn't work properly, delete them and add them manually by \"Add Integration\".\nDevices added in this way are integrated by **Cloud**. If they support LAN access, delete them and add them manually by \"Add Integration\".",
+                "title": "Please read these instructions"
             }
         }
     }

@@ -618,7 +618,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_account(self, user_input=None):
         if user_input is not None:
             if user_input['batch_add']:
-                return await self.async_step_select_devices()
+                return await self.async_step_batch_agreement()
             self._input2.update(user_input)
             self._steps.pop(0)
             return await self._steps[0]
@@ -687,6 +687,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         )
 
     async def async_step_select_devices(self, user_input=None):
+        errors = {}
         if user_input is not None:
             for device in user_input['devices']:
                 self.hass.async_add_job(self.hass.config_entries.flow.async_init(
@@ -702,12 +703,27 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                                         else "BLE Mesh" if dt == 3 else "Unknown"
                 name = f"{device['name']} ({dt}{', '+device['localip'] if (dt == '''WiFi''') else ''})"
                 devlist[device['did']] = name
-
         return self.async_show_form(
             step_id='select_devices',
             data_schema=vol.Schema({
                 vol.Required('devices', default=[]): cv.multi_select(devlist),
             }),
+            errors=errors,
+        )
+
+    async def async_step_batch_agreement(self, user_input=None):
+        errors = {}
+        if user_input is not None:
+            if not user_input['iagree']:
+                errors['base'] = 'plz_agree'
+            else:
+                return await self.async_step_select_devices()
+        return self.async_show_form(
+            step_id='batch_agreement',
+            data_schema=vol.Schema({
+                vol.Optional('iagree', default=False): bool,
+            }),
+            errors=errors,
         )
 
     async def async_finish(self, reload=True):
