@@ -51,11 +51,27 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 ## 配置
 
 ### UI 配置法
+**登录账号**
 ![HACS中不支持显示图片，请在浏览器中打开查看](images/flow/1.png)
 
 ![2](images/flow/2.png)
 
 ![3](images/flow/3.png)
+
+![4](images/flow/4.png)
+
+**逐一自动添加设备（推荐）**
+![1](images/flow/1.png)
+
+![8](images/flow/8.png)
+
+**批量添加设备（建议用来添加非 WiFi 设备）**
+![5](images/flow/5.png)
+
+![6](images/flow/6.png)
+
+![7](images/flow/7.png)
+
 
 ### 文件配置法
 

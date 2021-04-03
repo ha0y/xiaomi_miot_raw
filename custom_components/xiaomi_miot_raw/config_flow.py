@@ -693,7 +693,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 self.hass.async_add_job(self.hass.config_entries.flow.async_init(
                     DOMAIN, context={"source": "batch_add"}, data={'did': device}
                 ))
-            return await self.async_finish(False)
+            return self.async_create_entry(title="", data=None)
 
         devlist = {}
         for device in self.hass.data[DOMAIN]['micloud_devices']:

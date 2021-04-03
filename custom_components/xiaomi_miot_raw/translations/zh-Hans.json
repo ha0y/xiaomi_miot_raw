@@ -4,7 +4,7 @@
             "already_configured": "已经配置过这个设备了"
         },
         "create_entry": {
-            "default": "如果您添加的设备具有子设备，最长需要等待 30 秒才会显示出所有设备。"
+            "default": ""
         },
         "error": {
             "unexpected_error": "发生错误，请查看日志",

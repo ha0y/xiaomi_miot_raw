@@ -4,7 +4,7 @@
             "already_configured": "已設定過此裝置了"
         },
         "create_entry": {
-            "default": "如果新增的裝置包含子設備，至少需要等待 30 秒、才會顯示所有設備。"
+            "default": ""
         },
         "error": {
             "unexpected_error": "發生錯誤，請參閱日誌",

@@ -4,7 +4,7 @@
             "already_configured": "You have already configured this device!"
         },
         "create_entry": {
-            "default": "If the device has multiple sub-devices, it takes up to 30 seconds to show all of them."
+            "default": ""
         },
         "error": {
             "unexpected_error": "Unexpected error. See logs for detail",
