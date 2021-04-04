@@ -75,8 +75,6 @@ class MiotCover(GenericMiotDevice, CoverEntity):
         self._current_position = None
         self._target_position = None
         self._action = None
-        # self._hass = hass
-        # self._cloud = config.get(CONF_CLOUD)
         self._throttle1 = Throttle(timedelta(seconds=1))(self._async_update)
         self._throttle10 = Throttle(timedelta(seconds=10))(self._async_update)
         self.async_update = self._throttle10
@@ -106,25 +104,31 @@ class MiotCover(GenericMiotDevice, CoverEntity):
     @property
     def is_closed(self):
         """Return if the cover is closed, same as position 0."""
-        # try:
-        return self._current_position == 0
-        # except (ValueError, TypeError):
-            # return None
+        try:
+            return self._current_position / self._ctrl_params['current_position']['value_range'][1] <= 0.03
+        except Exception:
+            return self._current_position == 0
+
     @property
     def is_closing(self):
         """Return if the cover is closing or not."""
-        try:
+        if type(self._action) == str:
+            return 'down' in self._action.lower() \
+                or 'dowm' in self._action.lower() \
+                or 'clos' in self._action.lower()
+        elif type(self._action) == int:
             return self._action == self._ctrl_params['motor_status']['close']
-        except KeyError:
-            return None
+        return False
 
     @property
     def is_opening(self):
         """Return if the cover is opening or not."""
-        try:
+        if type(self._action) == str:
+            return 'up' in self._action.lower() \
+                or 'open' in self._action.lower()
+        elif type(self._action) == int:
             return self._action == self._ctrl_params['motor_status']['open']
-        except KeyError:
-            return None
+        return False
 
     async def async_open_cover(self, **kwargs):
         """Open the cover."""
@@ -171,7 +175,8 @@ class MiotCover(GenericMiotDevice, CoverEntity):
             self.async_update = self._throttle1
         else:
             self.async_update = self._throttle10
-        self._action = self._state_attrs.get(self._did_prefix + 'motor_status')
+        self._action = self._state_attrs.get(self._did_prefix + 'motor_status') or \
+            self._state_attrs.get(self._did_prefix + 'status')
 
     async def _async_update(self):
         if self._update_instant is False or self._skip_update:
