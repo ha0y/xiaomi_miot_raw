@@ -421,6 +421,9 @@ class MiotAdapter:
         if 'speaker' in ret and 'play_control' in ret:
             ret['speaker'] = {**ret['speaker'], **ret.pop('play_control')}
 
+        if 'ambient_light' in ret and 'ambient_light_custom' in ret:
+            ret['ambient_light'] = {**ret['ambient_light'], **ret.pop('ambient_light_custom')}
+
         if 'humidifier' in ret and 'environment' in ret:
             # deerma.humidifier.mjjsq target_humidity misplaced
             if 'target_humidity' in ret['environment']:
@@ -462,6 +465,9 @@ class MiotAdapter:
 
         if 'speaker' in ret and 'play_control' in ret:
             ret['speaker'] = {**ret['speaker'], **ret.pop('play_control')}
+
+        if 'ambient_light' in ret and 'ambient_light_custom' in ret:
+            ret['ambient_light'] = {**ret['ambient_light'], **ret.pop('ambient_light_custom')}
 
         if 'humidifier' in ret and 'environment' in ret:
             # deerma.humidifier.mjjsq target_humidity misplaced

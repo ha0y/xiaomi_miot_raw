@@ -78,12 +78,16 @@ MAP = {
         "switch_3",
         "switch_4",
         "coffee_machine",
+        "fish_tank",
     },
     "light": {
         "light",
         "light_2",
         "light_3",
         "light_4",
+        "ambient_light",
+        "ambient_light_custom",
+        "plant_light",
         "indicator_light",
     },
     "fan": {
