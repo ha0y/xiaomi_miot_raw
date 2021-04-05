@@ -99,7 +99,9 @@ class MiotCover(GenericMiotDevice, CoverEntity):
     @property
     def current_cover_position(self):
         """Return the current position of the cover."""
-        return self._current_position or 50
+        if self._current_position is None:
+            return 50
+        return self._current_position
 
     @property
     def is_closed(self):
@@ -117,7 +119,10 @@ class MiotCover(GenericMiotDevice, CoverEntity):
                 or 'dowm' in self._action.lower() \
                 or 'clos' in self._action.lower()
         elif type(self._action) == int:
-            return self._action == self._ctrl_params['motor_status']['close']
+            try:
+                return self._action == self._ctrl_params['motor_status']['close']
+            except KeyError:
+                return False
         return False
 
     @property
@@ -127,7 +132,10 @@ class MiotCover(GenericMiotDevice, CoverEntity):
             return 'up' in self._action.lower() \
                 or 'open' in self._action.lower()
         elif type(self._action) == int:
-            return self._action == self._ctrl_params['motor_status']['open']
+            try:
+                return self._action == self._ctrl_params['motor_status']['open']
+            except KeyError:
+                return False
         return False
 
     async def async_open_cover(self, **kwargs):
