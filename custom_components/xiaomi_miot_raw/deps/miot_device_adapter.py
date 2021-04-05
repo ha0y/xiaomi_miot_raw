@@ -160,8 +160,8 @@ class MiotAdapter:
                     "piid": p.piid
                 }
             if devtype == 'fan':
-                if 'speed' not in ret and 'mode' in ret:
-                    ret['speed'] = ret.pop('mode')
+                # if 'speed' not in ret and 'mode' in ret:
+                #     ret['speed'] = ret.pop('mode')
                 if 'horizontal_swing' in ret:
                     ret['oscillate'] = ret.pop('horizontal_swing')
                 elif 'vertical_swing' in ret:

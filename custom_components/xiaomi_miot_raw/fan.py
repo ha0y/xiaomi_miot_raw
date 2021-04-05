@@ -78,11 +78,10 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     await async_setup_platform(hass, config, async_add_entities)
 
 class MiotFan(ToggleableMiotDevice, FanEntity):
-    """ TODO stepless speed """
-
     def __init__(self, device, config, device_info, hass, main_mi_type):
         ToggleableMiotDevice.__init__(self, device, config, device_info, hass, main_mi_type)
         self._speed = None
+        self._mode = None
         self._oscillation = None
 
     @property
@@ -92,6 +91,8 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
         if self._did_prefix + 'oscillate' in self._mapping:
             s |= SUPPORT_OSCILLATE
         if self._did_prefix + 'speed' in self._mapping:
+            s |= (SUPPORT_SET_SPEED if not NEW_FAN else SUPPORT_SET_SPEED)
+        if self._did_prefix + 'mode' in self._mapping:
             s |= (SUPPORT_SET_SPEED if not NEW_FAN else SUPPORT_PRESET_MODE)
         return s
 
@@ -99,36 +100,43 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
     def speed_list(self) -> list:
         """Get the list of available speeds."""
         if NEW_FAN:
+            # 这个是假的！！
             return None
         else:
-            return list(self._ctrl_params['speed'].keys())
+            if 'speed' in self._ctrl_params:
+                return list(self._ctrl_params['speed'].keys())
+            elif 'mode' in self._ctrl_params:
+                return list(self._ctrl_params['mode'].keys())
+
+    @property
+    def _speed_list_without_preset_modes(self) -> list:
+        return list(self._ctrl_params['speed'].keys())
 
     @property
     def speed(self):
         """Return the current speed."""
-        return self._speed if not NEW_FAN else None
+        return (self._speed or self._mode) if not NEW_FAN else self._speed
 
     @property
     def preset_modes(self) -> list:
         """Get the list of available preset_modes."""
-        return list(self._ctrl_params['speed'].keys())
+        try:
+            return list(self._ctrl_params['mode'].keys())
+        except KeyError:
+            return []
 
     @property
     def preset_mode(self):
         """Return the current speed."""
-        try:
-            self._speed = self.get_key_by_value(self._ctrl_params['speed'],self.device_state_attributes[self._did_prefix + 'speed'])
-        except KeyError:
-            self._speed = None
-        return self._speed
+        return self._mode
 
-    @property
-    def percentage(self):
-        return None
+    # @property
+    # def percentage(self):
+    #     return None
 
     @property
     def speed_count(self):
-        return len(self.preset_modes)
+        return len(self._speed_list_without_preset_modes)
 
     @property
     def oscillating(self):
@@ -154,27 +162,38 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
         result = await self.set_property_new(multiparams = parameters)
         if result:
             self._state = True
+            if speed is not None:
+                self._speed = speed
+            self._skip_update = True
+
+    async def async_set_speed(self, speed: str) -> None:
+        result = await self.set_property_new(self._did_prefix + "speed", self._ctrl_params['speed'][speed])
+        if result:
             self._speed = speed
             self._skip_update = True
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
-        result = await self.set_property_new(self._did_prefix + "speed", self._ctrl_params['speed'][preset_mode])
+        result = await self.set_property_new(self._did_prefix + "mode", self._ctrl_params['mode'][preset_mode])
         if result:
             self._state = True
-            self._speed = preset_mode
+            self._mode = preset_mode
             self._skip_update = True
 
-    async def async_set_percentage(self, percentage: int) -> None:
-        """Set the speed percentage of the fan."""
-        pass
+    # async def async_set_percentage(self, percentage: int) -> None:
+    #     """Set the speed percentage of the fan."""
+    #     pass
 
     def _handle_platform_specific_attrs(self):
         super()._handle_platform_specific_attrs()
         try:
             self._speed = self.get_key_by_value(self._ctrl_params['speed'],self._state_attrs.get(self._did_prefix + 'speed'))
         except KeyError:
-            pass
+            self._speed = None
+        try:
+            self._mode = self.get_key_by_value(self._ctrl_params['mode'],self._state_attrs.get(self._did_prefix + 'mode'))
+        except KeyError:
+            self._mode = None
         self._oscillation = self._state_attrs.get(self._did_prefix + 'oscillate')
 
 class MiotSubFan(MiotSubToggleableDevice, FanEntity):
@@ -352,6 +371,7 @@ class MiotActionList(MiotSubDevice, FanEntity):
         self._state2 = STATE_ON
 
 class MiotWasher(ToggleableMiotDevice, FanEntity):
+    # TODO washer has many controllable properties. Try to add them (#96)
     def __init__(self, device, config, device_info, hass, main_mi_type):
         ToggleableMiotDevice.__init__(self, device, config, device_info, hass, main_mi_type)
         self._speed = None
