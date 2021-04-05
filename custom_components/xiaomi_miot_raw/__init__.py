@@ -485,8 +485,14 @@ class GenericMiotDevice(Entity):
             return False
 
     async def call_action_new(self, siid, aiid, params2=None, did=None):
+        if did is not None:
+            did_ = did
+        elif self._cloud is not None:
+            did_ = self._cloud.get("did")
+        else:
+            did_ = f'action-{siid}-{aiid}'
         params = {
-            'did':  did or self._cloud.get("did") or f'action-{siid}-{aiid}',
+            'did':  did_,
             'siid': siid,
             'aiid': aiid,
             'in':   params2 or [],
