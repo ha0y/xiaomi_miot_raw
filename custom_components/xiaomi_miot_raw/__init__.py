@@ -384,8 +384,11 @@ class GenericMiotDevice(Entity):
             result = await self.hass.async_add_job(partial(func, *args, **kwargs))
 
             _LOGGER.info("Response received from %s: %s", self._name, result)
-            if result[0]['code'] == 0:
-                return True
+            # This is a workaround. The action should not only return whether operation succeed, but also the 'out'.
+            if 'aiid' in result:
+                return True if result['code'] == 0 else False
+            return True if result[0]['code'] == 0 else False
+
         except DeviceException as exc:
             _LOGGER.error(mask_error, exc)
             return False
