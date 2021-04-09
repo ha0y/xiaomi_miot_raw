@@ -543,6 +543,8 @@ class GenericMiotDevice(Entity):
                 statedict={}
                 count4004 = 0
                 for r in response:
+                    if 'a_l_' in r['did']:
+                        continue
                     if r['code'] == 0:
                         try:
                             f = self._ctrl_params_new[r['did']]['value_ratio']
@@ -617,6 +619,8 @@ class GenericMiotDevice(Entity):
                         dict1[item['siid']][item['piid']] = item.get('value')
 
                     for key, value in self._mapping.items():
+                        if 'aiid' in value:
+                            continue
                         try:
                             if (('status' in key and 'switch_status' not in key) \
                                 or 'fault' in key) \
