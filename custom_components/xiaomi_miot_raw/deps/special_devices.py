@@ -14,6 +14,11 @@ SPECIAL_DEVICES={
         "mapping":{"motion":{"key":"device_log","type":"prop"}},
         "params":{"event_based":True}
     },
+    "cuco.plug.cp2":{
+        "device_type": ['switch'],
+        "mapping": {"switch": {"switch_status": {"siid": 2, "piid": 1}}},
+        "params": {"switch": {"switch_status": {"power_on": True, "power_off": False}, "main": True}}
+    },
 }
 
 
