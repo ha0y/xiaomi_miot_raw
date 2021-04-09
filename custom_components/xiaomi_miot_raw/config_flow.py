@@ -261,7 +261,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id='user',
             data_schema=vol.Schema({
-                vol.Required('action', default='localinfo'): vol.In(self._actions),
+                vol.Required('action', default=list(self._actions)[0]): vol.In(self._actions),
             })
         )
 

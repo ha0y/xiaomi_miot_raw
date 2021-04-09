@@ -84,6 +84,7 @@ async def async_setup(hass, hassconfig):
     hass.data[DOMAIN].setdefault('micloud_devices', [])
     hass.data[DOMAIN].setdefault('cloud_instance_list', [])
     hass.data[DOMAIN].setdefault('event_fetcher_list', [])
+    hass.data[DOMAIN].setdefault('add_handler', {})
 
     component = EntityComponent(_LOGGER, DOMAIN, hass, SCAN_INTERVAL)
     hass.data[DOMAIN]['component'] = component
@@ -831,6 +832,7 @@ class MiotSubDevice(Entity):
         self.entity_id = f"{DOMAIN}.{self._entity_id}"
         self._name = f'{parent_device.name} {mitype.replace("_", " ").title()}'
         self._state = STATE_UNKNOWN
+        self._icon = None
         self._available = True
         self._parent_device = parent_device
         self._state_attrs = {}
@@ -854,6 +856,11 @@ class MiotSubDevice(Entity):
     @property
     def state(self):
         return self._state
+
+    @property
+    def icon(self):
+        """Return the icon to use for device if any."""
+        return self._icon
 
     @property
     def available(self):

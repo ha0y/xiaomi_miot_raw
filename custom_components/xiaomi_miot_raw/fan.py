@@ -63,7 +63,6 @@ SUPPORT_PRESET_MODE = 8
 # pylint: disable=unused-argument
 @asyncio.coroutine
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
-    hass.data[DOMAIN].setdefault('add_handler', {})
     hass.data[DOMAIN]['add_handler'].setdefault(TYPE, async_add_devices)
     await async_generic_setup_platform(
         hass,
@@ -473,16 +472,17 @@ class MiotWasher(ToggleableMiotDevice, FanEntity):
                     if 'value_list' in v:
                         ett_to_add.append(SelectorEntity(
                             self,
+                            did_prefix='washer',
                             field=k,
                             value_list=v['value_list'],
                         ))
         if ett_to_add:
             self._hass.data[DOMAIN]['add_handler']['fan'](ett_to_add, update_before_add=True)
 
-
 class SelectorEntity(MiotSubDevice, FanEntity):
     def __init__(self, parent_device, **kwargs):
         self._parent_device = parent_device
+        self._did_prefix = f"{kwargs.get('did_prefix')[:10]}_" if kwargs.get('did_prefix') else ""
         self._field = kwargs.get('field')
         self._value_list = kwargs.get('value_list')
         self._name_suffix = kwargs.get('name') or self._field.replace("_", " ").title()
@@ -491,6 +491,7 @@ class SelectorEntity(MiotSubDevice, FanEntity):
         self._entity_id = f"{parent_device._entity_id}-{kwargs.get('field')}"
         self.entity_id = f"{DOMAIN}.{self._entity_id}"
         self._available = True
+        self._icon = "mdi:tune"
 
     @property
     def supported_features(self):
@@ -505,7 +506,7 @@ class SelectorEntity(MiotSubDevice, FanEntity):
     @property
     def speed(self):
         """Return the current speed."""
-        return self.get_key_by_value(self._value_list, self._parent_device.device_state_attributes.get(self._field))
+        return self._parent_device.get_key_by_value(self._value_list, self._parent_device.device_state_attributes.get(self._did_prefix + self._field))
 
     @property
     def percentage(self) -> str:
@@ -521,7 +522,7 @@ class SelectorEntity(MiotSubDevice, FanEntity):
         return len(self._action_list)
 
     async def async_turn_on(self, speed = None, **kwargs) -> None:
-        result = await self._parent_device.set_property_new(self._field, speed)
+        result = await self._parent_device.set_property_new(self._did_prefix + self._field, speed)
         if result:
             self._state2 = STATE_OFF
             self.schedule_update_ha_state()

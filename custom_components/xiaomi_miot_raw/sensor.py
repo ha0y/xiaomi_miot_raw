@@ -80,7 +80,6 @@ DEVCLASS_MAPPING = {
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     """Set up the sensor from config."""
     hass.data.setdefault(DATA_KEY, {})
-    hass.data[DOMAIN].setdefault('add_handler', {})
     hass.data[DOMAIN]['add_handler'].setdefault(TYPE, async_add_devices)
 
     host = config.get(CONF_HOST)

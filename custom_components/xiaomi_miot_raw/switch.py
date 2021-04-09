@@ -47,6 +47,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 # pylint: disable=unused-argument
 @asyncio.coroutine
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
+    hass.data[DOMAIN]['add_handler'].setdefault(TYPE, async_add_devices)
     await async_generic_setup_platform(
         hass,
         config,
@@ -68,3 +69,41 @@ class MiotSwitch(ToggleableMiotDevice, SwitchEntity):
 
 class MiotSubSwitch(MiotSubToggleableDevice, SwitchEntity):
     pass
+
+class BinarySelectorEntity(MiotSubDevice, SwitchEntity):
+    def __init__(self, parent_device, **kwargs):
+        self._parent_device = parent_device
+        self._did_prefix = f"{kwargs.get('did_prefix')[:10]}_" if kwargs.get('did_prefix') else ""
+        self._field = kwargs.get('field')
+        # self._value_list = kwargs.get('value_list')
+        self._name_suffix = kwargs.get('name') or self._field.replace("_", " ").title()
+        self._name = f'{parent_device.name} {self._name_suffix}'
+        self._unique_id = f"{parent_device.unique_id}-{kwargs.get('field')}"
+        self._entity_id = f"{parent_device._entity_id}-{kwargs.get('field')}"
+        self.entity_id = f"{DOMAIN}.{self._entity_id}"
+        self._available = True
+        self._icon = "mdi:tune-variant"
+
+    async def async_turn_on(self) -> None:
+        result = await self._parent_device.set_property_new(self._did_prefix + self._field, True)
+        if result:
+            self._state = STATE_ON
+            self.schedule_update_ha_state()
+
+    async def async_turn_off(self) -> None:
+        result = await self._parent_device.set_property_new(self._did_prefix + self._field, False)
+        if result:
+            self._state = STATE_OFF
+            self.schedule_update_ha_state()
+
+    @property
+    def is_on(self):
+        return self._parent_device.device_state_attributes.get(self._did_prefix + self._field)
+
+    @property
+    def state(self):
+        return self._state
+
+    @property
+    def device_state_attributes(self):
+        return {}
