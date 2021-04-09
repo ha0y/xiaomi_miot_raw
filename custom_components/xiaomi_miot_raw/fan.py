@@ -27,6 +27,7 @@ from miio.exceptions import DeviceException
 from .deps.miio_new import MiotDevice
 
 from . import GenericMiotDevice, ToggleableMiotDevice, MiotSubToggleableDevice, MiotSubDevice, dev_info, async_generic_setup_platform
+from .switch import BinarySelectorEntity
 from .deps.const import (
     DOMAIN,
     CONF_UPDATE_INSTANT,
@@ -468,8 +469,14 @@ class MiotWasher(ToggleableMiotDevice, FanEntity):
         for k,v in self._ctrl_params.items():
             if not isinstance(v, dict): continue
             if 'access' in v:
-                if v['access'] & 0b010 >> 1:
-                    if 'value_list' in v:
+                if (v['access'] & 0b010) >> 1:
+                    if v['format'] == 'bool':
+                        ett_to_add.append(BinarySelectorEntity(
+                            self,
+                            did_prefix='washer',
+                            field=k,
+                        ))
+                    elif 'value_list' in v:
                         ett_to_add.append(SelectorEntity(
                             self,
                             did_prefix='washer',

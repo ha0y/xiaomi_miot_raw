@@ -70,7 +70,7 @@ class MiotSwitch(ToggleableMiotDevice, SwitchEntity):
 class MiotSubSwitch(MiotSubToggleableDevice, SwitchEntity):
     pass
 
-class BinarySelectorEntity(MiotSubDevice, SwitchEntity):
+class BinarySelectorEntity(MiotSubToggleableDevice, SwitchEntity):
     def __init__(self, parent_device, **kwargs):
         self._parent_device = parent_device
         self._did_prefix = f"{kwargs.get('did_prefix')[:10]}_" if kwargs.get('did_prefix') else ""
