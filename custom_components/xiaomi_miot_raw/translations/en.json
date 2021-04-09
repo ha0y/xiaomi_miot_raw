@@ -101,6 +101,13 @@
                 "description": "If checked, there will be a sensor entity for each attribule.",
                 "title": "Sensor options"
             },
+            "cover": {
+                "data": {
+                    "reverse_position_percentage": "Reverse position percentage"
+                },
+                "description": "Reversing position percentage can fix some problems.",
+                "title": "Cover options"
+            },
             "climate": {
                 "data": {
                     "current_temp_source": "Environment temperature sensor entity ID"

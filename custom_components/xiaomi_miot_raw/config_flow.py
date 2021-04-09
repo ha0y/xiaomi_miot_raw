@@ -608,6 +608,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 self._steps.append(self.async_step_sensor())
             if 'climate' in self._input2['devtype']:
                 self._steps.append(self.async_step_climate())
+            if 'cover' in self._input2['devtype']:
+                self._steps.append(self.async_step_cover())
 
         if self._steps:
             self._steps.append(self.async_finish())
@@ -668,6 +670,26 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             step_id='sensor',
             data_schema=vol.Schema({
                 vol.Optional('show_individual_sensor', default=d): bool,
+            }),
+        )
+
+    async def async_step_cover(self, user_input=None):
+        if user_input is not None:
+            for device,p in self._prm.items():
+                if device in MAP['cover']:
+                    p.update(user_input)
+            self._steps.pop(0)
+            return await self._steps[0]
+
+        d = False
+        for device,p in self._prm.items():
+            if device in MAP['cover'] and p.get('reverse_position_percentage'):
+                d = True
+                break
+        return self.async_show_form(
+            step_id='cover',
+            data_schema=vol.Schema({
+                vol.Optional('reverse_position_percentage', default=d): bool,
             }),
         )
 

@@ -101,6 +101,13 @@
                 "description": "勾选后，每个属性都会作为一个传感器实体出现。",
                 "title": "传感器设置"
             },
+            "cover": {
+                "data": {
+                    "reverse_position_percentage": "反转位置百分比"
+                },
+                "description": "Home Assistant 定义的卷帘位置百分比：0 为关闭（放下），100 为开启（升起）。\n如果厂商的定义与之相反，就会出现“下降到底时上升按钮变灰”的问题。\n勾选后，位置百分比反转，可解决此问题。",
+                "title": "卷帘设置"
+            },
             "climate": {
                 "data": {
                     "current_temp_source": "环境温度传感器实体 ID"

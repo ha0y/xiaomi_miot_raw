@@ -101,6 +101,8 @@ class MiotCover(GenericMiotDevice, CoverEntity):
         """Return the current position of the cover."""
         if self._current_position is None:
             return 50
+        elif self._ctrl_params.get('reverse_position_percentage', False):
+            return self._ctrl_params['current_position']['value_range'][1] - self._current_position
         return self._current_position
 
     @property
