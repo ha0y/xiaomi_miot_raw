@@ -2,23 +2,11 @@
 
 简体中文 | [English](https://github.com/ha0y/xiaomi_miot_raw/blob/add-miot-support/README_en.md)
 
----
-### 2021.3.30 现已支持智能门锁！
-
-![HACS中不支持显示图片，请在浏览器中打开查看](images/smartlock.jpg)
-
-<a href="https://github.com/ha0y/xiaomi_miot_raw/blob/master/images/donation.png">
-    <img src="https://img.shields.io/badge/%E8%AF%B7%E4%BD%9C%E8%80%85-%E5%96%9D%E6%9D%AF%E5%92%96%E5%95%A1%EF%BC%9F-blue.svg"
-        alt="请作者喝杯咖啡？">
-</a>
-
----
-
-MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议规范，此后凡是可接入米家的设备均通过此协议进行通信。此插件按照 MIoT 协议规范与设备通信，实现对设备的状态读取及控制。
+MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议规范，此后凡是已接入米家的设备均可通过此协议进行通信。此插件按照 MIoT 协议规范与设备或服务器通信，实现对设备的状态读取及控制。
 
 由于 MIoT 协议具有极强的通用性，已接入米家的智能设备均可通过此插件快速高效地接入 Home Assistant，而无关设备的具体型号。
 
-本插件运行方式默认为本地接入(局域网读取/控制)，延迟极低。**对于不支持本地读取的设备，支持 2 种云端接入（云端读取本地控制/云端读取云端控制）。**
+本插件具有本地（局域网）和云端两种工作方式。两种方式结合，可以接入绝大多数米家智能设备(包括蓝牙、蓝牙 Mesh 和 ZigBee 设备)。
 
 目前此插件已支持以下设备类型：
 * sensor (传感器类设备，涵盖设备所有可读取的信息)
@@ -83,6 +71,8 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 
 
 ### 文件配置法
+
+**文件配置法已废弃，新特性不再适配文件配置法，建议不要使用**
 
 **请参考 [config_example 文件夹](https://github.com/ha0y/xiaomi_miot_raw/tree/add-miot-support/config_example)** 内的相关文件
 
