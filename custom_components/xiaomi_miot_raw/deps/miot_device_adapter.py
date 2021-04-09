@@ -44,6 +44,10 @@ def name_by_type(typ):
     nam = re.sub(r'\W+', '_', nam)
     return nam
 
+ACCESS_READ = 0b001
+ACCESS_WRITE = 0b010
+ACCESS_NOTIFY = 0b100
+
 SUPPORTED = {vv for v in MAP.values() for vv in v}
 
 def get_type_by_mitype(mitype:str):
@@ -194,10 +198,11 @@ class MiotAdapter:
 
     def get_params(self, propdict: dict = {}, devtype = ""):
         devtype = get_type_by_mitype(devtype)
+        propdict2 = propdict.copy()
         try:
             ret = {}
 
-            if p := propdict.get('on'):
+            if p := propdict2.pop('on', None):
                 if p.format_ == 'bool':
                     ret['switch_status'] = {
                         'power_on': True,
@@ -206,26 +211,26 @@ class MiotAdapter:
 
             # 把某个 service 里的 property 单独提出来
             # 例如：晾衣架的烘干，新风机的辅热
-            if p := propdict.get('dryer'):
+            if p := propdict2.pop('dryer', None):
                 if p.format_ == 'bool':
                     ret['dryer'] = {
                         'power_on': True,
                         'power_off': False
                     }
 
-            if p := propdict.get('heater'):
+            if p := propdict2.pop('heater', None):
                 if p.format_ == 'bool':
                     ret['heater'] = {
                         'power_on': True,
                         'power_off': False
                     }
 
-            if p := propdict.get('fault'):
+            if p := propdict2.pop('fault', None):
                 if vl := p.vlist:
                     lst = {item['description']: item['value'] for item in vl}
                     ret['fault'] = lst
 
-            if p := propdict.get('fan_level'):
+            if p := propdict2.pop('fan_level', None):
                 if vl := p.vlist:
                     lst = {item['description']: item['value'] for item in vl}
                     ret['speed'] = lst
@@ -238,30 +243,30 @@ class MiotAdapter:
                     # TODO: will this happen?
                     pass
 
-            if p := propdict.get('mode'):
+            if p := propdict2.pop('mode', None):
                 if vl := p.vlist:
                     lst = {item['description']: item['value'] for item in vl}
                     ret['mode'] = lst
 
-            if p := propdict.get('target_temperature'):
+            if p := propdict2.pop('target_temperature', None):
                 if vr := p.vrange:
                     ret['target_temperature'] = {
                         'value_range': vr
                     }
 
-            if p := propdict.get('drying_level'):
+            if p := propdict2.pop('drying_level', None):
                 if vl := p.vlist:
                     lst = {item['description']: item['value'] for item in vl}
                     ret['drying_level'] = lst
 
-            if p := propdict.get('status'):
+            if p := propdict2.pop('status', None):
                 if vl := p.vlist:
                     lst = {item['description']: item['value'] for item in vl}
                     ret['status'] = lst
 
             # print(devtype)
             if devtype == 'light':
-                if p := propdict.get('brightness'):
+                if p := propdict2.pop('brightness', None):
                     if vr := p.vrange:
                         ret['brightness'] = {
                             'value_range': vr
@@ -269,7 +274,7 @@ class MiotAdapter:
                     else:
                         # TODO: will this happen?
                         pass
-                if p := propdict.get('color_temperature'):
+                if p := propdict2.pop('color_temperature', None):
                     if vr := p.vrange:
                         ret['color_temperature'] = {
                             'value_range': vr
@@ -279,7 +284,7 @@ class MiotAdapter:
                         pass
 
             if devtype == 'cover':
-                if p := propdict.get('motor_control'):
+                if p := propdict2.pop('motor_control', None):
                     dct = {}
                     if vl := p.vlist:
                         for item in vl:
@@ -299,17 +304,17 @@ class MiotAdapter:
                         for item in ['open','close','stop']:
                             if item not in dct:
                                 _LOGGER.error(f"No {item} was found in motor_control.")
-                if p := propdict.get('current_position'):
+                if p := propdict2.pop('current_position', None):
                     if vr := p.vrange:
                         ret['current_position'] = {
                             'value_range': vr
                         }
-                if p := propdict.get('target_position'):
+                if p := propdict2.pop('target_position', None):
                     if vr := p.vrange:
                         ret['target_position'] = {
                             'value_range': vr
                         }
-                if p := propdict.get('status'):
+                if p := propdict2.pop('status', None):
                     dct = {}
                     if vl := p.vlist:
                         for item in vl:
@@ -325,13 +330,13 @@ class MiotAdapter:
                         ret['motor_status'] = dct
 
             if devtype == 'fan':
-                if p := propdict.get('mode'):
+                if p := propdict2.pop('mode', None):
                     if vl := p.vlist:
                         if not ret.get('speed'):
                             ret['speed'] = ret.pop('mode')
 
                 #TODO zhimi.fan.fa1 has both fan_level and mode
-                if p := propdict.get('horizontal_swing'):
+                if p := propdict2.pop('horizontal_swing', None):
                     ret['oscillate'] = {
                         True: True,
                         False: False
@@ -339,18 +344,18 @@ class MiotAdapter:
 
             if devtype in ('humidifier', 'dehumidifier'):
                 # deerma.humidifier.mjjsq
-                if p := propdict.get('fan_level'):
+                if p := propdict2.pop('fan_level', None):
                     if vl := p.vlist:
                         if not ret.get('mode'):
                             ret['mode'] = ret.pop('speed')
 
             if devtype == 'media_player':
-                if p := propdict.get('volume'):
+                if p := propdict2.pop('volume', None):
                     if vr := p.vrange:
                         ret['volume'] = {
                             'value_range': vr
                         }
-                if p := propdict.get('playing_state'):
+                if p := propdict2.pop('playing_state', None):
                     if vl := p.vlist:
                         dct = {}
                         for item in vl:
@@ -361,7 +366,7 @@ class MiotAdapter:
                                 dct['playing'] = item['value']
                         ret['playing_state'] = dct
 
-            if p := propdict.get('target_humidity'):
+            if p := propdict2.pop('target_humidity', None):
                 if vr := p.vrange:
                     ret['target_humidity'] = {
                         'value_range': vr
@@ -383,10 +388,26 @@ class MiotAdapter:
                             ret[k] = {}
                         ret[k]['format'] = f
 
-            if p := propdict.get('physical_controls_locked'):
+            if p := propdict2.pop('physical_controls_locked', None):
                 ret['enabled'] = False
-            if p := propdict.get('indicator_light'):
+            if p := propdict2.pop('indicator_light', None):
                 ret['enabled'] = False
+
+            #####################
+
+            for k,v in propdict2.items():
+                r = {}
+                acc = 0
+                acc |= ACCESS_READ if 'read' in v.access else 0
+                acc |= ACCESS_WRITE if 'write' in v.access else 0
+                acc |= ACCESS_NOTIFY if 'notify' in v.access else 0
+                r['access'] = acc
+                r['format'] = v.format_
+                if v.vlist:
+                    r['value_list'] = dict([(a['description'], a['value']) for a in v.vlist])
+                elif v.vrange:
+                    r['value_range'] = v.vrange
+                ret[k] = r
 
             return ret
         except Exception as ex:

@@ -63,6 +63,8 @@ SUPPORT_PRESET_MODE = 8
 # pylint: disable=unused-argument
 @asyncio.coroutine
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
+    hass.data[DOMAIN].setdefault('add_handler', {})
+    hass.data[DOMAIN]['add_handler'].setdefault(TYPE, async_add_devices)
     await async_generic_setup_platform(
         hass,
         config,
@@ -380,6 +382,8 @@ class MiotWasher(ToggleableMiotDevice, FanEntity):
             self._assumed_state = False
         else:
             self._assumed_state = True
+        self.SPEED_OR_MODE = 'mode' if 'mode' in self._ctrl_params else 'speed'
+        hass.async_add_job(self.create_sub_entities)
 
     @property
     def supported_features(self):
@@ -392,7 +396,7 @@ class MiotWasher(ToggleableMiotDevice, FanEntity):
         if NEW_FAN:
             return None
         else:
-            return list(self._ctrl_params['speed'].keys())
+            return list(self._ctrl_params[self.SPEED_OR_MODE].keys())
 
     @property
     def speed(self):
@@ -402,13 +406,13 @@ class MiotWasher(ToggleableMiotDevice, FanEntity):
     @property
     def preset_modes(self) -> list:
         """Get the list of available preset_modes."""
-        return list(self._ctrl_params['speed'].keys())
+        return list(self._ctrl_params[self.SPEED_OR_MODE].keys())
 
     @property
     def preset_mode(self):
         """Return the current speed."""
         try:
-            self._speed = self.get_key_by_value(self._ctrl_params['speed'],self.device_state_attributes[self._did_prefix + 'speed'])
+            self._speed = self.get_key_by_value(self._ctrl_params[self.SPEED_OR_MODE],self.device_state_attributes[self._did_prefix + self.SPEED_OR_MODE])
         except KeyError:
             self._speed = None
         return self._speed
@@ -455,7 +459,96 @@ class MiotWasher(ToggleableMiotDevice, FanEntity):
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
-        result = await self.set_property_new(self._did_prefix + "speed", self._ctrl_params['speed'][preset_mode])
+        result = await self.set_property_new(self._did_prefix + self.SPEED_OR_MODE, self._ctrl_params[self.SPEED_OR_MODE][preset_mode])
         if result:
             self._speed = preset_mode
             self._skip_update = True
+
+    async def create_sub_entities(self):
+        ett_to_add = []
+        for k,v in self._ctrl_params.items():
+            if not isinstance(v, dict): continue
+            if 'access' in v:
+                if v['access'] & 0b010 >> 1:
+                    if 'value_list' in v:
+                        ett_to_add.append(SelectorEntity(
+                            self,
+                            field=k,
+                            value_list=v['value_list'],
+                        ))
+        if ett_to_add:
+            self._hass.data[DOMAIN]['add_handler']['fan'](ett_to_add, update_before_add=True)
+
+
+class SelectorEntity(MiotSubDevice, FanEntity):
+    def __init__(self, parent_device, **kwargs):
+        self._parent_device = parent_device
+        self._field = kwargs.get('field')
+        self._value_list = kwargs.get('value_list')
+        self._name_suffix = kwargs.get('name') or self._field.replace("_", " ").title()
+        self._name = f'{parent_device.name} {self._name_suffix}'
+        self._unique_id = f"{parent_device.unique_id}-{kwargs.get('field')}"
+        self._entity_id = f"{parent_device._entity_id}-{kwargs.get('field')}"
+        self.entity_id = f"{DOMAIN}.{self._entity_id}"
+        self._available = True
+
+    @property
+    def supported_features(self):
+        """Return the supported features."""
+        return SUPPORT_SET_SPEED if not NEW_FAN else SUPPORT_PRESET_MODE
+
+    @property
+    def speed_list(self) -> list:
+        """Get the list of available speeds."""
+        return list(self._value_list)
+
+    @property
+    def speed(self):
+        """Return the current speed."""
+        return self.get_key_by_value(self._value_list, self._parent_device.device_state_attributes.get(self._field))
+
+    @property
+    def percentage(self) -> str:
+        """Return the current speed."""
+        return None
+
+    preset_modes = speed_list
+    preset_mode = speed
+
+    @property
+    def speed_count(self) -> int:
+        """Return the number of speeds the fan supports."""
+        return len(self._action_list)
+
+    async def async_turn_on(self, speed = None, **kwargs) -> None:
+        result = await self._parent_device.set_property_new(self._field, speed)
+        if result:
+            self._state2 = STATE_OFF
+            self.schedule_update_ha_state()
+
+    async def async_turn_off(self):
+        pass
+
+    async def async_set_preset_mode(self, preset_mode: str) -> None:
+        """Set new preset mode."""
+        await self.async_turn_on(speed=preset_mode)
+
+    async def async_set_percentage(self, percentage: int) -> None:
+        """Set the speed percentage of the fan."""
+        pass
+
+    @property
+    def is_on(self):
+        return self._state2 == STATE_ON
+
+    @property
+    def state(self):
+        return self._state2
+
+    @property
+    def device_state_attributes(self):
+        return {ATTR_ATTRIBUTION: f"可在此设置“{self._parent_device.name}”的 {self._field}。开关仅用于反馈操作是否成功，无控制功能。"}
+
+    async def async_update(self):
+        await asyncio.sleep(1)
+        self._state2 = STATE_ON
