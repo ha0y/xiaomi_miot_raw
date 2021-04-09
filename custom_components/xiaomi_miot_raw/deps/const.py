@@ -131,6 +131,7 @@ MAP = {
         "water_heater",
         "kettle",
         "dishwasher",
+        "water_dispenser",
     },
 }
 
