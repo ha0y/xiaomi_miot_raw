@@ -529,7 +529,7 @@ class SelectorEntity(MiotSubDevice, FanEntity):
         return len(self._action_list)
 
     async def async_turn_on(self, speed = None, **kwargs) -> None:
-        result = await self._parent_device.set_property_new(self._did_prefix + self._field, speed)
+        result = await self._parent_device.set_property_new(self._did_prefix + self._field, self._value_list[speed])
         if result:
             self._state2 = STATE_OFF
             self.schedule_update_ha_state()

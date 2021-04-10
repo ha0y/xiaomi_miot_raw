@@ -405,6 +405,8 @@ class GenericMiotDevice(Entity):
                         params,
                     )
                     if result:
+                        if field in self._state_attrs:
+                            self._state_attrs[field] = params
                         return True
                 else:
                     result = await self._try_command(
@@ -448,6 +450,8 @@ class GenericMiotDevice(Entity):
                                 elif item['code'] != 0:
                                     _LOGGER.error(f"Control {self._name} by cloud failed: {r}")
                                     return False
+                            if field in self._state_attrs:
+                                self._state_attrs[field] = params
                             self._skip_update = True
                             return True
                     return False
