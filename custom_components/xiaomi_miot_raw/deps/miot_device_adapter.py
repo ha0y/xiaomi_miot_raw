@@ -344,10 +344,8 @@ class MiotAdapter:
 
             if devtype in ('humidifier', 'dehumidifier'):
                 # deerma.humidifier.mjjsq
-                if p := propdict2.pop('fan_level', None):
-                    if vl := p.vlist:
-                        if not ret.get('mode'):
-                            ret['mode'] = ret.pop('speed')
+                if not ret.get('mode'):
+                    ret['mode'] = ret.pop('speed')
 
             if devtype == 'media_player':
                 if p := propdict2.pop('volume', None):
