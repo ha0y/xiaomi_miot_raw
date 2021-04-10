@@ -375,17 +375,6 @@ class MiotAdapter:
                         'value_range': get_range_by_list(vl)
                     }
 
-            if devtype == 'sensor':
-                for k,v in propdict.items():
-                    if u := v.unit:
-                        if k not in ret:
-                            ret[k] = {}
-                        ret[k]['unit'] = u
-                    if f := v.format_:
-                        if k not in ret:
-                            ret[k] = {}
-                        ret[k]['format'] = f
-
             if p := propdict2.pop('physical_controls_locked', None):
                 ret['enabled'] = False
             if p := propdict2.pop('indicator_light', None):
@@ -401,6 +390,7 @@ class MiotAdapter:
                 acc |= ACCESS_NOTIFY if 'notify' in v.access else 0
                 r['access'] = acc
                 r['format'] = v.format_
+                r['unit'] = v.unit if v.unit != "none" else None
                 if v.vlist:
                     r['value_list'] = dict([(a['description'], a['value']) for a in v.vlist])
                 elif v.vrange:
