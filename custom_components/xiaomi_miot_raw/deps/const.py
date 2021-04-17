@@ -70,6 +70,8 @@ MAP = {
         "tds_sensor",
         "air_fryer",
         "remain_clean_time",
+        "sleep_monitor",
+        "sleep_info",
     },
     "switch": {
         "switch",

@@ -19,6 +19,11 @@ SPECIAL_DEVICES={
         "mapping": {"switch": {"switch_status": {"siid": 2, "piid": 1}}},
         "params": {"switch": {"switch_status": {"power_on": True, "power_off": False}, "main": True}}
     },
+    "degree.lunar.smh013": {
+        "device_type": ['switch', 'sensor'],
+        "mapping": { "sleep_monitor": { "sleep_state": { "siid": 2, "piid": 1 }, "search_report": { "siid": 4, "piid": 5 }, "set_sleep_time": { "siid": 4, "piid": 6 }, "user_info": { "siid": 4, "piid": 7 }, "sleep_info": { "siid": 4, "piid": 8 }, "realtime_heart_rate": { "siid": 4, "piid": 10 }, "realtime_breath_rate": { "siid": 4, "piid": 11 }, "realtime_sleepstage": { "siid": 4, "piid": 12 }, "user_info_down": { "siid": 4, "piid": 13 }, "set_sleep_time_down": { "siid": 4, "piid": 14 }, "linkage_sleepstage": { "siid": 4, "piid": 16 }, "linkage_warning": { "siid": 4, "piid": 17 }, "gen_report": { "siid": 4, "piid": 18 }, "search_report_today": { "siid": 4, "piid": 19 } }, "switch": { "switch_status": { "siid": 4, "piid": 15 } } },
+        "params": { "sleep_monitor": { "sleep_state": { "access": 5, "format": "uint8", "unit": None, "value_list": { "Out of Bed": 0, "Awake": 1, "Light Sleep": 3, "Deep Sleep": 4, "Rapid Eye Movement": 2 } }, "main": True }, "switch": { "switch_status": { "power_on": True, "power_off": False } } }
+    }
 }
 
 
