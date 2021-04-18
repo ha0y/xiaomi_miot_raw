@@ -317,11 +317,20 @@ class GenericMiotDevice(Entity):
         self._cloud_write = config.get('cloud_write')
         self._cloud_instance = None
         self.coordinator = None
+        self._body_for_update_cloud = None
         if self._cloud:
             c = setup_cloud(self, hass)
             self._cloud_instance = c[0]
             self.coordinator = c[1]
             self.coordinator.add_fixed_by_mapping(self._cloud, self._mapping)
+
+            data1 = {}
+            data1['datasource'] = 1
+            data1['params'] = []
+            for value in self._mapping.values():
+                if 'aiid' not in value:
+                    data1['params'].append({**{'did':self._cloud.get("did")},**value})
+            self._body_for_update_cloud = json.dumps(data1,separators=(',', ':'))
 
         self._fail_count = 0
         self._available = None
@@ -593,15 +602,8 @@ class GenericMiotDevice(Entity):
 
             else:
                 _LOGGER.info(f"{self._name} is updating from cloud.")
-                data1 = {}
-                data1['datasource'] = 1
-                data1['params'] = []
-                for value in self._mapping.values():
-                    if 'aiid' not in value:
-                        data1['params'].append({**{'did':self._cloud.get("did")},**value})
-                data2 = json.dumps(data1,separators=(',', ':'))
 
-                a = await self._cloud_instance.get_props(data2, self._cloud.get("server_location"))
+                a = await self._cloud_instance.get_props(self._body_for_update_cloud, self._cloud.get("server_location"))
 
                 dict1 = {}
                 statedict = {}
@@ -620,6 +622,7 @@ class GenericMiotDevice(Entity):
                         self._available = True
 
                     for item in a['result']:
+                        # TODO handle -704030013 (Unreadable property)
                         dict1.setdefault(item['siid'], {})
                         dict1[item['siid']][item['piid']] = item.get('value')
 
