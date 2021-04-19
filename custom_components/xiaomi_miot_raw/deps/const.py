@@ -48,6 +48,40 @@ SCHEMA = {
         vol.Optional(CONF_SENSOR_PROPERTY): cv.string,
         vol.Optional(CONF_SENSOR_UNIT): cv.string,
 }
+
+SERVICE_SCHEMA = vol.Schema({vol.Optional(ATTR_ENTITY_ID): cv.entity_ids})
+SERVICE_TO_METHOD = {
+    'speak_text': {
+        "method": "async_speak_text",
+        "schema": SERVICE_SCHEMA.extend({
+                vol.Required('text'): cv.string,
+            })
+    },
+    'execute_text': {
+        "method": "async_execute_text",
+        "schema": SERVICE_SCHEMA.extend({
+                vol.Required('text'): cv.string,
+                vol.Optional('silent'): cv.boolean,
+            })
+    },
+    'call_action': {
+        "method": "call_action_new",
+        "schema": SERVICE_SCHEMA.extend({
+                vol.Required('siid'): vol.All(),
+                vol.Required('aiid'): vol.All(),
+                vol.Optional('inn'): vol.All(),
+            })
+    },
+    'set_miot_property': {
+        "method": "set_property_for_service",
+        "schema": SERVICE_SCHEMA.extend({
+                vol.Required('siid'): vol.All(),
+                vol.Required('piid'): vol.All(),
+                vol.Required('value'): vol.All(),
+            })
+    },
+}
+
 MAP = {
     "sensor": {
         "air_monitor",

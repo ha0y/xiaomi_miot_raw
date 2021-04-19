@@ -37,6 +37,8 @@ from .deps.const import (
     ATTR_FIRMWARE_VERSION,
     ATTR_HARDWARE_VERSION,
     SCHEMA,
+    SERVICE_SCHEMA,
+    SERVICE_TO_METHOD,
     MAP,
     DUMMY_IP,
     DUMMY_TOKEN,
@@ -344,6 +346,12 @@ class GenericMiotDevice(Entity):
         self._last_notified = 0
         self._callbacks = set()
 
+        for service in (SERVICE_TO_METHOD):
+            schema = SERVICE_TO_METHOD[service].get("schema", SERVICE_SCHEMA)
+            hass.services.async_register(
+                DOMAIN, service, self.async_service_handler, schema=schema
+            )
+
     @property
     def should_poll(self):
         """Poll the miio device."""
@@ -501,7 +509,7 @@ class GenericMiotDevice(Entity):
             _LOGGER.error('Set miot property to %s: %s(%s) failed: %s', self._name, field, params, ex)
             return False
 
-    async def call_action_new(self, siid, aiid, params2=None, did=None):
+    async def call_action_new(self, siid, aiid, inn=None, did=None):
         if did is not None:
             did_ = did
         elif self._cloud is not None:
@@ -512,7 +520,7 @@ class GenericMiotDevice(Entity):
             'did':  did_,
             'siid': siid,
             'aiid': aiid,
-            'in':   params2 or [],
+            'in':   inn or [],
         }
 
         try:
@@ -536,6 +544,23 @@ class GenericMiotDevice(Entity):
         except DeviceException as ex:
             _LOGGER.error('Call miot action to %s (%s) failed: %s', self._name, params, ex)
             return False
+
+    async def set_property_for_service(self, siid, piid, value):
+        try:
+            if not self._cloud_write:
+                result = await self._try_command(
+                    f"Setting property for {self._name} failed.",
+                    self._device.send,
+                    "set_properties",
+                    [{"did": f"set-{siid}-{piid}", "siid": siid, "piid": piid, "value": value}],
+                )
+            else:
+                did = self._cloud.get("did")
+                p = {'params': [{"did": did, "siid": siid, "piid": piid, "value": value}]}
+                pp = json.dumps(p,separators=(',', ':'))
+                results = await self._cloud_instance.set_props(pp, self._cloud.get("server_location"))
+        except DeviceException as ex:
+            _LOGGER.error('Set miot property to %s: %s(%s) failed: %s', self._name, ex)
 
     async def async_update(self):
         """Fetch state from the device."""
@@ -773,6 +798,33 @@ class GenericMiotDevice(Entity):
 
     def _handle_platform_specific_attrs(self):
         pass
+
+    @asyncio.coroutine
+    def async_service_handler(self, service):
+        """Map services to methods on XiaomiMiioDevice."""
+        method = SERVICE_TO_METHOD.get(service.service)
+        params = {
+            key: value for key, value in service.data.items() if key != ATTR_ENTITY_ID
+        }
+        entity_ids = service.data.get(ATTR_ENTITY_ID)
+        if entity_ids:
+            devices = [
+                device
+                for device in self.hass.data[DOMAIN]['entities'].values()
+                if device.entity_id in entity_ids
+            ]
+        else:
+            # devices = hass.data[DOMAIN]['entities'].values()
+            devices = []
+            _LOGGER.error("No entity_id specified.")
+
+        update_tasks = []
+        for device in devices:
+            yield from getattr(device, method["method"])(**params)
+            update_tasks.append(device.async_update_ha_state(True))
+
+        if update_tasks:
+            yield from asyncio.wait(update_tasks, loop=self.hass.loop)
 
 
 class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
@@ -1068,3 +1120,5 @@ async def async_generic_setup_platform(
                 devices.append(sub_class_dict['default'](parent_device, mapping.get(item), params.get(item), item))
 
         async_add_devices(devices, update_before_add=True)
+
+

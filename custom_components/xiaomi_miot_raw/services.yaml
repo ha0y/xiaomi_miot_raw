@@ -19,3 +19,27 @@ execute_text:
     silent:
       description: (可选，默认否)静默执行
       example: "true"
+call_action:
+  description: 执行 action(供高级用户使用)
+  fields:
+    siid:
+      description: siid
+      example: 3
+    aiid:
+      description: aiid
+      example: 1
+    inn:
+      description: in 参数，列表形式
+      example: ""
+set_miot_property:
+  description: Set property(供高级用户使用)
+  fields:
+    siid:
+      description: siid
+      example: 2
+    piid:
+      description: aiid
+      example: 1
+    value:
+      description: 值
+      example: "true"
