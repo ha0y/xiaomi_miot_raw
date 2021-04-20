@@ -604,7 +604,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         else:
             if 'indicator_light' in self._prm or 'physical_controls_locked' in self._prm:
                 self._steps.append(self.async_step_light_and_lock())
-            if self._input2['devtype'] == ['sensor']:
+            if 'sensor' in self._input2['devtype']:
                 self._steps.append(self.async_step_sensor())
             if 'climate' in self._input2['devtype']:
                 self._steps.append(self.async_step_climate())

@@ -19,6 +19,11 @@ SPECIAL_DEVICES={
         "mapping": {"switch": {"switch_status": {"siid": 2, "piid": 1}}},
         "params": {"switch": {"switch_status": {"power_on": True, "power_off": False}, "main": True}}
     },
+    "degree.lunar.smh013": {
+        "device_type": ['switch', 'sensor'],
+        "mapping": {"sleep_monitor":{"sleep_state":{"siid":2,"piid":1},"realtime_heart_rate":{"siid":4,"piid":10},"realtime_breath_rate":{"siid":4,"piid":11},"realtime_sleepstage":{"siid":4,"piid":12}},"switch":{"switch_status":{"siid":4,"piid":15}}},
+        "params": {"sleep_monitor":{"sleep_state":{"access":5,"format":"uint8","unit":None,"value_list":{"Out of Bed":0,"Awake":1,"Light Sleep":3,"Deep Sleep":4,"Rapid Eye Movement":2}},"realtime_heart_rate":{"unit":"bpm"},"realtime_breath_rate":{"unit":"/min"},"main":True},"switch":{"switch_status":{"power_on":True,"power_off":False}}}
+    }
 }
 
 
