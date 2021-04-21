@@ -426,6 +426,14 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                                 data=self._input2,
                             )
                         else:
+                            # 3rd party device and Manually added device doesn't have one
+                            self._input2['cloud_device_info'] = {
+                                'name': self._input2[CONF_NAME],
+                                'mac': "",
+                                'did': self._did,
+                                'model': self._input2[CONF_MODEL],
+                                'fw_version': "",
+                            }
                             return self.async_show_form(
                                 step_id="cloudinfo",
                                 data_schema=vol.Schema({
