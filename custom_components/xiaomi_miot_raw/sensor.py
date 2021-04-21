@@ -74,6 +74,7 @@ DEVCLASS_MAPPING = {
     "energy"          : ["power_consumption"],
     "power_factor"    : ["power_factor"],
     "voltage"         : ["voltage"],
+    "carbon_dioxide"  : ["co2_density"],
 }
 # pylint: disable=unused-argument
 @asyncio.coroutine

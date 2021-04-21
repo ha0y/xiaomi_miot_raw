@@ -352,6 +352,14 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
         except:
             pass
         try:
+            self._target_humidity = self._state_attrs.get(self._did_prefix + 'target_humidity')
+        except:
+            pass
+        try:
+            self._current_humidity = self._state_attrs.get('environmen_relative_humidity')
+        except:
+            pass
+        try:
             self._current_temperature = self._state_attrs.get('environmen_temperature')
             if not self._current_temperature:
                 if src := self._ctrl_params.get('current_temp_source'):
