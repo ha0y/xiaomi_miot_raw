@@ -71,6 +71,14 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     SCHEMA
 )
 
+STATE_MAPPING = {
+    STATE_CLEANING:  ['Sweeping'],
+    STATE_DOCKED:    ['Charging'],
+    STATE_IDLE:      ['Idle'],
+    STATE_PAUSED:    ['Paused'],
+    STATE_RETURNING: ['Go Charging'],
+}
+
 SCAN_INTERVAL = timedelta(seconds=10)
 # pylint: disable=unused-argument
 @asyncio.coroutine
@@ -137,11 +145,6 @@ class MiotVacuum(GenericMiotDevice, StateVacuumEntity):
         """Return the list of supported fan speeds."""
         return list(self._ctrl_params['mode'].keys())
 
-    @property
-    def extra_state_attributes(self):
-        """Return device state attributes."""
-        return {}
-
     async def async_start(self):
         """Start or resume the cleaning task."""
         if self.supported_features & SUPPORT_START == 0:
@@ -199,4 +202,9 @@ class MiotVacuum(GenericMiotDevice, StateVacuumEntity):
 
     def _handle_platform_specific_attrs(self):
         super()._handle_platform_specific_attrs()
-        # TODO
+        try:
+            for k,v in STATE_MAPPING.items():
+                if self._state_attrs.get(self._did_prefix + 'status') in v:
+                    self._state = k
+        except:
+            pass
