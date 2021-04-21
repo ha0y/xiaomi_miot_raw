@@ -28,6 +28,7 @@ SUPPORTED_DOMAINS = [
     "climate",
     "lock",
     "water_heater",
+    "vacuum",
 ]
 DEFAULT_NAME = "Xiaomi MIoT Device"
 
@@ -168,6 +169,9 @@ MAP = {
         "kettle",
         "dishwasher",
         "water_dispenser",
+    },
+    "vacuum": {
+        "vacuum",
     },
 }
 
