@@ -101,6 +101,13 @@
                 "description": "勾選後，每個屬性都會以單獨感測器實體顯示。",
                 "title": "感測器設定"
             },
+            "cover": {
+                "data": {
+                    "reverse_position_percentage": "反轉位置百分比"
+                },
+                "description": "Home Assistant 預設窗簾位置百分比為：0 關閉狀態（放下）、100 為開啟狀態（升起）。\n因此當廠商之定義與預設相反時，會出現「下降到最底時、升起按鈕無法操作」的問題。\n勾選選項後、進行位置百分比反轉，即能解決此問題。",
+                "title": "窗簾選項"
+            },
             "climate": {
                 "data": {
                     "current_temp_source": "環境溫度感測器實體 ID"
