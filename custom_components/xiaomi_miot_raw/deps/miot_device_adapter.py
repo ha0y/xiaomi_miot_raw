@@ -155,7 +155,8 @@ class MiotAdapter:
 
     def get_mapping(self, propdict: dict = {}, devtype = ""):
         try:
-            # ret = []
+            if not propdict:
+                return None
             ret = {}
             for p in propdict.values():
                 did = translate.get(p.newid) or p.newid
@@ -198,6 +199,8 @@ class MiotAdapter:
 
     def get_params(self, propdict: dict = {}, devtype = ""):
         devtype = get_type_by_mitype(devtype)
+        if not propdict:
+            return None
         propdict2 = propdict.copy()
         try:
             ret = {}
@@ -415,7 +418,8 @@ class MiotAdapter:
         ret={}
         for service in self.services.values():
             if (nid := service.newid) in SUPPORTED:
-                ret[nid]=self.get_mapping_by_snewid(nid)
+                if (mp := self.get_mapping_by_snewid(nid)) is not None:
+                    ret[nid]=mp
 
         if action_dict := self.get_all_actions():
             ret['a_l'] = action_dict
@@ -462,10 +466,11 @@ class MiotAdapter:
         for service in self.services.values():
             if (nid := service.newid) in SUPPORTED:
                 if not ret.get(nid):
-                    ret[nid]=self.get_params_by_snewid(nid)
-                    if nid == self.mitype and not has_main:
-                        ret[nid]['main'] = True
-                        has_main = True
+                    if (prm := self.get_params_by_snewid(nid)) is not None:
+                        ret[nid]=prm
+                        if nid == self.mitype and not has_main:
+                            ret[nid]['main'] = True
+                            has_main = True
         if self.mitype == 'air_conditioner' or self.mitype == 'hood':
             try:
                 ret[self.mitype] = {**ret[self.mitype], **ret.pop('fan_control')}
