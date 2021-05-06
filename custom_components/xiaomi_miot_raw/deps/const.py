@@ -107,6 +107,7 @@ MAP = {
         "remain_clean_time",
         "sleep_monitor",
         "sleep_info",
+        "plant_monitor",
     },
     "switch": {
         "switch",
