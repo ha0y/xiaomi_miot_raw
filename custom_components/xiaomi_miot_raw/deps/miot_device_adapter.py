@@ -48,7 +48,8 @@ ACCESS_READ = 0b001
 ACCESS_WRITE = 0b010
 ACCESS_NOTIFY = 0b100
 
-SUPPORTED = {vv for v in MAP.values() for vv in v}
+CUSTOM_SERVICES = {'custom_service'}
+SUPPORTED = {vv for v in MAP.values() for vv in v}.union(CUSTOM_SERVICES)
 
 def get_type_by_mitype(mitype:str):
     if mitype == "fan_control":
@@ -58,7 +59,7 @@ def get_type_by_mitype(mitype:str):
             return k
     return None
 
-translate = {"on":"switch_status", "fan_level":"speed"}
+translate = {"on":"switch_status", "fan_level":"speed", "horizontal_swing":"oscillate", "speed_level":"stepless_speed"}
 
 def get_range_by_list(value_list: list):
     l = [item['value'] for item in value_list]
@@ -88,7 +89,7 @@ class MiotAdapter:
     def init_all_services(self) -> None:
         for s in self.spec['services']:
             if (n := name_by_type(s['type'])) in SUPPORTED:
-                if n != 'fan_control':
+                if n != 'fan_control' and n not in CUSTOM_SERVICES:
                     self.devtypeset.add(get_type_by_mitype(n))
             if not self.services.get(name_by_type(s['type'])):
                 self.services[name_by_type(s['type'])] = Service(
@@ -242,9 +243,12 @@ class MiotAdapter:
                         str(i):i for i in range(vr[0],vr[1]+1,vr[2])
                     }
                     ret['speed'] = lst
-                else:
-                    # TODO: will this happen?
-                    pass
+
+            if p := propdict2.pop('speed_level', None): # dmaker stepless speed
+                if vr := p.vrange:
+                    ret['stepless_speed'] = {
+                        'value_range': vr
+                    }
 
             if p := propdict2.pop('mode', None):
                 if vl := p.vlist:
@@ -442,6 +446,11 @@ class MiotAdapter:
             if 'target_humidity' in ret['environment']:
                 ret['humidifier']['target_humidity'] = (ret['environment'].pop('target_humidity'))
 
+        if 'fan' in ret and 'custom_service' in ret:
+            # zhimi fan stepless speed
+            if 'stepless_speed' in ret['custom_service']:
+                ret['fan']['stepless_speed'] = (ret['custom_service'].pop('stepless_speed'))
+
         # 把某个 service 里的 property 单独提出来
         # 例如：晾衣架的烘干，新风机的辅热
         if 'airer' in ret:
@@ -458,6 +467,9 @@ class MiotAdapter:
                 ret.setdefault('air_fresh_heater', {})
                 ret['air_fresh_heater'].update({'switch_status': ret['air_fresh'].pop('heater')})
                 self.devtypeset.add('fan')
+
+        for item in CUSTOM_SERVICES:
+            ret.pop(item, None)
         return ret
 
     def get_all_params(self):
@@ -488,6 +500,11 @@ class MiotAdapter:
             if 'target_humidity' in ret['environment']:
                 ret['humidifier']['target_humidity'] = (ret['environment'].pop('target_humidity'))
 
+        if 'fan' in ret and 'custom_service' in ret:
+            # zhimi fan stepless speed
+            if 'stepless_speed' in ret['custom_service']:
+                ret['fan']['stepless_speed'] = (ret['custom_service'].pop('stepless_speed'))
+
         # 把某个 service 里的 property 单独提出来
         # 例如：晾衣架的烘干，新风机的辅热
         if 'airer' in ret:
@@ -508,6 +525,9 @@ class MiotAdapter:
                 ret[list(ret.keys())[0]]['main'] = True
             except IndexError:
                 _LOGGER.error("识别不出主设备，请手动指定")
+
+        for item in CUSTOM_SERVICES:
+            ret.pop(item, None)
         return ret
 
     def get_all_actions(self):

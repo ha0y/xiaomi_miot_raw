@@ -112,7 +112,14 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
 
     @property
     def _speed_list_without_preset_modes(self) -> list:
-        return list(self._ctrl_params['speed'].keys())
+        if 'stepless_speed' not in self._ctrl_params:
+            return list(self._ctrl_params['speed'].keys())
+        else:
+            return list(range(
+                self._ctrl_params['stepless_speed']['value_range'][0],
+                self._ctrl_params['stepless_speed']['value_range'][1] + 1,
+                self._ctrl_params['stepless_speed']['value_range'][2],
+            ))
 
     @property
     def speed(self):
@@ -169,7 +176,10 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
             self._skip_update = True
 
     async def async_set_speed(self, speed: str) -> None:
-        result = await self.set_property_new(self._did_prefix + "speed", self._ctrl_params['speed'][speed])
+        if 'stepless_speed' not in self._ctrl_params:
+            result = await self.set_property_new(self._did_prefix + "speed", self._ctrl_params['speed'][speed])
+        else:
+            result = await self.set_property_new(self._did_prefix + "stepless_speed", speed)
         if result:
             self._speed = speed
             self._skip_update = True
@@ -189,7 +199,8 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
     def _handle_platform_specific_attrs(self):
         super()._handle_platform_specific_attrs()
         try:
-            self._speed = self.get_key_by_value(self._ctrl_params['speed'],self._state_attrs.get(self._did_prefix + 'speed'))
+            self._speed = self.get_key_by_value(self._ctrl_params['speed'],self._state_attrs.get(self._did_prefix + 'speed')) if 'stepless_speed' not in self._ctrl_params \
+                else self._state_attrs.get(self._did_prefix + 'stepless_speed')
         except KeyError:
             self._speed = None
         try:
