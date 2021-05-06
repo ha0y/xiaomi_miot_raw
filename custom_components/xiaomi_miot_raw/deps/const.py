@@ -143,6 +143,7 @@ MAP = {
         "air_fresh_heater",
         "bed",
         "pet_drinking_fountain",
+        "mosquito_dispeller",
     },
     "cover": {
         "curtain",
