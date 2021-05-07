@@ -30,9 +30,9 @@ SPECIAL_DEVICES={
         "params": {"plant_monitor": {"temperature": {"access": 5, "format": "float", "unit": "celsius"}, "relative_humidity": {"access": 5, "format": "float", "unit": "percentage", "value_range": [0, 100, 1]}, "soil_ec": {"access": 5, "format": "uint16", "unit": "µS/cm", "value_range": [0, 5000, 1]}, "illumination": {"access": 5, "format": "float", "unit": "lux", "value_range": [0, 10000, 1]}, "main": True}}
     },
     "zhimi.heater.na1": {
-        "device_type": ['climate', 'switch'],
-        "mapping": {"heater": {"fault": {"siid": 2, "piid": 1}, "switch_status": {"siid": 2, "piid": 2}, "speed": {"siid": 2, "piid": 3}, "preset": {"siid": 2, "piid": 4}}, "indicator_light": {"brightness": {"siid": 6, "piid": 1}}, "physical_controls_locked": {"physical_controls_locked": {"siid": 7, "piid": 1}}, "switch": {"switch_status":{"siid":3,"piid":1}}},
-        "params": {"heater": {"switch_status": {"power_on": True, "power_off": False}, "fault": {"No faults": 0}, "preset": {"Fan not swing": 0, "Fan swing": 1}, "speed": {"High": 1, "Low": 2}, "main": True},"switch":{"switch_status":{"power_on":True,"power_off":False}}, "indicator_light": {"brightness": {"value_range": [0, 2, 1]}}, "physical_controls_locked": {"enabled": False}}
+        "device_type": ['climate', 'switch', 'light', 'lock'],
+        "mapping": {"heater": {"fault": {"siid": 2, "piid": 1}, "switch_status": {"siid": 2, "piid": 2}, "speed": {"siid": 2, "piid": 3}, "horizontal_swing": {"siid": 2, "piid": 4}}, "indicator_light": {"brightness": {"siid": 6, "piid": 1}}, "physical_controls_locked": {"physical_controls_locked": {"siid": 7, "piid": 1}}, "switch": {"switch_status":{"siid":3,"piid":1}}, "switch_2": {"switch_status":{"siid":8,"piid":3}}},
+        "params": {"heater": {"switch_status": {"power_on": True, "power_off": False}, "fault": {"No faults": 0}, "horizontal_swing":{"off":0,"on":1}, "speed": {"High": 1, "Low": 2}, "main": True},"switch":{"switch_status":{"power_on":True,"power_off":False}}, "indicator_light": {"brightness": {"value_range": [0, 2, 1]}}, "physical_controls_locked": {"enabled": False}, "switch_2":{"switch_status":{"power_on": True,"power_off": False}}}
     },
 }
 
