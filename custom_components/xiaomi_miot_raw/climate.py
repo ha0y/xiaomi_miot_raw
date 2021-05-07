@@ -174,16 +174,6 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
         return self._ctrl_params['target_temperature']['value_range'][0]
 
     @property
-    def min_temp(self):
-        """Return the lowbound target temperature we try to reach."""
-        return self._ctrl_params['target_temperature']['value_range'][0]
-
-    @property
-    def max_temp(self):
-        """Return the lowbound target temperature we try to reach."""
-        return self._ctrl_params['target_temperature']['value_range'][1]
-
-    @property
     def current_humidity(self):
         """Return the current humidity."""
         return self._current_humidity
@@ -230,8 +220,7 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
     @property
     def preset_modes(self):
         """Return preset modes."""
-        # return self._preset_modes
-        return ["home", "eco"]
+        return list(self._ctrl_params['preset'].keys())
 
     @property
     def is_aux_heat(self):
@@ -332,8 +321,10 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
 
     async def async_set_preset_mode(self, preset_mode):
         """Update preset_mode on."""
-        self._preset = preset_mode
-        self.async_write_ha_state()
+        result = await self.set_property_new(self._did_prefix + "preset", self._ctrl_params['preset'][preset_mode])
+        if result:
+            self._preset = preset_mode
+            self.async_write_ha_state()
 
     async def async_turn_aux_heat_on(self):
         """Turn auxiliary heater on."""
@@ -375,6 +366,10 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
             _LOGGER.error(ex)
         try:
             self._current_fan_mode = self.get_key_by_value(self._ctrl_params['speed'], self._state_attrs.get(self._did_prefix + 'speed'))
+        except:
+            pass
+        try:
+            self._preset = self.get_key_by_value(self._ctrl_params['preset'], self._state_attrs.get(self._did_prefix + 'preset'))
         except:
             pass
         try:

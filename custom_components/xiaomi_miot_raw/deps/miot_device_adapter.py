@@ -48,7 +48,7 @@ ACCESS_READ = 0b001
 ACCESS_WRITE = 0b010
 ACCESS_NOTIFY = 0b100
 
-CUSTOM_SERVICES = {'custom_service'}
+CUSTOM_SERVICES = {'custom_service', 'private_service'}
 SUPPORTED = {vv for v in MAP.values() for vv in v}.union(CUSTOM_SERVICES)
 
 def get_type_by_mitype(mitype:str):
