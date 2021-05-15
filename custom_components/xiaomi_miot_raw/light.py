@@ -102,7 +102,12 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
 
     async def async_turn_on(self, **kwargs):
         """Turn on."""
-        parameters = [{**{'did': self._did_prefix + "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping[self._did_prefix + 'switch_status'])}]
+        parameters = []
+        if 'switch_status' in self._ctrl_params:
+            parameters.append({**{'did': self._did_prefix + "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping[self._did_prefix + 'switch_status'])})
+        elif 'brightness' in self._ctrl_params and ATTR_BRIGHTNESS not in kwargs:
+            # for some devices that control onoff by setting brightness to 0
+            parameters.append({**{'did': self._did_prefix + "brightness", 'value': self._ctrl_params['brightness']['value_range'][-2]}, **(self._mapping[self._did_prefix + 'brightness'])})
         if ATTR_EFFECT in kwargs:
             modes = self._ctrl_params['mode']
             parameters.append({**{'did': self._did_prefix + "mode", 'value': self._ctrl_params['mode'].get(kwargs[ATTR_EFFECT])}, **(self._mapping[self._did_prefix + 'mode'])})
@@ -124,6 +129,20 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
 
         if result:
             self._state = True
+            self.async_write_ha_state()
+
+    async def async_turn_off(self, **kwargs):
+        """Turn off."""
+        if 'switch_status' in self._ctrl_params:
+            prm = self._ctrl_params['switch_status']['power_off']
+            result = await self.set_property_new(self._did_prefix + "switch_status",prm)
+        elif 'brightness' in self._ctrl_params:
+            prm = self._ctrl_params['brightness']['value_range'][0]
+            result = await self.set_property_new(self._did_prefix + "brightness",prm)
+        else:
+            raise NotImplementedError()
+        if result:
+            self._state = False
             self.async_write_ha_state()
 
     @property
@@ -214,7 +233,12 @@ class MiotSubLight(MiotSubToggleableDevice, LightEntity):
 
     async def async_turn_on(self, **kwargs):
         """Turn on."""
-        parameters = [{**{'did': self._did_prefix + "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping['switch_status'])}]
+        parameters = []
+        if 'switch_status' in self._ctrl_params:
+            parameters.append({**{'did': self._did_prefix + "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping['switch_status'])})
+        elif 'brightness' in self._ctrl_params and ATTR_BRIGHTNESS not in kwargs:
+            # for some devices that control onoff by setting brightness to 0
+            parameters.append({**{'did': self._did_prefix + "brightness", 'value': self._ctrl_params['brightness']['value_range'][-2]}, **(self._mapping['brightness'])})
         if ATTR_EFFECT in kwargs:
             modes = self._ctrl_params['mode']
             parameters.append({**{'did': self._did_prefix + "mode", 'value': self._ctrl_params['mode'].get(kwargs[ATTR_EFFECT])}, **(self._mapping['mode'])})
@@ -238,6 +262,22 @@ class MiotSubLight(MiotSubToggleableDevice, LightEntity):
             self._state = True
             self._state_attrs[f"{self._did_prefix}switch_status"] = True
             self._parent_device.schedule_update_ha_state(force_refresh=True)
+
+    async def async_turn_off(self, **kwargs):
+        """Turn off."""
+        if 'switch_status' in self._ctrl_params:
+            prm = self._ctrl_params['switch_status']['power_off']
+            result = await self._parent_device.set_property_new(self._did_prefix + "switch_status",prm)
+        elif 'brightness' in self._ctrl_params:
+            prm = self._ctrl_params['brightness']['value_range'][0]
+            result = await self._parent_device.set_property_new(self._did_prefix + "brightness",prm)
+        else:
+            raise NotImplementedError()
+        if result:
+            self._state = False
+            # self._state_attrs[f"{self._did_prefix}switch_status"] = False
+            self._parent_device.schedule_update_ha_state(force_refresh=True)
+            self._skip_update = True
 
     @property
     def color_temp(self):

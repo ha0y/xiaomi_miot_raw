@@ -278,9 +278,10 @@ class MiotAdapter:
                         ret['brightness'] = {
                             'value_range': vr
                         }
-                    else:
-                        # TODO: will this happen?
-                        pass
+                    elif vl := p.vlist:
+                        ret['brightness'] = {
+                            'value_range': get_range_by_list(vl)
+                        }
                 if p := propdict2.pop('color_temperature', None):
                     if vr := p.vrange:
                         ret['color_temperature'] = {
