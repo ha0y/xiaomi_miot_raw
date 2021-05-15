@@ -11,7 +11,7 @@
             "cannot_connect": "Can not connect",
             "value_error": "Wrong value",
             "bad_params": "Bad params",
-            "no_local_access": "Possible reasons:\n(1) Wrong siid or piid\n(2) Local access is not supported by device. Try Cloud Access.",
+            "no_local_access": "Local access is not supported on this device. Cloud Access has been enabled. Click 'SUBMIT' again.",
             "no_connect_warning": "Failed to discover your device. If it is a Xiaomi Speaker, it is normal and you need to enter its model manually above. If not, please check your input.",
             "cant_login": "Cannot login",
             "account_tips": "This is to facilitate adding devices. \nAfter logging in, come back here to select devices to add."
@@ -91,7 +91,7 @@
                     "server_location": "Server location",
                     "batch_add": "Batch add devices"
                 },
-                "description": "Select which server are your devices in.\nTo log out, use **Delete**. This will not affect added devices.\nTo refresh devices list, use **Reload**.",
+                "description": "Select which server are your devices in.\nTo log out, use **Delete**. This will not affect added devices.\nTo refresh devices list, use **Reload**.\nTo add devices, use'Add Integration'-'Xiaomi MIoT' instead of 'Batch add devices'.",
                 "title": "Account options"
             },
             "sensor": {

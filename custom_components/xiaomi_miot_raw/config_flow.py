@@ -218,7 +218,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._input2.update({"ett_id_migrated": True}) # 新的实体ID格式，相对稳定，为避免已有ID变化，灰度选项
         self._actions = {
             'xiaomi_account': "登录小米账号",
-            'localinfo': "接入设备"
+            'localinfo': "通过 IP/token 添加设备"
         }
         self._non_interactive = False
 
@@ -254,7 +254,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     dt = get_conn_type(device)
                     dt = "WiFi" if dt == 0 else "ZigBee" if dt == 1 else "BLE" if dt == 2 \
                                            else "BLE Mesh" if dt == 3 else "Unknown"
-                    name = f"接入 {device['name']} ({dt}{', '+device['localip'] if (dt == '''WiFi''') else ''})"
+                    name = f"添加 {device['name']} ({dt}{', '+device['localip'] if (dt == '''WiFi''') else ''})"
                     self._actions[device['did']] = name
             self._actions.pop('xiaomi_account')
 
@@ -370,6 +370,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_devinfo(self, user_input=None):    # 3. 修改mapping，params，云端设置
         errors = {}
         hint = ""
+        local_failed = False
         if user_input is not None:
             self._devtype = user_input['devtype']
             self._input2['devtype'] = self._devtype
@@ -460,6 +461,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             except DeviceException as ex:
                 errors["base"] = "no_local_access"
                 hint = f"错误信息: {ex}"
+                local_failed = True
 
         # if self._non_interactive:
         #     return self.async_abort(reason="no_configurable_options")
@@ -470,8 +472,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required('devtype', default=user_input.get('devtype')): cv.multi_select(SUPPORTED_DOMAINS),
                 vol.Required(CONF_MAPPING, default=user_input.get(CONF_MAPPING)): str,
                 vol.Required(CONF_CONTROL_PARAMS, default=user_input.get(CONF_CONTROL_PARAMS)): str,
-                vol.Optional('cloud_read'): bool,
-                vol.Optional('cloud_write'): bool,
+                vol.Optional('cloud_read', default=True if local_failed else False): bool,
+                vol.Optional('cloud_write', default=True if local_failed else False): bool,
                 }),
             description_placeholders={"device_info": hint},
             errors=errors,
