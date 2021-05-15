@@ -31,7 +31,7 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 
 ## 安装
 
-* 将 custom_component 文件夹中的内容拷贝至自己的相应目录
+* 将 custom_components 文件夹中的内容拷贝至自己的相应目录
 
 或者
 * 在 [HACS](https://hacs.xyz/) 商店中，直接搜索添加“[Xiaomi MIoT](https://github.com/ha0y/xiaomi_miot_raw)”
