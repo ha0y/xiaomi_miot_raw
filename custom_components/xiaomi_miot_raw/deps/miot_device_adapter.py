@@ -254,7 +254,11 @@ class MiotAdapter:
                 if vl := p.vlist:
                     lst = {item['description']: item['value'] for item in vl}
                     ret['mode'] = lst
-
+                elif vr := p.vrange:
+                    lst = {
+                        str(i):i for i in range(vr[0],vr[1]+1,vr[2])
+                    }
+                    ret['mode'] = lst
             if p := propdict2.pop('target_temperature', None):
                 if vr := p.vrange:
                     ret['target_temperature'] = {
