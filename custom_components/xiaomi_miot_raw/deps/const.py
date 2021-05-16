@@ -108,6 +108,7 @@ MAP = {
         "sleep_monitor",
         "sleep_info",
         "plant_monitor",
+        "motion_detection",
     },
     "switch": {
         "switch",
