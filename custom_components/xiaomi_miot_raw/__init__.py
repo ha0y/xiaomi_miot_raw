@@ -245,7 +245,7 @@ class GenericMiotDevice(Entity):
             except StopIteration:
                 _LOGGER.info(f"Setting up xiaomi account for {self._name}...")
                 mc = MiCloud(
-                    aiohttp_client.async_get_clientsession(self._hass)
+                    aiohttp_client.async_create_clientsession(self._hass)
                 )
                 mc.login_by_credientals(
                     self._cloud.get('userId'),
