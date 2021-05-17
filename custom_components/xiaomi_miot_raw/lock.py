@@ -131,3 +131,7 @@ class MiotPhysicalControlLock(MiotSubDevice, LockEntity):
     @property
     def supported_features(self):
         return 0
+
+    @property
+    def state(self):
+        return STATE_LOCKED if self.is_locked else STATE_UNLOCKED
