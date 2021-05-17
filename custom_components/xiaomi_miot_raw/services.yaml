@@ -4,42 +4,105 @@ speak_text:
     entity_id:
       description: 实体 ID
       example: "media_player.xiao_ai"
+      required: true
+      selector:
+        entity:
+          integration: xiaomi_miot_raw
+          domain: media_player
     text:
       description: 要播报的文本
       example: "你好"
+      required: true
+      selector:
+        object:
 execute_text:
   description: 让小爱执行指定指令
   fields:
     entity_id:
       description: 实体 ID
       example: "media_player.xiao_ai"
+      required: true
+      selector:
+        entity:
+          integration: xiaomi_miot_raw
+          domain: media_player
     text:
       description: 要执行的文本
       example: "播放轻音乐"
+      required: true
+      selector:
+        object:
     silent:
       description: (可选，默认否)静默执行
       example: "true"
+      required: false
+      selector:
+        boolean:
 call_action:
   description: 执行 action(供高级用户使用)
   fields:
+    entity_id:
+      description: 实体 ID
+      example: "media_player.xiao_ai"
+      required: true
+      selector:
+        entity:
+          integration: xiaomi_miot_raw
     siid:
       description: siid
       example: 3
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 256
+          mode: box
     aiid:
       description: aiid
       example: 1
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 256
+          mode: box
     inn:
       description: in 参数，列表形式
       example: ""
+      required: false
+      selector:
+        object:
 set_miot_property:
   description: Set property(供高级用户使用)
   fields:
+    entity_id:
+      description: 实体 ID
+      example: "switch.212a01_abcd"
+      required: true
+      selector:
+        entity:
+          integration: xiaomi_miot_raw
     siid:
       description: siid
       example: 2
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 256
+          mode: box
     piid:
-      description: aiid
+      description: piid
       example: 1
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 256
+          mode: box
     value:
       description: 值
       example: "true"
+      required: true
+      selector:
+        object:
