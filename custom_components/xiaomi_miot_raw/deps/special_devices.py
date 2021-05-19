@@ -14,6 +14,16 @@ SPECIAL_DEVICES={
         "mapping":{"motion":{"key":"device_log","type":"prop"}},
         "params":{"event_based":True}
     },
+    "lumi.motion.bmgl01": {
+        "device_type":['sensor'],
+        "mapping":{"motion":{"key":"device_log","type":"prop"}},
+        "params":{"event_based":True}
+    },
+    "lumi.sensor_motion.aq2": {
+        "device_type":['sensor'],
+        "mapping":{"motion":{"key":"device_log","type":"prop"}},
+        "params":{"event_based":True}
+    },
     "cuco.plug.cp2":{
         "device_type": ['switch'],
         "mapping": {"switch": {"switch_status": {"siid": 2, "piid": 1}}},
