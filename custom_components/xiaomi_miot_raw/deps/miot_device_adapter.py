@@ -446,6 +446,9 @@ class MiotAdapter:
         if 'ambient_light' in ret and 'ambient_light_custom' in ret:
             ret['ambient_light'] = {**ret['ambient_light'], **ret.pop('ambient_light_custom')}
 
+        if 'screen' in ret and 'indicator_light' not in ret:
+            ret['indicator_light'] = ret.pop('screen')
+
         if 'humidifier' in ret and 'environment' in ret:
             # deerma.humidifier.mjjsq target_humidity misplaced
             if 'target_humidity' in ret['environment']:
@@ -499,6 +502,9 @@ class MiotAdapter:
 
         if 'ambient_light' in ret and 'ambient_light_custom' in ret:
             ret['ambient_light'] = {**ret['ambient_light'], **ret.pop('ambient_light_custom')}
+
+        if 'screen' in ret and 'indicator_light' not in ret:
+            ret['indicator_light'] = ret.pop('screen')
 
         if 'humidifier' in ret and 'environment' in ret:
             # deerma.humidifier.mjjsq target_humidity misplaced

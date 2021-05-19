@@ -135,7 +135,8 @@ MAP = {
         "ambient_light_custom",
         "plant_light",
         "indicator_light",
-        "night_light"
+        "night_light",
+        "screen",
     },
     "fan": {
         "a_l",
