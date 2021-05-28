@@ -113,6 +113,7 @@ MAP = {
         "pressure_cooker",
         "printer",
         "remain_clean_time",
+        "repellent",
         "router",
         "sleep_info",
         "sleep_monitor",
