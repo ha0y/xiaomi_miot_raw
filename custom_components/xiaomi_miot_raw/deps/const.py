@@ -188,6 +188,7 @@ MAP = {
     "climate": {
         "air_conditioner",
         "heater",
+        "thermostat",
     },
     "lock": {
         "physical_controls_locked",
