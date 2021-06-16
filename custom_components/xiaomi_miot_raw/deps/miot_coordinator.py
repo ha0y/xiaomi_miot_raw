@@ -119,6 +119,8 @@ class MiotEventCoordinator(DataUpdateCoordinator):
             self._item[1]['type'],
             self._cloud.get("server_location"),
         )
+        if result is None:
+            return None
         if result['code'] != 0:
             _LOGGER.error(result)
             return result
