@@ -658,6 +658,10 @@ class GenericMiotDevice(Entity):
                         if 'aiid' in value:
                             continue
                         try:
+                            if key in self._ctrl_params_new:
+                                if f := self._ctrl_params_new[key].get('value_ratio'):
+                                    statedict[key] = round(dict1[value['siid']][value['piid']] * f , 3)
+                                    continue
                             if (('status' in key and 'switch_status' not in key) \
                                 or 'fault' in key) \
                                 and type(dict1[value['siid']][value['piid']]) == int:
