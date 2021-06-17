@@ -167,7 +167,7 @@ class MiCloud:
 
         return None
 
-    async def request_miot_api(self, api, params = None, server: str = None):
+    async def request_miot_api(self, api, data = None, server: str = None):
         server = server or self.svr or 'cn'
         api_base = 'https://api.io.mi.com/app' if server == 'cn' \
             else f"https://{server}.api.io.mi.com/app"
@@ -175,7 +175,7 @@ class MiCloud:
 
         nonce = gen_nonce()
         signed_nonce = gen_signed_nonce(self.auth['ssecurity'], nonce)
-        signature = gen_signature(api, signed_nonce, nonce, params)
+        signature = gen_signature(api, signed_nonce, nonce, data)
         headers = {
             'content-type': "application/x-www-form-urlencoded",
             'x-xiaomi-protocal-flag-cli': "PROTOCAL-HTTP2",
@@ -193,7 +193,7 @@ class MiCloud:
             }, data={
                 'signature': signature,
                 '_nonce': nonce,
-                'data': params
+                'data': data
             }, timeout=5)
 
             self._fail_count = 0
@@ -219,13 +219,40 @@ class MiCloud:
         except:
             _LOGGER.exception(f"Can't request MIoT api")
 
-    async def get_props(self, params: str = "", server: str = None):
-        return await self.request_miot_api('/miotspec/prop/get', params, server)
+    async def request_rpc(self, did, method, params: str = "", server: str = None):
+        data = json.dumps({
+            "id": 1,
+            "method": method,
+            "params": params,
+        }, separators=(',', ':'))
+        return await self.request_miot_api(f'/home/rpc/{did}', data, server)
 
-    async def set_props(self, params: str = "", server: str = None):
-        return await self.request_miot_api('/miotspec/prop/set', params, server)
+    async def get_props(self, params: str = "", server: str = None, *, use_rpc = False):
+        if not use_rpc:
+            return await self.request_miot_api('/miotspec/prop/get', params, server)
+        else:
+            p = json.loads(params).get('params')
+            if p:
+                _LOGGER.warn(p)
+                if 'did' in p[0]:
+                    did = p[0]['did']
+                    return await self.request_rpc(did, "get_properties", p, server)
+            _LOGGER.error("Need did!")
+            return None
 
-    async def call_action(self, params: str = "", server: str = None):
+    async def set_props(self, params: str = "", server: str = None, *, use_rpc = False):
+        if not use_rpc:
+            return await self.request_miot_api('/miotspec/prop/set', params, server)
+        else:
+            p = json.loads(params).get('params')
+            if p:
+                if 'did' in p[0]:
+                    did = p[0]['did']
+                    return await self.request_rpc(did, "set_properties", p, server)
+            _LOGGER.error("Need did!")
+            return None
+
+    async def call_action(self, params: str = "", server: str = None, *, use_rpc = False):
         return await self.request_miot_api('/miotspec/action', params, server)
 
     async def get_user_device_data(self, did: str, key, type_, server: str = None, *, limit=5):

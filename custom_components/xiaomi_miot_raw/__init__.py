@@ -633,6 +633,9 @@ class GenericMiotDevice(Entity):
                 dict1 = {}
                 statedict = {}
                 if a:
+                    if a['code'] != 0:
+                        _LOGGER.error(f"Error updating {self._name} from cloud: {a}")
+                        return None
                     if all(item['code'] == -704042011 for item in a['result']):
                         if self._available == True or self._available == None:
                             if OFFLINE_NOTIFY:
