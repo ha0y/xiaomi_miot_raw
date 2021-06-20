@@ -49,6 +49,11 @@ SPECIAL_DEVICES={
         "mapping": {"switch": {"switch_status": {"siid": 3, "piid": 22}}},
         "params": {"switch": {"switch_status": {"power_on": 2, "power_off": 0}, "main": True}}
     },
+    "zimi.plug.zncz01": {
+        "device_type": ['switch', 'light', 'sensor'],
+        "mapping": {"switch": {"switch_status": {"siid": 2, "piid": 1}, "working_time": {"siid": 2, "piid": 2}}, "power_consumption": {"electric_power": {"siid": 3, "piid": 1}, "power_consumption": {"siid": 3, "piid": 2}}, "indicator_light": {"switch_status": {"siid": 4, "piid": 1}}},
+        "params": {"switch": {"switch_status": {"power_on": True, "power_off": False}, "working_time": {"access": 5, "format": "uint32", "unit": "minutes", "value_range": [0, 30, 1]}, "main": True}, "power_consumption": {"electric_power":{"value_ratio": 0.01, "unit": "W"}}, "indicator_light": {"switch_status": {"power_on": True, "power_off": False}}}
+    },
 }
 
 
