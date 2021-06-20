@@ -166,7 +166,10 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
         parameters = [{**{'did': self._did_prefix + "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping[self._did_prefix + 'switch_status'])}]
 
         if speed:
-            parameters.append({**{'did': self._did_prefix + "speed", 'value': self._ctrl_params['speed'][speed]}, **(self._mapping[self._did_prefix + 'speed'])})
+            if 'speed' in self._ctrl_params:
+                parameters.append({**{'did': self._did_prefix + "speed", 'value': self._ctrl_params['speed'][speed]}, **(self._mapping[self._did_prefix + 'speed'])})
+            elif 'mode' in self._ctrl_params:
+                parameters.append({**{'did': self._did_prefix + "mode", 'value': self._ctrl_params['mode'][speed]}, **(self._mapping[self._did_prefix + 'mode'])})
 
         result = await self.set_property_new(multiparams = parameters)
         if result:
