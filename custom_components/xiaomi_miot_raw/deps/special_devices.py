@@ -54,6 +54,16 @@ SPECIAL_DEVICES={
         "mapping": {"switch": {"switch_status": {"siid": 2, "piid": 1}, "working_time": {"siid": 2, "piid": 2}}, "power_consumption": {"electric_power": {"siid": 3, "piid": 1}, "power_consumption": {"siid": 3, "piid": 2}}, "indicator_light": {"switch_status": {"siid": 4, "piid": 1}}},
         "params": {"switch": {"switch_status": {"power_on": True, "power_off": False}, "working_time": {"access": 5, "format": "uint32", "unit": "minutes", "value_range": [0, 30, 1]}, "main": True}, "power_consumption": {"electric_power":{"value_ratio": 0.01, "unit": "W"}}, "indicator_light": {"switch_status": {"power_on": True, "power_off": False}}}
     },
+    "lumi.acpartner.mcn04": {
+        "device_type": ['climate', 'light', 'sensor'],
+        "mapping": {"air_conditioner": {"switch_status": {"siid": 3, "piid": 1}, "mode": {"siid": 3, "piid": 2}, "fault": {"siid": 3, "piid": 3}, "target_temperature": {"siid": 3, "piid": 4}, "speed": {"siid": 4, "piid": 2}, "vertical_swing": {"siid": 4, "piid": 4}}, "power_consumption": {"power_consumption": {"siid": 7, "piid": 1}, "electric_power": {"siid": 7, "piid": 2}}, "power_10A_consumption": {"power_consumption": {"siid": 7, "piid": 3}, "electric_power": {"siid": 7, "piid": 4}}, "indicator_light": {"indicator_light": {"siid": 9, "piid": 1}, "effective_time": {"siid": 9, "piid": 2}}},
+        "params": {"air_conditioner": {"switch_status": {"power_on": True, "power_off": False}, "fault": {"No Faults": 0}, "mode": {"Cool": 0, "Heat": 1, "Auto": 2, "Fan": 3, "Dry": 4}, "target_temperature": {"value_range": [16, 30, 1]}, "speed": {"Auto": 0, "Low": 1, "Medium": 2, "High": 3}, "main": True}, "power_consumption": {"electric_power":{"unit": "W"}}, "power_10A_consumption": {"electric_power":{"unit": "W"}},"indicator_light": {"enabled": False, "effective_time": {"access": 7, "format": "uint32", "unit": None, "value_range": [1, 991378198, 1]}}}
+    },
+    "lumi.airrtc.tcpecn01": {
+        "device_type": ['climate', 'switch'],
+        "mapping": {"air_conditioner": {"switch_status": {"siid": 2, "piid": 1}, "mode": {"siid": 2, "piid": 2}, "target_temperature": {"siid": 2, "piid": 3}, "speed": {"siid": 3, "piid": 1}}, "switch": {"switch_status": {"siid": 2, "piid": 1}}},
+        "params": {"air_conditioner": {"switch_status": {"power_on": True, "power_off": False}, "mode": {"Cool": 1, "Heat": 2}, "target_temperature": {"value_range": [17, 30, 1]}, "main": True, "speed": {"Auto": 0, "Low": 1, "Medium": 2, "High": 3}}, "switch": {"switch_status": {"power_on": True, "power_off": False}}}
+    },
 }
 
 

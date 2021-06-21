@@ -110,6 +110,7 @@ MAP = {
         "oven",
         "plant_monitor",
         "power_consumption",
+        "power_10A_consumption",
         "pressure_cooker",
         "printer",
         "remain_clean_time",
@@ -187,6 +188,7 @@ MAP = {
     },
     "climate": {
         "air_conditioner",
+        "air_condition_outlet",
         "heater",
         "thermostat",
     },

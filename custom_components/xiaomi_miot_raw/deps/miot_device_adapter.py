@@ -443,9 +443,10 @@ class MiotAdapter:
             ret['a_l'] = action_dict
             self.devtypeset.add('fan')
 
-        if self.mitype == 'air_conditioner' or self.mitype == 'hood':
+        if 'fan_control' in ret:
             try:
-                ret[self.mitype] = {**ret[self.mitype], **ret.pop('fan_control')}
+                to_merge = next(t for t in ('air_conditioner', 'air_condition_outlet', 'hood') if t in ret)
+                ret[to_merge] = {**ret[to_merge], **ret.pop('fan_control')}
             except Exception as ex:
                 pass
 
@@ -500,9 +501,11 @@ class MiotAdapter:
                         if nid == self.mitype and not has_main:
                             ret[nid]['main'] = True
                             has_main = True
-        if self.mitype == 'air_conditioner' or self.mitype == 'hood':
+
+        if 'fan_control' in ret:
             try:
-                ret[self.mitype] = {**ret[self.mitype], **ret.pop('fan_control')}
+                to_merge = next(t for t in ('air_conditioner', 'air_condition_outlet', 'hood') if t in ret)
+                ret[to_merge] = {**ret[to_merge], **ret.pop('fan_control')}
             except Exception as ex:
                 pass
 

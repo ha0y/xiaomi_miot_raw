@@ -306,8 +306,8 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
                     if item in self._ctrl_params['mode']:
                         modevalue = self._ctrl_params['mode'].get(item)
                         break
-                if not modevalue:
-                    _LOGGER.error(f"Failed to set {self._name} to mode {hvac_mode} because cannot find it in params.")
+                if modevalue is None:
+                    raise NotImplementedError(f"Failed to set {self._name} to mode {hvac_mode} because cannot find it in params.")
                     return False
 
                 parameters.append({
