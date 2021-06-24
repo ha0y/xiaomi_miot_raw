@@ -18,6 +18,7 @@ from .deps.xiaomi_cloud_new import MiCloud
 
 from datetime import timedelta
 from . import GenericMiotDevice, MiotSubDevice, dev_info
+from .binary_sensor import MiotSubBinarySensor
 from .deps.const import (
     DOMAIN,
     CONF_UPDATE_INSTANT,
@@ -97,14 +98,14 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
             di['fw_version'],
             ""
         )
-        devices = [MiotEventBasedSensor(None, config, device_info, hass, item) for item in mapping.items()]
+        sensor_devices = [MiotEventBasedSensor(None, config, device_info, hass, item) for item in mapping.items()]
 
         # device = MiotEventBasedSensor(None, config, device_info, hass, params['eb_type'])
         # devices = [device]
         # _LOGGER.info(f"{params['eb_type']} is the main device of {host}.")
         # hass.data[DOMAIN]['miot_main_entity'][f'{host}-{config.get(CONF_NAME)}'] = device
         # hass.data[DOMAIN]['entities'][device.unique_id] = device
-        async_add_devices(devices, update_before_add=True)
+        async_add_devices(sensor_devices, update_before_add=True)
         return True
 
     mappingnew = {}
@@ -168,7 +169,8 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
                         ""
                     )
         device = MiotSensor(miio_device, config, device_info, hass, main_mi_type)
-        devices = [device]
+        sensor_devices = [device]
+        binary_devices = []
         _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
         hass.data[DOMAIN]['miot_main_entity'][f'{host}-{config.get(CONF_NAME)}'] = device
         hass.data[DOMAIN]['entities'][device.unique_id] = device
@@ -180,12 +182,32 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
                         format_ = paramsnew[k].get('format')
                     else:
                         unit = format_ = None
+                    if format_ != 'bool':
+                        sensor_devices.append(MiotSubSensor(
+                            device, mappingnew, paramsnew, main_mi_type,
+                            {'sensor_property': k, CONF_SENSOR_UNIT: unit}
+                        ))
+                    else:
+                        binary_devices.append(MiotSubBinarySensor(
+                            device, mappingnew, paramsnew, main_mi_type,
+                            {'sensor_property': k}
+                        ))
+        async_add_devices(sensor_devices, update_before_add=True)
+        if binary_devices:
+            retry_time = 1
+            while True:
+                if 'binary_sensor' in hass.data[DOMAIN]['add_handler']:
+                    break
+                else:
+                    retry_time *= 2
+                    if retry_time > 120:
+                        _LOGGER.error(f"Cannot create binary sensor for {config.get(CONF_NAME)}({host}) !")
+                        raise PlatformNotReady
+                    else:
+                        _LOGGER.debug(f"Waiting for binary sensor of {config.get(CONF_NAME)}({host}) ({retry_time - 1} seconds).")
+                        await asyncio.sleep(retry_time)
 
-                    devices.append(MiotSubSensor(
-                        device, mappingnew, paramsnew, main_mi_type,
-                        {'sensor_property': k, CONF_SENSOR_UNIT: unit}
-                    ))
-        async_add_devices(devices, update_before_add=True)
+            hass.data[DOMAIN]['add_handler']['binary_sensor'](binary_devices, update_before_add=True)
 
     if other_mi_type:
         retry_time = 1
@@ -209,12 +231,12 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
             if k in MAP[TYPE]:
                 for kk,vv in v.items():
                     paramsnew[f"{k[:10]}_{kk}"] = vv
-        devices = []
+        sensor_devices = []
         for k in mappingnew.keys():
-            devices.append(MiotSubSensor(parent_device, mappingnew, paramsnew, other_mi_type[0],{'sensor_property': k}))
+            sensor_devices.append(MiotSubSensor(parent_device, mappingnew, paramsnew, other_mi_type[0],{'sensor_property': k}))
 
         # device = MiotSubSensor(parent_device, "switch_switch_status")
-        async_add_devices(devices, update_before_add=True)
+        async_add_devices(sensor_devices, update_before_add=True)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):

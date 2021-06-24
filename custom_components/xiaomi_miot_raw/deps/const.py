@@ -29,6 +29,7 @@ SUPPORTED_DOMAINS = [
     "lock",
     "water_heater",
     "vacuum",
+    "binary_sensor",
 ]
 DEFAULT_NAME = "Xiaomi MIoT Device"
 
@@ -204,6 +205,7 @@ MAP = {
     "vacuum": {
         "vacuum",
     },
+    "binary_sensor": {},
 }
 
 UNIT_MAPPING = {
