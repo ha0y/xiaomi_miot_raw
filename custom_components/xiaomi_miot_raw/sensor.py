@@ -182,7 +182,7 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
                         format_ = paramsnew[k].get('format')
                     else:
                         unit = format_ = None
-                    if unit != 'bool':
+                    if format_ != 'bool':
                         sensor_devices.append(MiotSubSensor(
                             device, mappingnew, paramsnew, main_mi_type,
                             {'sensor_property': k, CONF_SENSOR_UNIT: unit}
@@ -194,6 +194,19 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
                         ))
         async_add_devices(sensor_devices, update_before_add=True)
         if binary_devices:
+            retry_time = 1
+            while True:
+                if 'binary_sensor' in hass.data[DOMAIN]['add_handler']:
+                    break
+                else:
+                    retry_time *= 2
+                    if retry_time > 120:
+                        _LOGGER.error(f"Cannot create binary sensor for {config.get(CONF_NAME)}({host}) !")
+                        raise PlatformNotReady
+                    else:
+                        _LOGGER.debug(f"Waiting for binary sensor of {config.get(CONF_NAME)}({host}) ({retry_time - 1} seconds).")
+                        await asyncio.sleep(retry_time)
+
             hass.data[DOMAIN]['add_handler']['binary_sensor'](binary_devices, update_before_add=True)
 
     if other_mi_type:

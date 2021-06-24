@@ -45,6 +45,12 @@ SCAN_INTERVAL = timedelta(seconds=10)
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     SCHEMA
 )
+DEVCLASS_MAPPING = {
+    "door"     : ["contact_state"],
+    "moisture" : ["submersion_state"],
+    "motion"   : ["motion_state"],
+}
+
 # pylint: disable=unused-argument
 @asyncio.coroutine
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
@@ -55,7 +61,7 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         async_add_devices,
         discovery_info,
         TYPE,
-        {'default': MiotBinarySensor},
+        {'default': None},
         {'default': MiotSubBinarySensor}
     )
 
@@ -74,15 +80,21 @@ class MiotSubBinarySensor(MiotSubDevice, BinarySensorEntity):
     @property
     def state(self):
         """Return the state of the device."""
+        if self.is_on == True:
+            return STATE_ON
+        elif self.is_on == False:
+            return STATE_OFF
+        else:
+            return STATE_UNKNOWN
+
+    @property
+    def is_on(self):
+        """Return true if the binary sensor is on."""
         try:
             return self._parent_device.device_state_attributes[self._sensor_property]
         except:
             return None
 
-    @property
-    def is_on(self):
-        """Return true if the binary sensor is on."""
-        return self._state
 
     @property
     def device_info(self):
@@ -90,13 +102,13 @@ class MiotSubBinarySensor(MiotSubDevice, BinarySensorEntity):
             'identifiers': {(DOMAIN, self._parent_device.unique_id)},
         }
 
-    # @property
-    # def device_class(self):
-    #     """Return the device class of the sensor."""
-    #     try:
-    #         return next(k for k,v in DEVCLASS_MAPPING.items() for item in v if item in self._sensor_property)
-    #     except StopIteration:
-    #         return None
+    @property
+    def device_class(self):
+        """Return the device class of the sensor."""
+        try:
+            return next(k for k,v in DEVCLASS_MAPPING.items() for item in v if item in self._sensor_property)
+        except StopIteration:
+            return None
 
     @property
     def unique_id(self):
