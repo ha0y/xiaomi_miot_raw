@@ -1,10 +1,8 @@
 import asyncio
-import json
 import logging
 from functools import partial
 
 from datetime import timedelta
-from collections import OrderedDict
 import json
 from collections import OrderedDict
 import homeassistant.helpers.config_validation as cv
