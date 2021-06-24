@@ -56,7 +56,7 @@ ACCESS_READ = 0b001
 ACCESS_WRITE = 0b010
 ACCESS_NOTIFY = 0b100
 
-CUSTOM_SERVICES = {'custom_service', 'private_service'}
+CUSTOM_SERVICES = {'custom_service', 'private_service', 'dm_service'}
 SUPPORTED = {vv for v in MAP.values() for vv in v}.union(CUSTOM_SERVICES)
 
 def get_type_by_mitype(mitype:str):
@@ -254,6 +254,12 @@ class MiotAdapter:
                     ret['speed'] = lst
 
             if p := propdict2.pop('speed_level', None): # dmaker stepless speed
+                if vr := p.vrange:
+                    ret['stepless_speed'] = {
+                        'value_range': vr
+                    }
+
+            if p := propdict2.pop('stepless_fan_level', None): # zhimi stepless speed
                 if vr := p.vrange:
                     ret['stepless_speed'] = {
                         'value_range': vr
@@ -464,10 +470,11 @@ class MiotAdapter:
             if 'target_humidity' in ret['environment']:
                 ret['humidifier']['target_humidity'] = (ret['environment'].pop('target_humidity'))
 
-        if 'fan' in ret and 'custom_service' in ret:
-            # zhimi fan stepless speed
-            if 'stepless_speed' in ret['custom_service']:
+        if 'fan' in ret:
+            if 'stepless_speed' in ret.get('custom_service', {}):
                 ret['fan']['stepless_speed'] = (ret['custom_service'].pop('stepless_speed'))
+            if 'stepless_speed' in ret.get('dm_service', {}):
+                ret['fan']['stepless_speed'] = (ret['dm_service'].pop('stepless_speed'))
 
         # 把某个 service 里的 property 单独提出来
         # 例如：晾衣架的烘干，新风机的辅热
@@ -523,10 +530,11 @@ class MiotAdapter:
             if 'target_humidity' in ret['environment']:
                 ret['humidifier']['target_humidity'] = (ret['environment'].pop('target_humidity'))
 
-        if 'fan' in ret and 'custom_service' in ret:
-            # zhimi fan stepless speed
-            if 'stepless_speed' in ret['custom_service']:
+        if 'fan' in ret:
+            if 'stepless_speed' in ret.get('custom_service', {}):
                 ret['fan']['stepless_speed'] = (ret['custom_service'].pop('stepless_speed'))
+            if 'stepless_speed' in ret.get('dm_service', {}):
+                ret['fan']['stepless_speed'] = (ret['dm_service'].pop('stepless_speed'))
 
         # 把某个 service 里的 property 单独提出来
         # 例如：晾衣架的烘干，新风机的辅热

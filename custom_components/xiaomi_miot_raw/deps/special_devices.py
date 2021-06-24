@@ -64,11 +64,16 @@ SPECIAL_DEVICES={
         "mapping": {"air_conditioner": {"switch_status": {"siid": 2, "piid": 1}, "mode": {"siid": 2, "piid": 2}, "target_temperature": {"siid": 2, "piid": 3}, "speed": {"siid": 3, "piid": 1}}, "switch": {"switch_status": {"siid": 2, "piid": 1}}},
         "params": {"air_conditioner": {"switch_status": {"power_on": True, "power_off": False}, "mode": {"Cool": 1, "Heat": 2}, "target_temperature": {"value_range": [17, 30, 1]}, "main": True, "speed": {"Auto": 0, "Low": 1, "Medium": 2, "High": 3}}, "switch": {"switch_status": {"power_on": True, "power_off": False}}}
     },
+    "dmaker.fan.1e": {
+        "device_type": ['fan'],
+        "mapping": {"fan": {"switch_status": {"siid": 2, "piid": 1}, "speed": {"siid": 2, "piid": 2}, "mode": {"siid": 2, "piid": 3}, "oscillate": {"siid": 2, "piid": 4}, "horizontal_angle": {"siid": 2, "piid": 5}, "stepless_speed": {"siid": 8, "piid": 1}, "motor_control": {"siid": 6, "piid": 1}}, "indicator_light": {"switch_status": {"siid": 4, "piid": 1}}, "physical_controls_locked": {"physical_controls_locked": {"siid": 7, "piid": 1}}, "a_l": {"off_delay_time_toggle": {"siid": 3, "aiid": 1}, "dm_service_toggle_mode": {"siid": 8, "aiid": 1}, "dm_service_loop_gear": {"siid": 8, "aiid": 2}}},
+        "params": {"fan": {"switch_status": {"power_on": True, "power_off": False}, "speed": {"Level1": 1, "Level2": 2, "Level3": 3, "Level4": 4}, "mode": {"Straight Wind": 0, "Natural Wind": 1}, "oscillate": {"True": True, "False": False}, "horizontal_angle": {"access": 7, "format": "uint16", "unit": None, "value_list": {"30": 30, "60": 60, "90": 90, "120": 120, "140": 140}}, "main": True, "stepless_speed": {"value_range": [1, 100, 1]}, "motor_control": {"left": 1, "right": 2}}, "indicator_light": {"switch_status": {"power_on": True, "power_off": False}}, "physical_controls_locked": {"enabled": False}}
+    },
 }
 
 
 LOCK_PRM = {
     "device_type": ['sensor'],
     "mapping":'{"door":{"key":7,"type":"event"},"lock":{"key":11,"type":"event"}}',
-    "params":'{"event_based":true}'
+    "params":'{"event_based":True}'
 }

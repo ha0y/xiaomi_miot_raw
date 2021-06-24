@@ -19,6 +19,7 @@ from homeassistant.components.fan import (
     SPEED_OFF,
     SUPPORT_OSCILLATE,
     SUPPORT_SET_SPEED,
+    SUPPORT_DIRECTION,
     FanEntity)
 from homeassistant.const import *
 from homeassistant.exceptions import PlatformNotReady
@@ -92,6 +93,8 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
         s = 0
         if self._did_prefix + 'oscillate' in self._mapping:
             s |= SUPPORT_OSCILLATE
+            if self._did_prefix + 'motor_control' in self._mapping:
+                s |= SUPPORT_DIRECTION
         if self._did_prefix + 'speed' in self._mapping:
             s |= (SUPPORT_SET_SPEED if not NEW_FAN else SUPPORT_SET_SPEED)
         if self._did_prefix + 'mode' in self._mapping:
@@ -194,6 +197,23 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
             self._state = True
             self._mode = preset_mode
             self._skip_update = True
+
+    @property
+    def current_direction(self) -> str:
+        """Fan direction."""
+        return None
+
+    async def async_set_direction(self, direction: str) -> None:
+        """Set the direction of the fan."""
+        if direction == 'forward':
+            d = 'left'
+        elif direction == 'reverse':
+            d = 'right'
+        else:
+            d = direction
+        if d not in self._ctrl_params['motor_control']:
+            raise TypeError(f"Your fan does not support {direction}.")
+        await self.set_property_new(self._did_prefix + "motor_control", self._ctrl_params['motor_control'][d])
 
     # async def async_set_percentage(self, percentage: int) -> None:
     #     """Set the speed percentage of the fan."""
