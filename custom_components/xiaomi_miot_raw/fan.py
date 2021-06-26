@@ -334,7 +334,7 @@ class MiotActionList(MiotSubDevice, FanEntity):
     def __init__(self, parent_device, mapping, params, mitype):
         """params is not needed. We keep it here to make the ctor same."""
         super().__init__(parent_device, mapping, {}, mitype)
-        self._name = f'{parent_device.name} 动作列表'
+        self._name_suffix = '动作列表'
         self._action_list = []
         for k, v in mapping.items():
             if 'aiid' in v:

@@ -898,7 +898,10 @@ class MiotSubDevice(Entity):
         self._unique_id = f'{parent_device.unique_id}-{mitype}'
         self._entity_id = f"{parent_device._entity_id}-{mitype}"
         self.entity_id = f"{DOMAIN}.{self._entity_id}"
-        self._name = f'{parent_device.name} {mitype.replace("_", " ").title()}'
+        self._name_suffix = mitype.replace("_", " ").title()
+        if mitype in params:
+            if params[mitype].get('name'):
+                self._name_suffix = params[mitype]['name']
         self._state = STATE_UNKNOWN
         self._icon = None
         self._available = True
@@ -919,7 +922,7 @@ class MiotSubDevice(Entity):
 
     @property
     def name(self):
-        return self._name
+        return f'{self._parent_device.name} {self._name_suffix}'
 
     @property
     def state(self):

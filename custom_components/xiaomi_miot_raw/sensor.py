@@ -279,6 +279,10 @@ class MiotSubSensor(MiotSubDevice):
     def __init__(self, parent_device, mapping, params, mitype, others={}):
         super().__init__(parent_device, mapping, params, mitype)
         self._sensor_property = others.get('sensor_property')
+        self._name_suffix = self._sensor_property.replace('_', ' ').capitalize()
+        if self._sensor_property in params:
+            if params[self._sensor_property].get('name'):
+                self._name_suffix = params[self._sensor_property]['name']
         self.entity_id = f"{DOMAIN}.{parent_device._entity_id}-{others.get('sensor_property').split('_')[-1]}"
         try:
             if u := others.get(CONF_SENSOR_UNIT):
@@ -323,11 +327,6 @@ class MiotSubSensor(MiotSubDevice):
     def unique_id(self):
         """Return an unique ID."""
         return f"{self._parent_device.unique_id}-{self._sensor_property}"
-
-    @property
-    def name(self):
-        """Return the name of this entity, if any."""
-        return f"{self._parent_device.name} {self._sensor_property.replace('_', ' ').capitalize()}"
 
 class MiotEventBasedSensor(Entity):
     def __init__(self, device, config, device_info, hass = None, event_item = None):
