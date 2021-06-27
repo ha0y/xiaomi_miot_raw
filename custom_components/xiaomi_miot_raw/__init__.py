@@ -904,7 +904,6 @@ class MiotSubDevice(Entity):
                 self._name_suffix = params[mitype]['name']
         self._state = STATE_UNKNOWN
         self._icon = None
-        self._available = True
         self._parent_device = parent_device
         self._state_attrs = {}
         self._mapping = mapping
@@ -935,7 +934,7 @@ class MiotSubDevice(Entity):
 
     @property
     def available(self):
-        return self._available
+        return self._parent_device.available
 
     @property
     def device_state_attributes(self):
