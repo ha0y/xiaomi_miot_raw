@@ -564,6 +564,21 @@ class GenericMiotDevice(Entity):
 
     async def async_update(self):
         """Fetch state from the device."""
+        def pre_process_data(key, value):
+            try:
+                if key in self._ctrl_params_new:
+                    if f := self._ctrl_params_new[key].get('value_ratio'):
+                        return round(value * f , 3)
+                if (('status' in key and 'switch_status' not in key) \
+                    or 'fault' in key) \
+                    and type(value) == int:
+                    if key in self._ctrl_params_new:
+                        if s := self.get_key_by_value(self._ctrl_params_new[key], value):
+                            return s
+                return value
+            except KeyError:
+                return None
+
         # On state change some devices doesn't provide the new state immediately.
         if self._update_instant is False or self._skip_update:
             self._skip_update = False
@@ -585,18 +600,7 @@ class GenericMiotDevice(Entity):
                     if 'a_l_' in r['did']:
                         continue
                     if r['code'] == 0:
-                        try:
-                            f = self._ctrl_params_new[r['did']]['value_ratio']
-                            statedict[r['did']] = round(r['value'] * f , 3)
-                        except (KeyError, TypeError, IndexError):
-                            if (('status' in r['did'] and 'switch_status' not in r['did']) \
-                                or 'fault' in r['did']) \
-                                and type(r['value']) == int:
-                                if r['did'] in self._ctrl_params_new:
-                                    if s := self.get_key_by_value(self._ctrl_params_new[r['did']], r['value']):
-                                        statedict[r['did']] = s
-                                        continue
-                            statedict[r['did']] = r['value']
+                        statedict[r['did']] = pre_process_data(r['did'], r['value'])
                     elif r['code'] == 9999:
                         persistent_notification.async_create(
                             self._hass,
@@ -657,21 +661,7 @@ class GenericMiotDevice(Entity):
                     for key, value in self._mapping.items():
                         if 'aiid' in value:
                             continue
-                        try:
-                            if key in self._ctrl_params_new:
-                                if f := self._ctrl_params_new[key].get('value_ratio'):
-                                    statedict[key] = round(dict1[value['siid']][value['piid']] * f , 3)
-                                    continue
-                            if (('status' in key and 'switch_status' not in key) \
-                                or 'fault' in key) \
-                                and type(dict1[value['siid']][value['piid']]) == int:
-                                if key in self._ctrl_params_new:
-                                    if s := self.get_key_by_value(self._ctrl_params_new[key], dict1[value['siid']][value['piid']]):
-                                        statedict[key] = s
-                                        continue
-                            statedict[key] = dict1[value['siid']][value['piid']]
-                        except KeyError:
-                            statedict[key] = None
+                        statedict[key] = pre_process_data(key, dict1[value['siid']][value['piid']])
 
                 else:
                     pass
