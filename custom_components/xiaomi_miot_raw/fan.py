@@ -165,10 +165,13 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
             self._skip_update = True
 
     async def async_turn_on(self, speed: str = None, **kwargs) -> None:
-        """Turn on the entity."""
+        """旧版HA前端调风速是这个"""
         parameters = [{**{'did': self._did_prefix + "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping[self._did_prefix + 'switch_status'])}]
 
-        if speed:
+        if 'from_stepless_speed' in kwargs:
+            parameters.append({**{'did': self._did_prefix + "stepless_speed", 'value': speed}, **(self._mapping[self._did_prefix + 'stepless_speed'])})
+
+        elif speed:
             if 'speed' in self._ctrl_params:
                 parameters.append({**{'did': self._did_prefix + "speed", 'value': self._ctrl_params['speed'][speed]}, **(self._mapping[self._did_prefix + 'speed'])})
             elif 'mode' in self._ctrl_params:
@@ -182,13 +185,11 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
             self._skip_update = True
 
     async def async_set_speed(self, speed: str) -> None:
-        if 'stepless_speed' not in self._ctrl_params:
-            result = await self.set_property_new(self._did_prefix + "speed", self._ctrl_params['speed'][speed])
+        """HomeKit调风速是这个，旧版speed形如“Level1”，新版是百分比"""
+        if 'stepless_speed' not in self._ctrl_params or not NEW_FAN:
+            await self.async_turn_on(speed)
         else:
-            result = await self.set_property_new(self._did_prefix + "stepless_speed", speed)
-        if result:
-            self._speed = speed
-            self._skip_update = True
+            await self.async_turn_on(speed, from_stepless_speed = True)
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
@@ -222,7 +223,8 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
     def _handle_platform_specific_attrs(self):
         super()._handle_platform_specific_attrs()
         try:
-            self._speed = self.get_key_by_value(self._ctrl_params['speed'],self._state_attrs.get(self._did_prefix + 'speed')) if 'stepless_speed' not in self._ctrl_params \
+            self._speed = self.get_key_by_value(self._ctrl_params['speed'],self._state_attrs.get(self._did_prefix + 'speed')) \
+                if 'stepless_speed' not in self._ctrl_params or not NEW_FAN \
                 else self._state_attrs.get(self._did_prefix + 'stepless_speed')
         except KeyError:
             self._speed = None
