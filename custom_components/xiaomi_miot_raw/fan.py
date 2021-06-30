@@ -65,7 +65,10 @@ SUPPORT_PRESET_MODE = 8
 # pylint: disable=unused-argument
 @asyncio.coroutine
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
-    hass.data[DOMAIN]['add_handler'].setdefault(TYPE, async_add_devices)
+    hass.data[DOMAIN]['add_handler'].setdefault(TYPE, {})
+    if 'config_entry' in config:
+        id = f"{config.get(CONF_HOST)}-{config.get(CONF_NAME)}"
+        hass.data[DOMAIN]['add_handler'][TYPE].setdefault(id, async_add_devices)
     await async_generic_setup_platform(
         hass,
         config,
@@ -520,7 +523,7 @@ class MiotWasher(ToggleableMiotDevice, FanEntity):
                             value_list=v['value_list'],
                         ))
         if ett_to_add:
-            self._hass.data[DOMAIN]['add_handler']['fan'](ett_to_add, update_before_add=True)
+            self._hass.data[DOMAIN]['add_handler']['fan'][f"{host}-{config.get(CONF_NAME)}"](ett_to_add, update_before_add=True)
 
 class SelectorEntity(MiotSubDevice, FanEntity):
     def __init__(self, parent_device, **kwargs):

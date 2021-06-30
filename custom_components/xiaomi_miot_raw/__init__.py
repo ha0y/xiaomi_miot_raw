@@ -139,7 +139,10 @@ async def async_setup_entry(hass, entry):
     if type(entry.data.get('devtype')) == str:
         hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, entry.data.get('devtype')))
     else:
-        for t in entry.data.get('devtype'):
+        devtype_new = entry.data.get('devtype')
+        if 'sensor' in devtype_new and 'binary_sensor' not in devtype_new:
+            devtype_new += ['binary_sensor']
+        for t in devtype_new:
             hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, t))
 
     return True

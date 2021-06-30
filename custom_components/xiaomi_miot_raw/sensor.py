@@ -82,7 +82,10 @@ DEVCLASS_MAPPING = {
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     """Set up the sensor from config."""
     hass.data.setdefault(DATA_KEY, {})
-    hass.data[DOMAIN]['add_handler'].setdefault(TYPE, async_add_devices)
+    hass.data[DOMAIN]['add_handler'].setdefault(TYPE, {})
+    if 'config_entry' in config:
+        id = f"{config.get(CONF_HOST)}-{config.get(CONF_NAME)}"
+        hass.data[DOMAIN]['add_handler'][TYPE].setdefault(id, async_add_devices)
 
     host = config.get(CONF_HOST)
     token = config.get(CONF_TOKEN)
@@ -196,17 +199,17 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
             retry_time = 1
             while True:
                 if 'binary_sensor' in hass.data[DOMAIN]['add_handler']:
-                    break
+                    if f"{host}-{config.get(CONF_NAME)}" in hass.data[DOMAIN]['add_handler']['binary_sensor']:
+                        break
+                retry_time *= 2
+                if retry_time > 120:
+                    _LOGGER.error(f"Cannot create binary sensor for {config.get(CONF_NAME)}({host}) !")
+                    raise PlatformNotReady
                 else:
-                    retry_time *= 2
-                    if retry_time > 120:
-                        _LOGGER.error(f"Cannot create binary sensor for {config.get(CONF_NAME)}({host}) !")
-                        raise PlatformNotReady
-                    else:
-                        _LOGGER.debug(f"Waiting for binary sensor of {config.get(CONF_NAME)}({host}) ({retry_time - 1} seconds).")
-                        await asyncio.sleep(retry_time)
+                    _LOGGER.debug(f"Waiting for binary sensor of {config.get(CONF_NAME)}({host}) ({retry_time - 1} seconds).")
+                    await asyncio.sleep(retry_time)
 
-            hass.data[DOMAIN]['add_handler']['binary_sensor'](binary_devices, update_before_add=True)
+            hass.data[DOMAIN]['add_handler']['binary_sensor'][f"{host}-{config.get(CONF_NAME)}"](binary_devices, update_before_add=True)
 
     if other_mi_type:
         retry_time = 1
@@ -540,7 +543,7 @@ class MiotEventBasedSensor(Entity):
                 })
             )
 
-        self._hass.data[DOMAIN]['add_handler']['sensor'](ett_to_add, update_before_add=True)
+        self._hass.data[DOMAIN]['add_handler']['sensor'][f"{host}-{config.get(CONF_NAME)}"](ett_to_add, update_before_add=True)
 
 class MiotEventBasedSubSensor(Entity):
     def __init__(self, parent_sensor, options):
