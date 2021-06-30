@@ -179,6 +179,8 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         hass.data[DOMAIN]['entities'][device.unique_id] = device
         if main_mi_type:
             for k in mappingnew.keys():
+                if 'a_l_' in k:
+                    continue
                 if k in paramsnew:
                     unit = paramsnew[k].get('unit')
                     format_ = paramsnew[k].get('format')
@@ -215,6 +217,8 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         retry_time = 1
         while True:
             if parent_device := hass.data[DOMAIN]['miot_main_entity'].get(f'{host}-{config.get(CONF_NAME)}'):
+                if isinstance(parent_device, MiotSensor):
+                    return
                 break
             else:
                 retry_time *= 2
