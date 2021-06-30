@@ -96,7 +96,6 @@
             },
             "sensor": {
                 "data": {
-                    "show_individual_sensor": "Each attribute as an entity"
                 },
                 "description": "If checked, there will be a sensor entity for each attribule.",
                 "title": "Sensor options"

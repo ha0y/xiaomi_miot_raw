@@ -95,7 +95,6 @@
             },
             "sensor": {
                 "data": {
-                    "show_individual_sensor": "每個屬性皆視為單獨之實體"
                 },
                 "description": "勾選後，每個屬性都會以單獨感測器實體顯示。",
                 "title": "感測器設定"

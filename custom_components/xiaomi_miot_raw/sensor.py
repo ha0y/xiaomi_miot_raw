@@ -175,23 +175,22 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         hass.data[DOMAIN]['miot_main_entity'][f'{host}-{config.get(CONF_NAME)}'] = device
         hass.data[DOMAIN]['entities'][device.unique_id] = device
         if main_mi_type:
-            if params[main_mi_type].get('show_individual_sensor'):
-                for k in mappingnew.keys():
-                    if k in paramsnew:
-                        unit = paramsnew[k].get('unit')
-                        format_ = paramsnew[k].get('format')
-                    else:
-                        unit = format_ = None
-                    if format_ != 'bool':
-                        sensor_devices.append(MiotSubSensor(
-                            device, mappingnew, paramsnew, main_mi_type,
-                            {'sensor_property': k, CONF_SENSOR_UNIT: unit}
-                        ))
-                    else:
-                        binary_devices.append(MiotSubBinarySensor(
-                            device, mappingnew, paramsnew, main_mi_type,
-                            {'sensor_property': k}
-                        ))
+            for k in mappingnew.keys():
+                if k in paramsnew:
+                    unit = paramsnew[k].get('unit')
+                    format_ = paramsnew[k].get('format')
+                else:
+                    unit = format_ = None
+                if format_ != 'bool':
+                    sensor_devices.append(MiotSubSensor(
+                        device, mappingnew, paramsnew, main_mi_type,
+                        {'sensor_property': k, CONF_SENSOR_UNIT: unit}
+                    ))
+                else:
+                    binary_devices.append(MiotSubBinarySensor(
+                        device, mappingnew, paramsnew, main_mi_type,
+                        {'sensor_property': k}
+                    ))
         async_add_devices(sensor_devices, update_before_add=True)
         if binary_devices:
             retry_time = 1

@@ -614,8 +614,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         else:
             if 'indicator_light' in self._prm or 'physical_controls_locked' in self._prm:
                 self._steps.append(self.async_step_light_and_lock())
-            if 'sensor' in self._input2['devtype']:
-                self._steps.append(self.async_step_sensor())
             if 'climate' in self._input2['devtype']:
                 self._steps.append(self.async_step_climate())
             if 'cover' in self._input2['devtype']:
@@ -661,26 +659,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         return self.async_show_form(
             step_id='light_and_lock',
             data_schema=data_schema,
-        )
-
-    async def async_step_sensor(self, user_input=None):
-        if user_input is not None:
-            for device,p in self._prm.items():
-                if device in MAP['sensor']:
-                    p.update(user_input)
-            self._steps.pop(0)
-            return await self._steps[0]
-
-        d = False
-        for device,p in self._prm.items():
-            if device in MAP['sensor'] and p.get('show_individual_sensor'):
-                d = True
-                break
-        return self.async_show_form(
-            step_id='sensor',
-            data_schema=vol.Schema({
-                vol.Optional('show_individual_sensor', default=d): bool,
-            }),
         )
 
     async def async_step_cover(self, user_input=None):

@@ -96,7 +96,6 @@
             },
             "sensor": {
                 "data": {
-                    "show_individual_sensor": "每个属性作为单独的实体"
                 },
                 "description": "勾选后，每个属性都会作为一个传感器实体出现。",
                 "title": "传感器设置"
