@@ -169,8 +169,11 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
 
     async def async_turn_on(self, speed: str = None, **kwargs) -> None:
         """旧版HA前端调风速是这个"""
-        parameters = [{**{'did': self._did_prefix + "switch_status", 'value': self._ctrl_params['switch_status']['power_on']},**(self._mapping[self._did_prefix + 'switch_status'])}]
+        result = True
+        if not self.is_on:
+            result &= await self.set_property_new(self._did_prefix + "switch_status", self._ctrl_params['switch_status']['power_on'])
 
+        parameters = []
         if 'from_stepless_speed' in kwargs:
             parameters.append({**{'did': self._did_prefix + "stepless_speed", 'value': speed}, **(self._mapping[self._did_prefix + 'stepless_speed'])})
 
@@ -180,7 +183,8 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
             elif 'mode' in self._ctrl_params:
                 parameters.append({**{'did': self._did_prefix + "mode", 'value': self._ctrl_params['mode'][speed]}, **(self._mapping[self._did_prefix + 'mode'])})
 
-        result = await self.set_property_new(multiparams = parameters)
+        if parameters:
+            result &= await self.set_property_new(multiparams = parameters)
         if result:
             self._state = True
             if speed is not None:
