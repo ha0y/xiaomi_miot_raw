@@ -65,7 +65,7 @@ BLE_LOCK_ERROR = {
     0xC0DE1005: "锁体传感器故障",
 }
 
-class BleEventParser:
+class EventParser:
     def __init__(self, data):
         self.data = re.sub(r'\[\"(.*)\"\]', r'\1', data)
 
@@ -84,7 +84,7 @@ class BleEventParser:
         return datetime.fromtimestamp(self.timestamp).isoformat(sep=' ')
 
 
-class BleDoorParser(BleEventParser):    #0x0007, 7
+class BleDoorParser(EventParser):    #0x0007, 7
     @property
     def event_id(self):
         return self[0]
@@ -100,7 +100,7 @@ class BleDoorParser(BleEventParser):    #0x0007, 7
         else:
             return int.from_bytes(self[1:5], 'little')
 
-class BleLockParser(BleEventParser):    #0x000b, 11
+class BleLockParser(EventParser):    #0x000b, 11
     @property
     def action_id(self):
         return self[0] & 0x0F
@@ -138,12 +138,19 @@ class BleLockParser(BleEventParser):    #0x000b, 11
     def timestamp(self):
         return int.from_bytes(self[5:9], 'little')
 
-class BleMotionParser(BleEventParser):
+class TimestampParser(EventParser):
     @property
     def timestamp(self):
         return int(self.data.split('[')[1].split(',')[0])
 
+class ZgbIlluminationParser(EventParser):
+    @property
+    def illumination(self):
+        try:
+            return int(self.data.split('[')[3].split(']')[0])
+        except ValueError:
+            return None
 if __name__ == '__main__':
-    a = BleMotionParser(r'''["[1617026674,[\"event.motion\",[]]]"]''')
+    a = TimestampParser(r'''["[1617026674,[\"event.motion\",[]]]"]''')
     # print(a.event_id)
     print(a.timestamp)

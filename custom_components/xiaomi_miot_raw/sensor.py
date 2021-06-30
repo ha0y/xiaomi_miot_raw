@@ -37,10 +37,11 @@ from .deps.const import (
     UNIT_MAPPING,
 )
 from .deps.ble_event_parser import (
-    BleEventParser,
+    EventParser,
     BleDoorParser,
     BleLockParser,
-    BleMotionParser,
+    TimestampParser,
+    ZgbIlluminationParser,
 )
 from collections import OrderedDict
 from .deps.miot_coordinator import MiotEventCoordinator
@@ -367,6 +368,7 @@ class MiotEventBasedSensor(Entity):
         self._name = config.get(CONF_NAME)
 
         self._model = device_info.model
+        self._host = config.get(CONF_HOST)
         self._unique_id = f"{device_info.model.split('.')[-1]}-event-{config.get(CONF_CLOUD)['did'][-6:]}-{self._event_item[0]}"
         self._device_identifier = f"{device_info.model.split('.')[-1]}-event-{config.get(CONF_CLOUD)['did'][-6:]}"
         if config.get('ett_id_migrated'):
@@ -460,7 +462,8 @@ class MiotEventBasedSensor(Entity):
         self._state_attrs = {
             ATTR_MODEL: self._model,
         }
-        self._state_attrs.update(statedict)
+        if statedict:
+            self._state_attrs.update(statedict)
         self.async_write_ha_state()
         self.publish_updates()
 
@@ -485,9 +488,18 @@ class MiotEventBasedSensor(Entity):
                 MiotEventBasedSubSensor(self, {
                     'id': 'last_triggered',
                     'name': '上次触发',
-                    'data_processor': BleMotionParser,
+                    'data_processor': TimestampParser,
                     'property': 'friendly_time',
                     'icon': 'mdi:history',
+                })
+            )
+            ett_to_add.append(
+                MiotEventBasedSubSensor(self, {
+                    'id': 'illumination',
+                    'name': 'Illumination',
+                    'data_processor': ZgbIlluminationParser,
+                    'property': 'illumination',
+                    'icon': 'mdi:white-balance-sunny',
                 })
             )
         elif k == 7:
@@ -547,7 +559,7 @@ class MiotEventBasedSensor(Entity):
                 })
             )
 
-        self._hass.data[DOMAIN]['add_handler']['sensor'][f"{host}-{config.get(CONF_NAME)}"](ett_to_add, update_before_add=True)
+        self._hass.data[DOMAIN]['add_handler']['sensor'][f"{self._host}-{self._name}"](ett_to_add, update_before_add=True)
 
 class MiotEventBasedSubSensor(Entity):
     def __init__(self, parent_sensor, options):

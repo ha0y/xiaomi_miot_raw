@@ -527,7 +527,7 @@ class MiotWasher(ToggleableMiotDevice, FanEntity):
                             value_list=v['value_list'],
                         ))
         if ett_to_add:
-            self._hass.data[DOMAIN]['add_handler']['fan'][f"{host}-{config.get(CONF_NAME)}"](ett_to_add, update_before_add=True)
+            self._hass.data[DOMAIN]['add_handler']['fan'][f"{self._device.ip}-{self.name}"](ett_to_add, update_before_add=True)
 
 class SelectorEntity(MiotSubDevice, FanEntity):
     def __init__(self, parent_device, **kwargs):
