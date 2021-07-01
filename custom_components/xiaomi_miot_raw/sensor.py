@@ -103,7 +103,7 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
             ""
         )
         sensor_devices = [MiotEventBasedSensor(None, config, device_info, hass, item) for item in mapping.items()]
-
+        hass.data[DOMAIN]['miot_main_entity'][f'{host}-{config.get(CONF_NAME)}'] = sensor_devices[0]
         # device = MiotEventBasedSensor(None, config, device_info, hass, params['eb_type'])
         # devices = [device]
         # _LOGGER.info(f"{params['eb_type']} is the main device of {host}.")
