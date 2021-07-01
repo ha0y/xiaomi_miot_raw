@@ -75,5 +75,5 @@ SPECIAL_DEVICES={
 LOCK_PRM = {
     "device_type": ['sensor'],
     "mapping":'{"door":{"key":7,"type":"event"},"lock":{"key":11,"type":"event"}}',
-    "params":'{"event_based":True}'
+    "params":'{"event_based":true}'
 }
