@@ -600,8 +600,6 @@ class GenericMiotDevice(Entity):
                 statedict={}
                 count4004 = 0
                 for r in response:
-                    if 'a_l_' in r['did']:
-                        continue
                     if r['code'] == 0:
                         statedict[r['did']] = pre_process_data(r['did'], r['value'])
                     elif r['code'] == 9999:
