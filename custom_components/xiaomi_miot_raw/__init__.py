@@ -179,7 +179,7 @@ async def _setup_micloud_entry(hass, config_entry):
     data: dict = config_entry.data.copy()
     server_location = data.get('server_location') or 'cn'
 
-    session = aiohttp_client.async_create_clientsession(hass)
+    session = aiohttp_client.async_create_clientsession(hass, auto_cleanup=False)
     cloud = MiCloud(session)
     cloud.svr = server_location
 
@@ -248,7 +248,7 @@ class GenericMiotDevice(Entity):
             except StopIteration:
                 _LOGGER.info(f"Setting up xiaomi account for {self._name}...")
                 mc = MiCloud(
-                    aiohttp_client.async_create_clientsession(self._hass)
+                    aiohttp_client.async_create_clientsession(self._hass, auto_cleanup=False)
                 )
                 mc.login_by_credientals(
                     self._cloud.get('userId'),
@@ -438,6 +438,7 @@ class GenericMiotDevice(Entity):
                     )
                     if result:
                         return True
+                return False
             else:
                 _LOGGER.info(f"Control {self._name} by cloud.")
                 if not multiparams:
