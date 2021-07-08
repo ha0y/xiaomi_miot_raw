@@ -878,12 +878,6 @@ class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
             elif state == self._ctrl_params['switch_status']['power_off']:
                 self._state = False
             elif not self.assumed_state:
-                _LOGGER.warning(
-                    "New state (%s) of %s doesn't match expected values: %s/%s",
-                    state, self._name,
-                    self._ctrl_params['switch_status']['power_on'],
-                    self._ctrl_params['switch_status']['power_off'],
-                )
                 self._state = None
         else:
             self._state = None
