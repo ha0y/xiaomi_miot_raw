@@ -283,12 +283,14 @@ class GenericMiotDevice(Entity):
             self._mapping = mappingnew
 
         self._ctrl_params = config.get(CONF_CONTROL_PARAMS) or {}
+        self._max_properties = 10
 
         if type(self._ctrl_params) == str:
             self._ctrl_params = json.loads(self._ctrl_params)
 
         if not type(self._ctrl_params) == OrderedDict:
             paramsnew = {}
+            self._max_properties = self._ctrl_params.pop('max_properties', 10)
             for k,v in self._ctrl_params.items():
                 for kk,vv in v.items():
                     paramsnew[f"{k[:10]}_{kk}"] = vv
@@ -595,8 +597,8 @@ class GenericMiotDevice(Entity):
         try:
             if not self._cloud:
                 response = await self.hass.async_add_job(
-                        self._device.get_properties_for_mapping
-                    )
+                    partial(self._device.get_properties_for_mapping, max_properties=self._max_properties)
+                )
                 self._available = True
 
                 statedict={}
@@ -1077,7 +1079,7 @@ async def async_generic_setup_platform(
                         di['model'],
                         di['mac'],
                         di['fw_version'],
-                        ""
+                        "N/A for Cloud Mode"
                     )
         if main_mi_type in main_class_dict:
             device = main_class_dict[main_mi_type](miio_device, config, device_info, hass, main_mi_type)
