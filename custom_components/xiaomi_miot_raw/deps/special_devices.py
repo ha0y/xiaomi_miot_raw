@@ -16,7 +16,7 @@ SPECIAL_DEVICES={
     },
     "lumi.motion.bmgl01": {
         "device_type":['sensor'],
-        "mapping":{"motion":{"key":"device_log","type":"prop"}},
+        "mapping":{"motion":{"key":15, "type":"event"}},
         "params":{"event_based":True}
     },
     "lumi.sensor_motion.aq2": {

@@ -138,6 +138,11 @@ class BleLockParser(EventParser):    #0x000b, 11
     def timestamp(self):
         return int.from_bytes(self[5:9], 'little')
 
+class BleMotionWithIlluParser(EventParser): #0x000f, 15
+    @property
+    def illumination(self):
+        return int(self.data)
+    
 class TimestampParser(EventParser):
     @property
     def timestamp(self):

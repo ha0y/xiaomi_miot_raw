@@ -42,6 +42,7 @@ from .deps.ble_event_parser import (
     BleLockParser,
     TimestampParser,
     ZgbIlluminationParser,
+    BleMotionWithIlluParser,
 )
 from collections import OrderedDict
 from .deps.miot_coordinator import MiotEventCoordinator
@@ -556,6 +557,16 @@ class MiotEventBasedSensor(Entity):
                     'data_processor': BleLockParser,
                     'property': 'key_id_short',
                     'icon': 'mdi:account-key',
+                })
+            )
+        elif k == 15:
+            ett_to_add.append(
+                MiotEventBasedSubSensor(self, {
+                    'id': 'illumination',
+                    'name': 'Illumination',
+                    'data_processor': BleMotionWithIlluParser,
+                    'property': 'illumination',
+                    'icon': 'mdi:white-balance-sunny',
                 })
             )
 
