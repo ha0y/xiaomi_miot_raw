@@ -155,31 +155,31 @@ async def guess_mp_from_model(hass,model):
             if model == item['model']:
                 result.append(item)
         urnlist = [URN(r['type']) for r in result]
-        urnlist.sort()
-        params = {'type': str(urnlist[0])}
-        with async_timeout.timeout(10):
-            try:
-                s = await cs.get(url_spec, params=params)
-            except Exception:
-                s = None
-        if s:
-            spec = await s.json()
-            ad = MiotAdapter(spec)
+        if urnlist:
+            urnlist.sort()
+            params = {'type': str(urnlist[0])}
+            with async_timeout.timeout(10):
+                try:
+                    s = await cs.get(url_spec, params=params)
+                except Exception:
+                    s = None
+            if s:
+                spec = await s.json()
+                ad = MiotAdapter(spec)
 
-            mp = ad.get_all_mapping()
-            prm = ad.get_all_params()
-            dt = ad.get_all_devtype() # 这一行必须在下面
-            return {
-                'device_type': dt or ['switch'],
-                'mapping': json.dumps(mp,separators=(',', ':')),
-                'params': json.dumps(prm,separators=(',', ':'))
-            }
-    else:
-        return {
-            'device_type': [],
-            'mapping': "{}",
-            'params': "{}"
-        }
+                mp = ad.get_all_mapping()
+                prm = ad.get_all_params()
+                dt = ad.get_all_devtype() # 这一行必须在下面
+                return {
+                    'device_type': dt or ['switch'],
+                    'mapping': json.dumps(mp,separators=(',', ':')),
+                    'params': json.dumps(prm,separators=(',', ':'))
+                }
+    return {
+        'device_type': [],
+        'mapping': "{}",
+        'params': "{}"
+    }
     # TODO
 
 def data_masking(s: str, n: int) -> str:
