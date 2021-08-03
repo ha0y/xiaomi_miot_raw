@@ -388,9 +388,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         data=self._input2,
                     )
                 else:
-                    for item in self.hass.data[DOMAIN]['cloud_instance_list']:
-                        if item['username']:
-                            cloud = item['cloud_instance']
+                    if DOMAIN not in self.hass.data:
+                        cloud = None
+                    else:
+                        for item in self.hass.data[DOMAIN]['cloud_instance_list']:
+                            if item['username']:
+                                cloud = item['cloud_instance']
                     if cloud:
                         if not self._did:
                             for dev in self.hass.data[DOMAIN]['micloud_devices']:
