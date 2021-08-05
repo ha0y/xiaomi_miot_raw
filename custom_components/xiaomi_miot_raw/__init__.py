@@ -320,6 +320,7 @@ class GenericMiotDevice(Entity):
             self._entity_id = None
 
         self._hass = hass
+        self._entry_id = config['config_entry'].entry_id if 'config_entry' in config else None
         self._cloud = config.get(CONF_CLOUD)
         self._cloud_write = config.get('cloud_write')
         self._cloud_instance = None
@@ -567,7 +568,7 @@ class GenericMiotDevice(Entity):
                 pp = json.dumps(p,separators=(',', ':'))
                 results = await self._cloud_instance.set_props(pp, self._cloud.get("server_location"))
         except DeviceException as ex:
-            _LOGGER.error('Set miot property to %s: %s(%s) failed: %s', self._name, ex)
+            _LOGGER.error('Set miot property to %s failed: %s', self._name, ex)
 
     async def async_update(self):
         """Fetch state from the device."""

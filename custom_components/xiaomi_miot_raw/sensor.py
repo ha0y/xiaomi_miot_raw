@@ -86,7 +86,7 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
     hass.data.setdefault(DATA_KEY, {})
     hass.data[DOMAIN]['add_handler'].setdefault(TYPE, {})
     if 'config_entry' in config:
-        id = f"{config.get(CONF_HOST)}-{config.get(CONF_NAME)}"
+        id = config['config_entry'].entry_id
         hass.data[DOMAIN]['add_handler'][TYPE].setdefault(id, async_add_devices)
 
     host = config.get(CONF_HOST)
@@ -203,7 +203,7 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
             retry_time = 1
             while True:
                 if 'binary_sensor' in hass.data[DOMAIN]['add_handler']:
-                    if f"{host}-{config.get(CONF_NAME)}" in hass.data[DOMAIN]['add_handler']['binary_sensor']:
+                    if id in hass.data[DOMAIN]['add_handler']['binary_sensor']:
                         break
                 retry_time *= 2
                 if retry_time > 120:
@@ -213,12 +213,12 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
                     _LOGGER.debug(f"Waiting for binary sensor of {config.get(CONF_NAME)}({host}) ({retry_time - 1} seconds).")
                     await asyncio.sleep(retry_time)
 
-            hass.data[DOMAIN]['add_handler']['binary_sensor'][f"{host}-{config.get(CONF_NAME)}"](binary_devices, update_before_add=True)
+            hass.data[DOMAIN]['add_handler']['binary_sensor'][id](binary_devices, update_before_add=True)
 
     if other_mi_type:
         retry_time = 1
         while True:
-            if parent_device := hass.data[DOMAIN]['miot_main_entity'].get(f'{host}-{config.get(CONF_NAME)}'):
+            if parent_device := hass.data[DOMAIN]['miot_main_entity'].get(id):
                 if isinstance(parent_device, MiotSensor):
                     return
                 break
@@ -570,7 +570,7 @@ class MiotEventBasedSensor(Entity):
                 })
             )
 
-        self._hass.data[DOMAIN]['add_handler']['sensor'][f"{self._host}-{self._name}"](ett_to_add, update_before_add=True)
+        self._hass.data[DOMAIN]['add_handler']['sensor'][self._entry_id](ett_to_add, update_before_add=True)
 
 class MiotEventBasedSubSensor(Entity):
     def __init__(self, parent_sensor, options):

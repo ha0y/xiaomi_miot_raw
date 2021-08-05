@@ -56,7 +56,7 @@ DEVCLASS_MAPPING = {
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     hass.data[DOMAIN]['add_handler'].setdefault(TYPE, {})
     if 'config_entry' in config:
-        id = f"{config.get(CONF_HOST)}-{config.get(CONF_NAME)}"
+        id = config['config_entry'].entry_id
         hass.data[DOMAIN]['add_handler'][TYPE].setdefault(id, async_add_devices)
 
     await async_generic_setup_platform(
