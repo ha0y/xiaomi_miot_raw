@@ -24,14 +24,16 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 1. 打开 Home Assistant 的 HACS 页面。
 2. 点击`集成`。
 3. 点击右下角的`浏览并添加存储库`。
-4. 在新打开的页面中找到`Xiaomi MIoT`，安装即可。
+4. 在新打开的页面中找到`Xiaomi MIoT`，安装即可。  
+**注意**：如果您刚刚安装好 HACS，或者网络不通畅，您可能看不到`Xiaomi MIoT`插件，而能看到带有其他后缀的插件。  
+**`Xiaomi MIoT`插件名称不带任何后缀，请注意识别。** 如果在 HACS 中找不到此插件，可以使用下面的手动安装方法。
 5. 重新启动 Home Assistant。
 
 - **如需升级：** 在您打开 HACS 页面时，会自动出现升级提示。按照提示操作即可。
 
 ### 手动安装
 1. 下载插件 [zip 压缩包](https://github.com/ha0y/xiaomi_miot_raw/archive/refs/heads/master.zip)（该链接始终为最新版本）。
-2. 打开压缩包中的`custom_components`文件夹。
+2. 依次打开压缩包中的`xiaomi_miot_raw-master`/`custom_components`文件夹。
 3. 将该文件夹中的`xiaomi_miot_raw`文件夹拷贝至自己 HA 安装目录的`custom_components`文件夹。
 4. 重新启动 Home Assistant。
 
@@ -61,7 +63,9 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 <img src="https://github.com/ha0y/xiaomi_miot_raw/raw/master/images/flow/4.png" width="500"/>
 </details>
 
-**登录账号后，再次通过`途径 1`进入插件，即可选择要添加的设备。**
+**登录账号后，即可立即选择要添加的设备。**
+
+**后续如需添加更多设备，再次通过`途径 1`进入插件，即可选择要添加的设备。**
 <details>
 <summary>图片步骤说明</summary>
 
@@ -80,6 +84,8 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 
 <img src="https://github.com/ha0y/xiaomi_miot_raw/raw/master/images/flow/7.png" width="500"/>
 </details>
+
+## 特色功能
 
 **对设备进行细微调整，使之更适合您的实际情况：**
 1. 对于所有类型的设备，指示灯和童锁的开关默认是隐藏的。您可以通过`途径 2`启用它们。
