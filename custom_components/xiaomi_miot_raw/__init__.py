@@ -1101,7 +1101,7 @@ async def async_generic_setup_platform(
             device = main_class_dict['default'](miio_device, config, device_info, hass, main_mi_type)
 
         _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
-        hass.data[DOMAIN]['miot_main_entity'][f'{host}-{config.get(CONF_NAME)}'] = device
+        hass.data[DOMAIN]['miot_main_entity'][config['config_entry'].entry_id] = device
         hass.data[DOMAIN]['entities'][device.unique_id] = device
         async_add_devices([device], update_before_add=True)
 
@@ -1111,7 +1111,7 @@ async def async_generic_setup_platform(
     if sub_class_dict:
         retry_time = 1
         while True:
-            if parent_device := hass.data[DOMAIN]['miot_main_entity'].get(f'{host}-{config.get(CONF_NAME)}'):
+            if parent_device := hass.data[DOMAIN]['miot_main_entity'].get(config['config_entry'].entry_id):
                 break
             else:
                 retry_time *= 2

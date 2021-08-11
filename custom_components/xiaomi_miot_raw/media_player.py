@@ -96,7 +96,7 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
             raise PlatformNotReady
 
         _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
-        hass.data[DOMAIN]['miot_main_entity'][f'{host}-{config.get(CONF_NAME)}'] = device
+        hass.data[DOMAIN]['miot_main_entity'][config['config_entry'].entry_id] = device
         hass.data[DOMAIN]['entities'][device.unique_id] = device
         async_add_devices([device], update_before_add=True)
 
