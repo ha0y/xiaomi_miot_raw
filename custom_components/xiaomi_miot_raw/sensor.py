@@ -379,6 +379,7 @@ class MiotEventBasedSensor(Entity):
             self._entity_id = None
 
         self._hass = hass
+        self._entry_id = config['config_entry'].entry_id if 'config_entry' in config else None
         self._cloud = config.get(CONF_CLOUD)
 
         self._cloud_instance = None

@@ -1,7 +1,8 @@
 {
     "config": {
         "abort": {
-            "already_configured": "You have already configured this device!"
+            "already_configured": "You have already configured this device!",
+            "success": "Login succeed! Wait a moment and refresh to see devices added.\nTo add more, click `CONFIGURATION` under your account or `ADD INTEGRATION` - `Xiaomi MIoT`."
         },
         "create_entry": {
             "default": ""
@@ -23,7 +24,7 @@
                     "host": "IP",
                     "token": "token"
                 },
-                "description": "Log in your Xiaomi account for a faster way to add devices.\nNot all devices in the list are supported yet.",
+                "description": "Enter your Xiaomi credientals.",
                 "title": "Select Operation"
             },
             "xiaomi_account": {
@@ -64,6 +65,13 @@
                     "ssecurity": "ssecurity"
                 },
                 "description": "Cloud access requires information above"
+            },
+            "select_devices": {
+                "data": {
+                    "devices": "Devices list"
+                },
+                "description": "You have {dev_count} devices! Select devices to add below.\nYou can still select more in the future.",
+                "title": "选择要添加的设备"
             }
         },
         "title": "MIoT"

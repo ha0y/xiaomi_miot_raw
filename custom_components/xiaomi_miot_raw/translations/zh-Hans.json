@@ -1,7 +1,8 @@
 {
     "config": {
         "abort": {
-            "already_configured": "已经配置过这个设备了"
+            "already_configured": "已经配置过这个设备了",
+            "success": "登录成功！稍等片刻刷新页面，即可看到添加的设备。\n后续如果想添加更多设备，可以点击账号下的`选项`，**或者**点击`添加集成`，选择`Xiaomi MIoT`。"
         },
         "create_entry": {
             "default": ""
@@ -28,9 +29,9 @@
             },
             "xiaomi_account": {
 				"title": "小米账号登录",
-				"description": "",
+				"description": "请输入小米账号和密码。",
 				"data": {
-					"username": "邮箱/小米 ID",
+					"username": "邮箱/小米 ID/手机号",
 					"password": "密码"
 				}
 			},
@@ -64,6 +65,13 @@
                     "ssecurity": "ssecurity"
                 },
                 "description": "云端通信需要获取以下信息"
+            },
+            "select_devices": {
+                "data": {
+                    "devices": "设备列表"
+                },
+                "description": "你有 {dev_count} 个设备！在下面选择要添加的设备吧！\n一次选不完没关系，之后还可以继续添加。",
+                "title": "选择要添加的设备"
             }
         },
         "title": "MIoT"

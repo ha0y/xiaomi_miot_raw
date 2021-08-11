@@ -1,6 +1,7 @@
 import json
 import re
 
+import asyncio
 import async_timeout
 import homeassistant.helpers.config_validation as cv
 import requests
@@ -223,10 +224,16 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._non_interactive = False
 
     async def async_step_user(self, user_input=None, non_interactive=False):   # 1. 选择操作
+        self.hass.data.setdefault(DOMAIN, {})
+        self.hass.data[DOMAIN].setdefault('micloud_devices', [])
         self._non_interactive = non_interactive
         if user_input is not None:
             if user_input['action'] == 'xiaomi_account':
-                return await self.async_step_xiaomi_account()
+                if 'username' in user_input:
+                    self._non_interactive = True
+                    return await self.async_step_xiaomi_account(user_input)
+                else:
+                    return await self.async_step_xiaomi_account()
             elif user_input['action'] == 'localinfo':
                 return await self.async_step_localinfo()
             else:
@@ -509,19 +516,27 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_xiaomi_account(self, user_input=None, error=None): # 登录小米账号
         if user_input:
-            # if not user_input['servers']:
-                # return await self.async_step_xiaomi_account(error='no_servers')
+            if 'username' in user_input:
+                # if not user_input['servers']:
+                    # return await self.async_step_xiaomi_account(error='no_servers')
 
-            session = aiohttp_client.async_create_clientsession(self.hass)
-            cloud = MiCloud(session)
-            if await cloud.login(user_input['username'],
-                                 user_input['password']):
-                user_input.update(cloud.auth)
-                return self.async_create_entry(title=data_masking(user_input['username'], 4),
-                                               data=user_input)
+                session = aiohttp_client.async_create_clientsession(self.hass)
+                cloud = MiCloud(session)
+                if await cloud.login(user_input['username'],
+                                    user_input['password']):
+                    user_input.update(cloud.auth)
+                    self._input2 = user_input
+                    if not self._non_interactive:
+                        self.hass.async_add_job(self.hass.config_entries.flow.async_init(
+                            DOMAIN, context={"source": "user"}, data={'action': 'xiaomi_account', 'username': user_input['username'],'password': user_input['password']}
+                        ))
+                        return await self.async_step_select_devices()
+                    else:
+                        return self.async_create_entry(title=data_masking(user_input['username'], 4),
+                                data=user_input)
 
-            else:
-                return await self.async_step_xiaomi_account(error='cant_login')
+                else:
+                    return await self.async_step_xiaomi_account(error='cant_login')
 
         return self.async_show_form(
             step_id='xiaomi_account',
@@ -531,7 +546,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 # vol.Required('servers', default=['cn']):
                     # cv.multi_select(SERVERS)
             }),
-            errors={'base': error} if error else {'base': 'account_tips'}
+            errors={'base': error}
         )
 
     async def async_step_xiaoai(self, user_input=None, error=None): # 本地发现不了设备，需要手动输入model，输入后再修改mapping，params
@@ -590,6 +605,34 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return await self.async_step_user({
             'action': info['did']
         }, True)
+
+    async def async_step_select_devices(self, user_input=None):
+        errors = {}
+        if user_input is not None:
+            for device in user_input['devices']:
+                self.hass.async_add_job(self.hass.config_entries.flow.async_init(
+                    DOMAIN, context={"source": "batch_add"}, data={'did': device}
+                ))
+            return self.async_abort(reason="success")
+
+        devlist = {}
+        while not self.hass.data[DOMAIN]['micloud_devices']:
+            await asyncio.sleep(1)
+        for device in self.hass.data[DOMAIN]['micloud_devices']:
+            if device['did'] not in devlist:
+                dt = get_conn_type(device)
+                dt = "WiFi" if dt == 0 else "ZigBee" if dt == 1 else "BLE" if dt == 2 \
+                                        else "BLE Mesh" if dt == 3 else "Unknown"
+                name = f"{device['name']} ({dt}{', '+device['localip'] if (dt == '''WiFi''') else ''})"
+                devlist[device['did']] = name
+        return self.async_show_form(
+            step_id='select_devices',
+            data_schema=vol.Schema({
+                vol.Required('devices', default=[]): cv.multi_select(devlist),
+            }),
+            description_placeholders={"dev_count": str(len(devlist))},
+            errors=errors,
+        )
 
     @staticmethod
     @callback

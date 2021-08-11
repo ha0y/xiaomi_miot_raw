@@ -174,6 +174,19 @@ async def async_unload_entry(hass, entry):
 
         return True
 
+async def async_remove_entry(hass, entry):
+    if 'username' in entry.data:
+        remove_ok = all(
+            await asyncio.gather(
+                *[
+                    hass.config_entries.async_remove(v['config_entry'].entry_id)
+                    for v in hass.data[DOMAIN]['configs'].values() if v['config_entry'].source == 'batch_add'
+                ]
+            )
+        )
+        return remove_ok
+    return True
+
 async def _setup_micloud_entry(hass, config_entry):
     """Thanks to @AlexxIT """
     data: dict = config_entry.data.copy()
