@@ -590,10 +590,13 @@ class GenericMiotDevice(Entity):
                 if key in self._ctrl_params_new:
                     if f := self._ctrl_params_new[key].get('value_ratio'):
                         return round(value * f , 3)
-                if (('status' in key and 'switch_status' not in key) \
-                    or 'fault' in key) \
-                    and type(value) == int:
-                    if key in self._ctrl_params_new:
+                    if 'value_list' in self._ctrl_params_new[key]:
+                        if s := self.get_key_by_value(self._ctrl_params_new[key]['value_list'], value):
+                            return s
+                    elif (('status' in key and 'switch_status' not in key) \
+                        or 'state' in key \
+                        or 'fault' in key) \
+                        and type(value) == int:
                         if s := self.get_key_by_value(self._ctrl_params_new[key], value):
                             return s
                 return value
