@@ -262,8 +262,11 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
 
     async def async_set_humidity(self, humidity):
         """Set new humidity level."""
-        self._target_humidity = humidity
-        self.async_write_ha_state()
+        if humidity is not None:
+            result = await self.set_property_new(self._did_prefix + "target_humidity", humidity)
+            if result:
+                self._target_humidity = humidity
+                self.async_write_ha_state()
 
     async def async_set_swing_mode(self, swing_mode):
         """Set new swing mode."""
