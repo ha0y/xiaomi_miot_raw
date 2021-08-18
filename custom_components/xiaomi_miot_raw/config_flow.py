@@ -514,7 +514,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Import a config flow from configuration."""
         return True
 
-    async def async_step_xiaomi_account(self, user_input=None, error=None): # 登录小米账号
+    async def async_step_xiaomi_account(self, user_input=None, error=None, hint=""): # 登录小米账号
         if user_input:
             if 'username' in user_input:
                 # if not user_input['servers']:
@@ -522,8 +522,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
                 session = aiohttp_client.async_create_clientsession(self.hass)
                 cloud = MiCloud(session)
-                if await cloud.login(user_input['username'],
-                                    user_input['password']):
+                resp = await cloud.login(user_input['username'],
+                                    user_input['password'])
+                if resp == (0, None):
                     user_input.update(cloud.auth)
                     self._input2 = user_input
                     if not self._non_interactive:
@@ -534,9 +535,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     else:
                         return self.async_create_entry(title=data_masking(user_input['username'], 4),
                                 data=user_input)
-
                 else:
-                    return await self.async_step_xiaomi_account(error='cant_login')
+                    if resp[1] is None:
+                        return await self.async_step_xiaomi_account(error='wrong_pwd')
+                    else:
+                        return await self.async_step_xiaomi_account(error='need_auth',hint=f"[{str(resp[1])[:100]+'...'}]({resp[1]})\n")
+                        
 
         return self.async_show_form(
             step_id='xiaomi_account',
@@ -546,6 +550,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 # vol.Required('servers', default=['cn']):
                     # cv.multi_select(SERVERS)
             }),
+            description_placeholders={"hint": hint},
             errors={'base': error}
         )
 

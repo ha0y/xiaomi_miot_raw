@@ -205,7 +205,7 @@ async def _setup_micloud_entry(hass, config_entry):
 
     if devices is None:
         _LOGGER.debug(f"Login to MiCloud for {config_entry.title}")
-        if await cloud.login(data['username'], data['password']):
+        if await cloud.login(data['username'], data['password']) == (0, None):
             # update MiCloud auth in .storage
             data.update(cloud.auth)
             hass.config_entries.async_update_entry(config_entry, data=data)

@@ -14,7 +14,8 @@
             "bad_params": "参数有误",
             "no_local_access": "该设备不支持本地接入，已启用云端接入。请再次点击“提交”",
             "no_connect_warning": "连接设备失败。如果您添加的是小爱音箱，这是正常现象；否则，请检查信息是否有误。请在下方输入小爱音箱的 model。",
-            "cant_login": "登录失败",
+            "wrong_pwd": "密码错误",
+            "need_auth": "本次登录要输验证码。请打开上面的链接，按照页面提示操作。提示 ok 后，重新登录。",
             "account_tips": "登录账号是为了方便您添加设备，而不会自动添加所有设备。\n登录后再次添加此集成，即可选择要添加的设备。"
         },
         "step": {
@@ -29,7 +30,7 @@
             },
             "xiaomi_account": {
 				"title": "小米账号登录",
-				"description": "请输入小米账号和密码。",
+				"description": "{hint}请输入小米账号和密码。",
 				"data": {
 					"username": "邮箱/小米 ID/手机号",
 					"password": "密码"

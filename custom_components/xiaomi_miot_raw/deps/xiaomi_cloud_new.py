@@ -59,8 +59,10 @@ class MiCloud:
         try:
             payload = await self._login_step1()
             data = await self._login_step2(username, password, payload)
-            if not data['location']:
-                return False
+            if 'notificationUrl' in data:
+                return (-1, data['notificationUrl'])
+            elif not data['location']:
+                return (-1, None)
 
             token = await self._login_step3(data['location'])
 
@@ -70,7 +72,7 @@ class MiCloud:
                 'service_token': token
             }
 
-            return True
+            return (0, None)
 
         except Exception as e:
             _LOGGER.exception(f"Can't login to Mi Cloud: {e}")
