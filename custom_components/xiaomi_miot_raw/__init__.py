@@ -1045,8 +1045,25 @@ async def async_generic_setup_platform(
     token = config.get(CONF_TOKEN)
     mapping = config.get(CONF_MAPPING)
     params = config.get(CONF_CONTROL_PARAMS)
+    if params is None: params = OrderedDict()
+    
+    if TYPE == 'sensor' and 'event_based' in params:
+        di = config.get('cloud_device_info')
+        device_info = dev_info(
+            di['model'],
+            di['mac'],
+            di['fw_version'],
+            ""
+        )
+        
+        sensor_devices = [main_class_dict['_event_based_sensor'](None, config, device_info, hass, item) for item in mapping.items()]
+        if 'config_entry' in config:
+            hass.data[DOMAIN]['miot_main_entity'][config['config_entry'].entry_id] = sensor_devices[0]
+        async_add_devices(sensor_devices, update_before_add=True)
+        return True
 
     mappingnew = {}
+    paramsnew = {}
 
     main_mi_type = None
     other_mi_type = []
@@ -1066,6 +1083,11 @@ async def async_generic_setup_platform(
         for k,v in mapping.items():
             for kk,vv in v.items():
                 mappingnew[f"{k[:10]}_{kk}"] = vv
+        if TYPE == 'sensor':
+            for k,v in params.items():
+                if k in MAP[TYPE]:
+                    for kk,vv in v.items():
+                        paramsnew[f"{k[:10]}_{kk}"] = vv
 
         _LOGGER.info("Initializing %s with host %s (token %s...)", config.get(CONF_NAME), host, token[:5])
         if type(params) == OrderedDict:
@@ -1098,15 +1120,96 @@ async def async_generic_setup_platform(
                         di['fw_version'],
                         "N/A for Cloud Mode"
                     )
-        if main_mi_type in main_class_dict:
-            device = main_class_dict[main_mi_type](miio_device, config, device_info, hass, main_mi_type)
-        else:
-            device = main_class_dict['default'](miio_device, config, device_info, hass, main_mi_type)
+        
+        if TYPE in ('sensor', 'binary_sensor'):
+            """Begin special policy for sensor"""
+            device = main_class_dict['_sensor'](miio_device, config, device_info, hass, main_mi_type)
+            sensor_devices = [device]
+            binary_devices = []
+            _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
+            if 'config_entry' in config:
+                hass.data[DOMAIN]['miot_main_entity'][config['config_entry'].entry_id] = device
+            hass.data[DOMAIN]['entities'][device.unique_id] = device
+            if main_mi_type:
+                for k in mappingnew.keys():
+                    if 'a_l_' in k:
+                        continue
+                    if k in paramsnew:
+                        unit = paramsnew[k].get('unit')
+                        format_ = paramsnew[k].get('format')
+                    else:
+                        unit = format_ = None
+                    if format_ != 'bool':
+                        sensor_devices.append(sub_class_dict['_sub_sensor'](
+                            device, mappingnew, paramsnew, main_mi_type,
+                            {'sensor_property': k, "sensor_unit": unit}
+                        ))
+                    else:
+                        binary_devices.append(sub_class_dict['_sub_binary_sensor'](
+                            device, mappingnew, paramsnew, main_mi_type,
+                            {'sensor_property': k}
+                        ))
+            async_add_devices(sensor_devices, update_before_add=True)
+            if binary_devices:
+                retry_time = 1
+                while True:
+                    if 'binary_sensor' in hass.data[DOMAIN]['add_handler']:
+                        if id in hass.data[DOMAIN]['add_handler']['binary_sensor']:
+                            break
+                    retry_time *= 2
+                    if retry_time > 120:
+                        _LOGGER.error(f"Cannot create binary sensor for {config.get(CONF_NAME)}({host}) !")
+                        raise PlatformNotReady
+                    else:
+                        _LOGGER.debug(f"Waiting for binary sensor of {config.get(CONF_NAME)}({host}) ({retry_time - 1} seconds).")
+                        await asyncio.sleep(retry_time)
 
-        _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
-        hass.data[DOMAIN]['miot_main_entity'][config['config_entry'].entry_id] = device
-        hass.data[DOMAIN]['entities'][device.unique_id] = device
-        async_add_devices([device], update_before_add=True)
+                hass.data[DOMAIN]['add_handler']['binary_sensor'][id](binary_devices, update_before_add=True)
+        else:
+            """Begin normal policy"""
+            if main_mi_type in main_class_dict:
+                device = main_class_dict[main_mi_type](miio_device, config, device_info, hass, main_mi_type)
+            else:
+                device = main_class_dict['default'](miio_device, config, device_info, hass, main_mi_type)
+
+            _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
+            hass.data[DOMAIN]['miot_main_entity'][config['config_entry'].entry_id] = device
+            hass.data[DOMAIN]['entities'][device.unique_id] = device
+            async_add_devices([device], update_before_add=True)
+
+    if TYPE in ('sensor', 'binary_sensor'):
+        if other_mi_type:
+            id = config['config_entry'].entry_id
+            retry_time = 1
+            while True:
+                if parent_device := hass.data[DOMAIN]['miot_main_entity'].get(id):
+                    if isinstance(parent_device, main_class_dict['_sensor']):
+                        return
+                    break
+                else:
+                    retry_time *= 2
+                    if retry_time > 120:
+                        _LOGGER.error(f"The main device of {config.get(CONF_NAME)}({host}) is still not ready after 120 seconds!")
+                        raise PlatformNotReady
+                    else:
+                        _LOGGER.debug(f"The main device of {config.get(CONF_NAME)}({host}) is still not ready after {retry_time - 1} seconds.")
+                        await asyncio.sleep(retry_time)
+
+            for k,v in mapping.items():
+                if k in MAP[TYPE]:
+                    for kk,vv in v.items():
+                        mappingnew[f"{k[:10]}_{kk}"] = vv
+            for k,v in params.items():
+                if k in MAP[TYPE]:
+                    for kk,vv in v.items():
+                        paramsnew[f"{k[:10]}_{kk}"] = vv
+            sensor_devices = []
+            for k in mappingnew.keys():
+                sensor_devices.append(sub_class_dict['_sub_sensor'](parent_device, mappingnew, paramsnew, other_mi_type[0],{'sensor_property': k}))
+
+            # device = MiotSubSensor(parent_device, "switch_switch_status")
+            async_add_devices(sensor_devices, update_before_add=True)
+        return
 
     elif not sub_class_dict:
         _LOGGER.error(f"{TYPE}只能作为主设备！请检查{config.get(CONF_NAME)}配置")
