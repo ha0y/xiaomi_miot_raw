@@ -15,7 +15,13 @@ from miio.exceptions import DeviceException
 from .deps.miio_new import MiotDevice
 from homeassistant.components import persistent_notification
 
-from . import GenericMiotDevice, ToggleableMiotDevice
+from .basic_dev_class import (
+    GenericMiotDevice,
+    ToggleableMiotDevice,
+    MiotSubDevice,
+    MiotSubToggleableDevice
+)
+from . import async_generic_setup_platform
 from .deps.const import (ATTR_FIRMWARE_VERSION, ATTR_HARDWARE_VERSION,
                          ATTR_MODEL, ATTR_STATE_VALUE, CONF_CLOUD,
                          CONF_CONTROL_PARAMS, CONF_MAPPING, CONF_MODEL,

@@ -20,7 +20,13 @@ from homeassistant.util import Throttle
 from miio.exceptions import DeviceException
 from .deps.miio_new import MiotDevice
 
-from . import GenericMiotDevice, ToggleableMiotDevice, dev_info, async_generic_setup_platform
+from .basic_dev_class import (
+    GenericMiotDevice,
+    ToggleableMiotDevice,
+    MiotSubDevice,
+    MiotSubToggleableDevice
+)
+from . import async_generic_setup_platform
 from .deps.const import (
     DOMAIN,
     CONF_UPDATE_INSTANT,

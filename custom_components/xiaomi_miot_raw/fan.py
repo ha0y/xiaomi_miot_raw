@@ -27,7 +27,13 @@ from homeassistant.util import color
 from miio.exceptions import DeviceException
 from .deps.miio_new import MiotDevice
 
-from . import GenericMiotDevice, ToggleableMiotDevice, MiotSubToggleableDevice, MiotSubDevice, dev_info, async_generic_setup_platform
+from .basic_dev_class import (
+    GenericMiotDevice,
+    ToggleableMiotDevice,
+    MiotSubDevice,
+    MiotSubToggleableDevice
+)
+from . import async_generic_setup_platform
 from .switch import BinarySelectorEntity
 from .deps.const import (
     DOMAIN,
@@ -90,6 +96,7 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
         self._speed = None
         self._mode = None
         self._oscillation = None
+        hass.async_add_job(self.create_sub_entities)
 
     @property
     def supported_features(self):
