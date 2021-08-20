@@ -17,7 +17,13 @@ from .deps.miio_new import MiotDevice
 from .deps.xiaomi_cloud_new import MiCloud
 
 from datetime import timedelta
-from . import GenericMiotDevice, MiotSubDevice, dev_info, async_generic_setup_platform
+from .basic_dev_class import (
+    GenericMiotDevice,
+    ToggleableMiotDevice,
+    MiotSubDevice,
+    MiotSubToggleableDevice
+)
+from . import async_generic_setup_platform
 from .binary_sensor import MiotSubBinarySensor
 from .deps.const import (
     DOMAIN,
@@ -113,6 +119,7 @@ class MiotSensor(GenericMiotDevice):
         self._state = None
         self._sensor_property = config.get(CONF_SENSOR_PROPERTY)
         self._unit_of_measurement = config.get(CONF_SENSOR_UNIT)
+        hass.async_add_job(self.create_sub_entities)
 
     @property
     def state(self):

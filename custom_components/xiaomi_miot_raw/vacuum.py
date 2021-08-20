@@ -43,7 +43,13 @@ from miio.exceptions import DeviceException
 from .deps.miio_new import MiotDevice
 
 import copy
-from . import GenericMiotDevice, ToggleableMiotDevice, dev_info, async_generic_setup_platform
+from .basic_dev_class import (
+    GenericMiotDevice,
+    ToggleableMiotDevice,
+    MiotSubDevice,
+    MiotSubToggleableDevice
+)
+from . import async_generic_setup_platform
 from .deps.const import (
     DOMAIN,
     CONF_UPDATE_INSTANT,
@@ -106,6 +112,7 @@ class MiotVacuum(GenericMiotDevice, StateVacuumEntity):
         self._battery_level = None
         self._status = ""
         self._fan_speed = None
+        hass.async_add_job(self.create_sub_entities)
 
     @property
     def supported_features(self):

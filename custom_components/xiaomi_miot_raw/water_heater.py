@@ -25,7 +25,13 @@ from miio.exceptions import DeviceException
 from .deps.miio_new import MiotDevice
 
 import copy
-from . import GenericMiotDevice, ToggleableMiotDevice, dev_info, async_generic_setup_platform
+from .basic_dev_class import (
+    GenericMiotDevice,
+    ToggleableMiotDevice,
+    MiotSubDevice,
+    MiotSubToggleableDevice
+)
+from . import async_generic_setup_platform
 from .climate import MiotClimate
 from .deps.const import (
     DOMAIN,
@@ -82,6 +88,7 @@ class MiotWaterHeater(ToggleableMiotDevice, WaterHeaterEntity):
         self._away = None
         self._current_operation = None
         self._current_temperature = None
+        hass.async_add_job(self.create_sub_entities)
 
     @property
     def supported_features(self):
