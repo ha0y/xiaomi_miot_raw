@@ -48,6 +48,7 @@ from .deps.xiaomi_cloud_new import *
 from .deps.xiaomi_cloud_new import MiCloud
 from .deps.miot_coordinator import MiotCloudCoordinator
 from asyncio.exceptions import CancelledError
+from . import (HAVE_NUMBER, HAVE_SELECT)
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -523,21 +524,23 @@ class GenericMiotDevice(Entity):
         此处设置好添加条件后，到sensor处排除掉这些实体。"""
         if not self._ctrl_params_new:
             return
-        from .number import MiotNumberInput
-        from .select import MiotPropertySelector
+        if HAVE_NUMBER:
+            from .number import MiotNumberInput
+        if HAVE_SELECT:
+            from .select import MiotPropertySelector
         num_to_add = []
         sel_to_add = []
         for k,v in self._ctrl_params_new.items():
             if not isinstance(v, dict):
                 continue
-            if 'access' in v and 'value_range' in v:
+            if 'access' in v and 'value_range' in v and HAVE_NUMBER:
                 if v['access'] >> 1 & 0b01:
                     num_to_add.append(MiotNumberInput(
                         self,
                         full_did=k,
                         value_range=v['value_range']
                     ))
-            elif 'access' in v and 'value_list' in v:
+            elif 'access' in v and 'value_list' in v and HAVE_SELECT:
                 if v['access'] >> 1 & 0b01:
                     sel_to_add.append(MiotPropertySelector(
                         self,

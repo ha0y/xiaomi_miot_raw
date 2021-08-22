@@ -453,6 +453,11 @@ async def async_generic_setup_platform(
                         if 'access' in v and 'value_range' in v:
                             if v['access'] >> 1 & 0b01:
                                 continue
+                if k in paramsnew and HAVE_SELECT:
+                    if isinstance(paramsnew[k], dict):
+                        if 'access' in v and 'value_list' in v:
+                            if v['access'] >> 1 & 0b01:
+                                continue
                 sensor_devices.append(sub_class_dict['_sub_sensor'](parent_device, mappingnew, paramsnew, other_mi_type[0],{'sensor_property': k}))
 
             # device = MiotSubSensor(parent_device, "switch_switch_status")
