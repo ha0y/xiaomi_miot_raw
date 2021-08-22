@@ -82,7 +82,7 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         async_add_devices,
         discovery_info,
         TYPE,
-        {'default': MiotFan, 'washer': MiotWasher},
+        {'default': MiotFan},
         {'default': MiotSubFan, 'a_l': MiotActionList}
     )
 
@@ -422,120 +422,6 @@ class MiotActionList(MiotSubDevice, FanEntity):
     async def async_update(self):
         await asyncio.sleep(1)
         self._state2 = STATE_ON
-
-class MiotWasher(ToggleableMiotDevice, FanEntity):
-    # TODO washer has many controllable properties. Try to add them (#96)
-    def __init__(self, device, config, device_info, hass, main_mi_type):
-        ToggleableMiotDevice.__init__(self, device, config, device_info, hass, main_mi_type)
-        self._speed = None
-        self._oscillation = None
-        if 'switch_status' in self._ctrl_params:
-            self._assumed_state = False
-        else:
-            self._assumed_state = True
-        self.SPEED_OR_MODE = 'mode' if 'mode' in self._ctrl_params else 'speed'
-        hass.async_add_job(self.create_sub_entities)
-
-    @property
-    def supported_features(self):
-        """Return the supported features."""
-        return SUPPORT_SET_SPEED if not NEW_FAN else SUPPORT_PRESET_MODE
-
-    @property
-    def speed_list(self) -> list:
-        """Get the list of available speeds."""
-        if NEW_FAN:
-            return None
-        else:
-            return list(self._ctrl_params[self.SPEED_OR_MODE].keys())
-
-    @property
-    def speed(self):
-        """Return the current speed."""
-        return self._speed if not NEW_FAN else None
-
-    @property
-    def preset_modes(self) -> list:
-        """Get the list of available preset_modes."""
-        return list(self._ctrl_params[self.SPEED_OR_MODE].keys())
-
-    @property
-    def preset_mode(self):
-        """Return the current speed."""
-        try:
-            self._speed = self.get_key_by_value(self._ctrl_params[self.SPEED_OR_MODE],self.device_state_attributes[self._did_prefix + self.SPEED_OR_MODE])
-        except KeyError:
-            self._speed = None
-        return self._speed
-
-    @property
-    def percentage(self):
-        return None
-
-    @property
-    def speed_count(self):
-        return len(self.preset_modes)
-
-    @property
-    def oscillating(self):
-        """Return the oscillation state."""
-        return self._oscillation
-
-    @property
-    def assumed_state(self):
-        """Return true if unable to access real state of entity."""
-        return self._assumed_state
-
-    async def async_turn_on(self, speed: str = None, **kwargs):
-        """Turn on."""
-        if 'switch_status' in self._ctrl_params:
-            await super().async_turn_on()
-        else:
-            try:
-                result = await self.call_action_new(*(self._mapping['a_l_' + self._did_prefix + 'start_wash'].values()))
-            except Exception as ex:
-                _LOGGER.error(ex)
-        if speed:
-            await self.async_set_preset_mode(speed)
-
-    async def async_turn_off(self, **kwargs):
-        """Turn off."""
-        if 'switch_status' in self._ctrl_params:
-            await super().async_turn_off()
-        else:
-            try:
-                result = await self.call_action_new(*(self._mapping['a_l_' + self._did_prefix + 'pause'].values()))
-            except Exception as ex:
-                raise NotImplementedError(ex)
-
-    async def async_set_preset_mode(self, preset_mode: str) -> None:
-        """Set new preset mode."""
-        result = await self.set_property_new(self._did_prefix + self.SPEED_OR_MODE, self._ctrl_params[self.SPEED_OR_MODE][preset_mode])
-        if result:
-            self._speed = preset_mode
-            self._skip_update = True
-
-    async def create_sub_entities(self):
-        ett_to_add = []
-        for k,v in self._ctrl_params.items():
-            if not isinstance(v, dict): continue
-            if 'access' in v:
-                if (v['access'] & 0b010) >> 1:
-                    if v['format'] == 'bool':
-                        ett_to_add.append(BinarySelectorEntity(
-                            self,
-                            did_prefix='washer',
-                            field=k,
-                        ))
-                    elif 'value_list' in v:
-                        ett_to_add.append(SelectorEntity(
-                            self,
-                            did_prefix='washer',
-                            field=k,
-                            value_list=v['value_list'],
-                        ))
-        if ett_to_add:
-            self._hass.data[DOMAIN]['add_handler']['fan'][self._entry_id](ett_to_add, update_before_add=True)
 
 class SelectorEntity(MiotSubDevice, FanEntity):
     def __init__(self, parent_device, **kwargs):
