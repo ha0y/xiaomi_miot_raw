@@ -101,8 +101,8 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         async_add_devices,
         discovery_info,
         TYPE,
-        {'_sensor': MiotSensor, '_binary_sensor': None},
-        {'_sub_sensor': MiotSubSensor, '_sub_binary_sensor': MiotSubBinarySensor}
+        {'_sensor': MiotSensor, '_binary_sensor': None, '_event_based_sensor': MiotEventBasedSensor},
+        {'_sub_sensor': MiotSubSensor, '_sub_binary_sensor': MiotSubBinarySensor, '_event_based_sub_sensor': MiotEventBasedSubSensor}
     )
 
 
