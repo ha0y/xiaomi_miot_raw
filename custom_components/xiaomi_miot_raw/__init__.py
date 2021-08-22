@@ -139,10 +139,14 @@ async def async_setup_entry(hass, entry):
         devtype_new = entry.data.get('devtype')
         if 'number' not in devtype_new:
             devtype_new += ['number']
+        if 'select' not in devtype_new:
+            devtype_new += ['select']
         if 'sensor' in devtype_new and 'binary_sensor' not in devtype_new:
             devtype_new += ['binary_sensor']
         for t in devtype_new:
             if t == 'number' and not HAVE_NUMBER:
+                continue
+            if t == 'select' and not HAVE_SELECT:
                 continue
             hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, t))
 
@@ -475,11 +479,13 @@ async def async_generic_setup_platform(
                     mappingnew[f"{k[:10]}_{kk}"] = vv
 
         devices = []
-
+        
         for item in other_mi_type:
             if item == "indicator_light":
                 if not params[item].get('enabled'):
                     continue
+            if item == "a_l" and TYPE == 'fan' and HAVE_SELECT:
+                continue
 
             if item in sub_class_dict:
                 devices.append(sub_class_dict[item](parent_device, mapping.get(item), params.get(item), item))

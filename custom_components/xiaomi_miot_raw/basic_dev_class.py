@@ -524,19 +524,31 @@ class GenericMiotDevice(Entity):
         if not self._ctrl_params_new:
             return
         from .number import MiotNumberInput
-        ett_to_add = []
+        from .select import MiotPropertySelector
+        num_to_add = []
+        sel_to_add = []
         for k,v in self._ctrl_params_new.items():
             if not isinstance(v, dict):
                 continue
             if 'access' in v and 'value_range' in v:
                 if v['access'] >> 1 & 0b01:
-                    ett_to_add.append(MiotNumberInput(
+                    num_to_add.append(MiotNumberInput(
                         self,
                         full_did=k,
                         value_range=v['value_range']
                     ))
-        if ett_to_add:
-            self._hass.data[DOMAIN]['add_handler']['number'][self._entry_id](ett_to_add, update_before_add=True)
+            elif 'access' in v and 'value_list' in v:
+                if v['access'] >> 1 & 0b01:
+                    sel_to_add.append(MiotPropertySelector(
+                        self,
+                        full_did=k,
+                        value_list=v['value_list']
+                    ))
+
+        if num_to_add:
+            self._hass.data[DOMAIN]['add_handler']['number'][self._entry_id](num_to_add, update_before_add=True)
+        if sel_to_add:
+            self._hass.data[DOMAIN]['add_handler']['select'][self._entry_id](sel_to_add, update_before_add=True)
 
             
 

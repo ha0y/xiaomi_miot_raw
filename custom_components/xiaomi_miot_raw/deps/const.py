@@ -208,6 +208,7 @@ MAP = {
         "vacuum",
     },
     "binary_sensor": {},
+    "select": {"a_l"},
 }
 
 UNIT_MAPPING = {

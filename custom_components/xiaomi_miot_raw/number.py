@@ -64,7 +64,6 @@ class MiotNumberInput(NumberEntity, MiotSubDevice):
         self._parent_device = parent_device
         self._full_did = kwargs.get('full_did')
         self._value_range = kwargs.get('value_range')
-        # self._value_list = kwargs.get('value_list')
         self._name = f'{parent_device.name} {self._full_did}'
         self._unique_id = f"{parent_device.unique_id}-{kwargs.get('full_did')}"
         self._entity_id = f"{parent_device._entity_id}-{kwargs.get('full_did')}"
@@ -94,7 +93,6 @@ class MiotNumberInput(NumberEntity, MiotSubDevice):
                 _LOGGER.error(ex)
 
     async def async_set_value(self, value):
-        _LOGGER.warn(value)
         result = await self._parent_device.set_property_new(self._full_did, value)
         if result:
             self._state_attrs[self._full_did] = value
