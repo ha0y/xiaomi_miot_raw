@@ -130,6 +130,8 @@ class MiotVacuum(GenericMiotDevice, StateVacuumEntity):
             s |= SUPPORT_BATTERY
         if 'a_l_battery_start_charge' in self._mapping:
             s |= SUPPORT_RETURN_HOME
+        if 'a_l_voice_find_device' in self._mapping:
+            s |= SUPPORT_LOCATE
         return s
 
     @property
