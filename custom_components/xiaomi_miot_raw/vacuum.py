@@ -130,7 +130,8 @@ class MiotVacuum(GenericMiotDevice, StateVacuumEntity):
             s |= SUPPORT_BATTERY
         if 'a_l_battery_start_charge' in self._mapping:
             s |= SUPPORT_RETURN_HOME
-        if 'a_l_voice_find_device' in self._mapping:
+        if 'a_l_voice_find_device' in self._mapping or \
+            'a_l_identify_identify' in self._mapping:
             s |= SUPPORT_LOCATE
         return s
 
@@ -207,6 +208,18 @@ class MiotVacuum(GenericMiotDevice, StateVacuumEntity):
         result = await self.set_property_new(self._did_prefix + "mode", self._ctrl_params['mode'][fan_mode])
         if result:
             self._fan_speed = fan_speed
+            self.schedule_update_ha_state()
+
+    async def async_locate(self, **kwargs):
+        """Locate the vacuum (usually by playing a song)."""
+        if 'a_l_voice_find_device' in self._mapping:
+            result = await self.call_action_new(*(self._mapping['a_l_battery_start_charge'].values()))
+        elif 'a_l_identify_identify' in self._mapping:
+            result = await self.call_action_new(*(self._mapping['a_l_identify_identify'].values()))
+        else:
+            return
+
+        if result:
             self.schedule_update_ha_state()
 
     def _handle_platform_specific_attrs(self):
