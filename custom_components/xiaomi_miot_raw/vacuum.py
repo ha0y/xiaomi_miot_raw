@@ -213,7 +213,7 @@ class MiotVacuum(GenericMiotDevice, StateVacuumEntity):
     async def async_locate(self, **kwargs):
         """Locate the vacuum (usually by playing a song)."""
         if 'a_l_voice_find_device' in self._mapping:
-            result = await self.call_action_new(*(self._mapping['a_l_battery_start_charge'].values()))
+            result = await self.call_action_new(*(self._mapping['a_l_voice_find_device'].values()))
         elif 'a_l_identify_identify' in self._mapping:
             result = await self.call_action_new(*(self._mapping['a_l_identify_identify'].values()))
         else:
