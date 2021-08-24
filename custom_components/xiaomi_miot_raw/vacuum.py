@@ -202,7 +202,7 @@ class MiotVacuum(GenericMiotDevice, StateVacuumEntity):
         if self.supported_features & SUPPORT_FAN_SPEED == 0:
             return
 
-        result = await self.set_property_new(self._did_prefix + "mode", self._ctrl_params['mode'][fan_mode])
+        result = await self.set_property_new(self._did_prefix + "mode", self._ctrl_params['mode'][fan_speed])
         if result:
             self._fan_speed = fan_speed
             self.schedule_update_ha_state()
