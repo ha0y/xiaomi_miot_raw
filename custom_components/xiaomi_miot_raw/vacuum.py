@@ -230,3 +230,7 @@ class MiotVacuum(GenericMiotDevice, StateVacuumEntity):
                     self._state = k
         except:
             pass
+        try:
+            self._fan_speed = self.get_key_by_value(self._ctrl_params['mode'],self._state_attrs.get(self._did_prefix + 'mode'))
+        except KeyError:
+            self._fan_speed = None
