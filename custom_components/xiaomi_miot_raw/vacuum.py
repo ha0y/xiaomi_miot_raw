@@ -126,7 +126,7 @@ class MiotVacuum(GenericMiotDevice, StateVacuumEntity):
             s |= SUPPORT_STOP
         if self._did_prefix + 'mode' in self._mapping:
             s |= SUPPORT_FAN_SPEED
-        if 'battery_battery_level' in self._mapping:
+        if self._did_prefix + 'battery_level' in self._mapping:
             s |= SUPPORT_BATTERY
         if 'a_l_battery_start_charge' in self._mapping:
             s |= SUPPORT_RETURN_HOME
@@ -228,5 +228,9 @@ class MiotVacuum(GenericMiotDevice, StateVacuumEntity):
             for k,v in STATE_MAPPING.items():
                 if self._state_attrs.get(self._did_prefix + 'status') in v:
                     self._state = k
+        except:
+            pass
+        try:
+            self._battery_level = self._state_attrs.get(self._did_prefix + 'battery_level')
         except:
             pass
