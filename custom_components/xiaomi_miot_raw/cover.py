@@ -112,17 +112,12 @@ class MiotCover(GenericMiotDevice, CoverEntity):
         """Return the current position of the cover."""
         if self._current_position is None:
             return 50
-        elif self._ctrl_params.get('reverse_position_percentage', False):
-            return self._ctrl_params['current_position']['value_range'][1] - self._current_position
         return self._current_position
 
     @property
     def is_closed(self):
         """Return if the cover is closed, same as position 0."""
-        try:
-            return self._current_position / self._ctrl_params['current_position']['value_range'][1] <= 0.03
-        except Exception:
-            return self._current_position == 0
+        return self._current_position == 0
 
     @property
     def is_closing(self):
@@ -188,10 +183,32 @@ class MiotCover(GenericMiotDevice, CoverEntity):
 
         if result:
             self._skip_update = True
+            
+    def _update_current_position(self):
+        p = self._state_attrs.get(self._did_prefix + 'current_position')
+        if p is None:
+            self._current_position = None
+            return
+        range_min = 0
+        range_max = 100
+        try:
+            range_min = self._ctrl_params['current_position']['value_range'][0]
+            range_max = self._ctrl_params['current_position']['value_range'][1]
+        except KeyError:
+            pass
+        if p < range_min or range_max < p:
+            self._current_position = None
+            return
+        if 0 != range_min and range_max != 100:
+            p = (p - range_min) / (range_max - range_min) * 100
+        if self._ctrl_params.get('reverse_position_percentage', False):
+            p = 100 - p
+        self._current_position = p;
 
     def _handle_platform_specific_attrs(self):
         super()._handle_platform_specific_attrs()
-        self._current_position = self._state_attrs.get(self._did_prefix + 'current_position')
+        self._update_current_position()
+        
         if self.is_closing or self.is_opening:
             self.async_update = self._throttle1
         else:
