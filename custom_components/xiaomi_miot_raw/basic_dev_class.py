@@ -589,6 +589,11 @@ class GenericMiotDevice(Entity):
                     return int(slider_value/100*(valuerange[1]-valuerange[0]+1)/valuerange[2])*valuerange[2]
                 else:
                     return round(value/(valuerange[1]-valuerange[0]+1)*255)
+            elif param == 'current_position':
+                if dir:
+                    return int((value/100*(valuerange[1]-valuerange[0])+valuerange[0])/valuerange[2])*valuerange[2]
+                else:
+                    return round((value-valuerange[0])/(valuerange[1]-valuerange[0])*100)
             elif param == 'target_humidity':
                 # valuerange = self._ctrl_params[param]['value_range']
                 if value < valuerange[0]:
