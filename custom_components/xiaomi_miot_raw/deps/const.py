@@ -88,6 +88,7 @@ MAP = {
     "sensor": {
         "air_fryer",
         "air_monitor",
+        "battery",
         "chair",
         "chair_customize",
         "cooker",
