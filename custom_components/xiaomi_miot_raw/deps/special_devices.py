@@ -25,9 +25,14 @@ SPECIAL_DEVICES={
         "params":{"event_based":True}
     },
     "cuco.plug.cp2":{
-        "device_type": ['switch'],
-        "mapping": {"switch": {"switch_status": {"siid": 2, "piid": 1}}},
-        "params": {"switch": {"switch_status": {"power_on": True, "power_off": False}, "main": True}}
+        "device_type": ['switch','sensor'],
+        "mapping": {"switch":{"switch_status":{"siid":2,"piid":1}},"power_consumption":{"power_consumption":{"siid":2,"piid":2},"voltage":{"siid":2,"piid":3},"electric_current":{"siid":2,"piid":4},"countdown_time":{"siid":2,"piid":5}}},
+        "params": {"switch":{"switch_status":{"power_on":True,"power_off":False},"main":True},"power_consumption":{"power_consumption":{"access":5,"format":"uint16","unit":"kWh","value_range":[0,65535,1],"value_ratio": 0.01},"voltage":{"access":5,"format":"uint16","unit":"V","value_range":[0,3000,1],"value_ratio": 0.1},"electric_current":{"access":1,"format":"uint16","unit":"A","value_range":[0,65535,1],"value_ratio": 0.001},"countdown_time":{"access":7,"format":"uint16","unit":"minutes","value_range":[0,1440,1]}}, 'max_properties': 1}
+    },
+    "cuco.plug.cp1m":{
+        "device_type": ['switch','sensor'],
+        "mapping": {"switch":{"switch_status":{"siid":2,"piid":1}},"power_consumption":{"power_consumption":{"siid":2,"piid":2},"voltage":{"siid":2,"piid":3},"electric_current":{"siid":2,"piid":4}}},
+        "params": {"switch":{"switch_status":{"power_on":True,"power_off":False},"main":True},"power_consumption":{"power_consumption":{"access":5,"format":"uint16","unit":"kWh","value_range":[0,65535,1],"value_ratio": 0.01},"voltage":{"access":5,"format":"uint16","unit":"V","value_range":[0,3000,1],"value_ratio": 0.1},"electric_current":{"access":1,"format":"uint16","unit":"A","value_range":[0,65535,1],"value_ratio": 0.001}}, 'max_properties': 1}
     },
     "degree.lunar.smh013": {
         "device_type": ['switch', 'sensor'],
