@@ -194,8 +194,9 @@ class MiotCover(GenericMiotDevice, CoverEntity):
     def _handle_platform_specific_attrs(self):
         super()._handle_platform_specific_attrs()
         self._current_position = self._state_attrs.get(self._did_prefix + 'current_position')
-        if 'value_range' in self._ctrl_params['current_position'] and self._current_position is not None:
-            self._current_position = self.convert_value(self._current_position,"current_position",False,self._ctrl_params['current_position']['value_range'])
+        if 'current_position' in self._ctrl_params:
+            if 'value_range' in self._ctrl_params['current_position'] and self._current_position is not None:
+                self._current_position = self.convert_value(self._current_position,"current_position",False,self._ctrl_params['current_position']['value_range'])
         if self.is_closing or self.is_opening:
             self.async_update = self._throttle1
         else:
