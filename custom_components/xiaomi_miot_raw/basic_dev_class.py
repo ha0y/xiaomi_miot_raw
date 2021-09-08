@@ -398,6 +398,8 @@ class GenericMiotDevice(Entity):
     async def async_update(self):
         """Fetch state from the device."""
         def pre_process_data(key, value):
+            if value is None:
+                return None
             try:
                 if key in self._ctrl_params_new:
                     if f := self._ctrl_params_new[key].get('value_ratio'):
