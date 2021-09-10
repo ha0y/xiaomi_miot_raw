@@ -865,3 +865,79 @@ class MiotSubToggleableDevice(MiotSubDevice):
             return STATE_ON if self.device_state_attributes.get(f"{self._did_prefix}switch_status") else STATE_OFF
         except:
             return STATE_UNKNOWN
+
+class MiotIRDevice(GenericMiotDevice):
+    def __init__(self, device, config, device_info, hass = None, mi_type = None):
+        def setup_cloud(self, hass) -> tuple:
+            try:
+                return next((cloud['cloud_instance'], cloud['coordinator']) for cloud in hass.data[DOMAIN]['cloud_instance_list']
+                            if cloud['user_id'] == self._cloud.get('userId'))
+            except StopIteration:
+                _LOGGER.info(f"Setting up xiaomi account for {self._name}...")
+                mc = MiCloud(
+                    aiohttp_client.async_create_clientsession(self._hass, auto_cleanup=False)
+                )
+                mc.login_by_credientals(
+                    self._cloud.get('userId'),
+                    self._cloud.get('serviceToken'),
+                    self._cloud.get('ssecurity')
+                )
+                co = MiotCloudCoordinator(hass, mc)
+                hass.data[DOMAIN]['cloud_instance_list'].append({
+                    "user_id": self._cloud.get('userId'),
+                    "username": None,  # 不是从UI配置的用户，没有用户名
+                    "cloud_instance": mc,
+                    "coordinator": co
+                })
+                return (mc, co)
+
+        self._device = device
+        self._mi_type = mi_type
+        self._did_prefix = f"{self._mi_type[:10]}_" if self._mi_type else ""
+        
+        self._mapping = config.get(CONF_MAPPING)
+        self._ctrl_params = config.get(CONF_CONTROL_PARAMS) or {}
+
+        self._name = config.get(CONF_NAME)
+        self._update_instant = config.get(CONF_UPDATE_INSTANT)
+        self._model = device_info.model
+        
+        self._unique_id = f"{device_info.model.split('.')[-1]}-cloud-{config.get(CONF_CLOUD)['did'][-6:]}"
+        self._entity_id = self._unique_id
+        self.entity_id = f"{DOMAIN}.{self._entity_id}"
+
+        self._hass = hass
+        self._entry_id = config['config_entry'].entry_id if 'config_entry' in config else None
+        self._cloud = config.get(CONF_CLOUD)
+        self._cloud_write = config.get('cloud_write')
+        self._cloud_instance = None
+        self.coordinator = None
+        self._body_for_update_cloud = None
+        if self._cloud:
+            c = setup_cloud(self, hass)
+            self._cloud_instance = c[0]
+            self.coordinator = c[1]
+            self.coordinator.add_fixed_by_mapping(self._cloud, self._mapping)
+
+            data1 = {}
+            data1['datasource'] = 1
+            data1['params'] = []
+            for value in self._mapping.values():
+                if 'aiid' not in value:
+                    data1['params'].append({**{'did':self._cloud.get("did")},**value})
+            self._body_for_update_cloud = json.dumps(data1,separators=(',', ':'))
+
+        self._state = None
+        self._state_attrs = {
+            ATTR_MODEL: self._model,
+        }
+
+    @property
+    def assumed_state(self):
+        """Return true if unable to access real state of entity."""
+        return True
+
+    @property
+    def should_poll(self):
+        """Poll the miio device."""
+        return False

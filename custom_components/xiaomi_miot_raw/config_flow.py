@@ -35,7 +35,7 @@ from .deps.const import (
     MAP,
 )
 from .deps.miot_device_adapter import MiotAdapter
-from .deps.special_devices import SPECIAL_DEVICES, LOCK_PRM
+from .deps.special_devices import SPECIAL_DEVICES
 from .deps.xiaomi_cloud_new import MiCloud
 
 SERVERS = {
@@ -45,6 +45,12 @@ SERVERS = {
     'ru': "Russia",
     'sg': "Singapore",
     'us': "United States"
+}
+
+LOCK_PRM = {
+    "device_type": ['sensor'],
+    "mapping":'{"door":{"key":7,"type":"event"},"lock":{"key":11,"type":"event"}}',
+    "params":'{"event_based":true}'
 }
 
 class URN:
@@ -111,21 +117,6 @@ class URN:
         return c >= 0
 
 
-async def async_get_mp_from_net(hass, model):
-    cs = aiohttp_client.async_get_clientsession(hass)
-    url = "https://raw.githubusercontent.com/ha0y/miot-params/master/main.json"
-    with async_timeout.timeout(10):
-        try:
-            a = await cs.get(url)
-        except Exception:
-            a = None
-    if a:
-        data = await a.json(content_type=None)
-        for item in data:
-            if item['device_model'] == model:
-                return item
-    return None
-
 async def guess_mp_from_model(hass,model):
     if m := SPECIAL_DEVICES.get(model):
         return {
@@ -171,6 +162,17 @@ async def guess_mp_from_model(hass,model):
                 mp = ad.get_all_mapping()
                 prm = ad.get_all_params()
                 dt = ad.get_all_devtype() # 这一行必须在下面
+                
+                if str(model).startswith('miir.') and dt == ['fan']:
+                    dt = []
+                    if str(model).startswith('miir.light'):
+                        dt += 'light'
+                    elif str(model).startswith('miir.tv'):
+                        dt += 'media_player'
+                    elif str(model).startswith('miir.tv'):
+                        dt += 'climate'
+                    prm.update({'ir': True})
+                
                 return {
                     'device_type': dt or ['switch'],
                     'mapping': json.dumps(mp,separators=(',', ':')),
@@ -187,9 +189,11 @@ def data_masking(s: str, n: int) -> str:
     return re.sub(f"(?<=.{{{n}}}).(?=.{{{n}}})", "*", str(s))
 
 def get_conn_type(device: dict):
-    #0 for wifi, 1 for zigbee, 2 for BLE, 3 for Mesh, -1 for Unknown
+    #0 for wifi, 1 for zigbee, 2 for BLE, 3 for Mesh, 4 for IR, -1 for Unknown
     if 'blt' in device['did']:
         return 2
+    if str(device.get('model')).startswith('miir'):
+        return 4
     if device.get('parent_id'):
         return 1
     if device.get('localip'):
@@ -260,7 +264,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 if device['did'] not in self._actions:
                     dt = get_conn_type(device)
                     dt = "WiFi" if dt == 0 else "ZigBee" if dt == 1 else "BLE" if dt == 2 \
-                                           else "BLE Mesh" if dt == 3 else "Unknown"
+                                        else "BLE Mesh" if dt == 3 else "InfraRed" if dt == 4 else "Unknown"
                     name = f"添加 {device['name']} ({dt}{', '+device['localip'] if (dt == '''WiFi''') else ''})"
                     self._actions[device['did']] = name
             self._actions.pop('xiaomi_account')
@@ -627,7 +631,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if device['did'] not in devlist:
                 dt = get_conn_type(device)
                 dt = "WiFi" if dt == 0 else "ZigBee" if dt == 1 else "BLE" if dt == 2 \
-                                        else "BLE Mesh" if dt == 3 else "Unknown"
+                                        else "BLE Mesh" if dt == 3 else "InfraRed" if dt == 4 else "Unknown"
                 name = f"{device['name']} ({dt}{', '+device['localip'] if (dt == '''WiFi''') else ''})"
                 devlist[device['did']] = name
         return self.async_show_form(
@@ -761,7 +765,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             if device['did'] not in devlist:
                 dt = get_conn_type(device)
                 dt = "WiFi" if dt == 0 else "ZigBee" if dt == 1 else "BLE" if dt == 2 \
-                                        else "BLE Mesh" if dt == 3 else "Unknown"
+                                        else "BLE Mesh" if dt == 3 else "InfraRed" if dt == 4 else "Unknown"
                 name = f"{device['name']} ({dt}{', '+device['localip'] if (dt == '''WiFi''') else ''})"
                 devlist[device['did']] = name
         return self.async_show_form(

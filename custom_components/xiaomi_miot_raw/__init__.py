@@ -304,6 +304,20 @@ async def async_generic_setup_platform(
         async_add_devices(sensor_devices, update_before_add=True)
         return True
 
+    if 'ir' in params:
+        device = None
+        if TYPE == 'light':
+            device = main_class_dict['_ir_light']
+        elif TYPE == 'media_player':
+            device = main_class_dict['_ir_tv']
+        elif TYPE == 'climate':
+            device = main_class_dict['_ir_aircon']
+        if device:
+            if 'config_entry' in config:
+                hass.data[DOMAIN]['miot_main_entity'][id] = device
+            async_add_devices([device], update_before_add=True)
+        return True
+            
     mappingnew = {}
     paramsnew = {}
 

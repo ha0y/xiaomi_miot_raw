@@ -66,7 +66,7 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         async_add_devices,
         discovery_info,
         TYPE,
-        {'default': MiotLight},
+        {'default': MiotLight, '_ir_light': MiotIRLight},
         {'default': MiotSubLight}
     )
 
@@ -329,3 +329,6 @@ class MiotSubLight(MiotSubToggleableDevice, LightEntity):
         except KeyError:
             self._color = None
         return self._color
+
+class MiotIRLight(LightEntity):
+    pass
