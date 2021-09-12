@@ -305,17 +305,19 @@ async def async_generic_setup_platform(
         return True
 
     if 'ir' in params:
-        device = None
+        # TYPE number and select will also come here
         if TYPE == 'light':
-            device = main_class_dict['_ir_light']
+            device = main_class_dict['_ir_light'](config, hass, 'ir_light_control')
         elif TYPE == 'media_player':
-            device = main_class_dict['_ir_tv']
+            device = main_class_dict['_ir_tv'](config, hass, 'ir_tv_control')
         elif TYPE == 'climate':
-            device = main_class_dict['_ir_aircon']
-        if device:
-            if 'config_entry' in config:
-                hass.data[DOMAIN]['miot_main_entity'][id] = device
-            async_add_devices([device], update_before_add=True)
+            device = main_class_dict['_ir_aircon'](config, hass, 'ir_aircondition_control')
+        else:
+            return False
+        _LOGGER.info(f"Initializing InfraRed device {config.get(CONF_NAME)}, type: {TYPE}")
+        if 'config_entry' in config:
+            hass.data[DOMAIN]['miot_main_entity'][id] = device
+        async_add_devices([device], update_before_add=False)
         return True
             
     mappingnew = {}

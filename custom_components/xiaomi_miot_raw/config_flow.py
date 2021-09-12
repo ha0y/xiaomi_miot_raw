@@ -166,11 +166,11 @@ async def guess_mp_from_model(hass,model):
                 if str(model).startswith('miir.') and dt == ['fan']:
                     dt = []
                     if str(model).startswith('miir.light'):
-                        dt += 'light'
+                        dt.append('light')
                     elif str(model).startswith('miir.tv'):
-                        dt += 'media_player'
-                    elif str(model).startswith('miir.tv'):
-                        dt += 'climate'
+                        dt.append('media_player')
+                    elif str(model).startswith('miir.aircondition'):
+                        dt.append('climate')
                     prm.update({'ir': True})
                 
                 return {

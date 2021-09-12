@@ -25,7 +25,8 @@ from .basic_dev_class import (
     GenericMiotDevice,
     ToggleableMiotDevice,
     MiotSubDevice,
-    MiotSubToggleableDevice
+    MiotSubToggleableDevice,
+    MiotIRDevice,
 )
 from . import async_generic_setup_platform
 from .deps.const import (
@@ -330,5 +331,38 @@ class MiotSubLight(MiotSubToggleableDevice, LightEntity):
             self._color = None
         return self._color
 
-class MiotIRLight(LightEntity):
-    pass
+class MiotIRLight(MiotIRDevice, LightEntity):
+    @property
+    def supported_features(self):
+        """Return the supported features."""
+        return SUPPORT_BRIGHTNESS
+
+    @property
+    def brightness(self):
+        return 128
+
+    @property
+    def is_on(self):
+        return self._state
+
+    async def async_turn_on(self, **kwargs):
+        result = False
+        if ATTR_BRIGHTNESS in kwargs:
+            if kwargs[ATTR_BRIGHTNESS] > 128:
+                result = await self.async_send_ir_command('brightness_up')
+            elif kwargs[ATTR_BRIGHTNESS] < 128:
+                result = await self.async_send_ir_command('brightness_down')
+            else:
+                return
+        else:
+            result = await self.async_send_ir_command('turn_on')
+        if result:
+            self._state = True
+            self.async_write_ha_state()
+
+    async def async_turn_off(self, **kwargs):
+        result = await self.async_send_ir_command('turn_off')
+        if result:
+            self._state = False
+            self.async_write_ha_state()
+

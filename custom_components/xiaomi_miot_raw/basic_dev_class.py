@@ -867,7 +867,7 @@ class MiotSubToggleableDevice(MiotSubDevice):
             return STATE_UNKNOWN
 
 class MiotIRDevice(GenericMiotDevice):
-    def __init__(self, device, config, device_info, hass = None, mi_type = None):
+    def __init__(self, config, hass, did_prefix):
         def setup_cloud(self, hass) -> tuple:
             try:
                 return next((cloud['cloud_instance'], cloud['coordinator']) for cloud in hass.data[DOMAIN]['cloud_instance_list']
@@ -891,18 +891,14 @@ class MiotIRDevice(GenericMiotDevice):
                 })
                 return (mc, co)
 
-        self._device = device
-        self._mi_type = mi_type
-        self._did_prefix = f"{self._mi_type[:10]}_" if self._mi_type else ""
-        
         self._mapping = config.get(CONF_MAPPING)
         self._ctrl_params = config.get(CONF_CONTROL_PARAMS) or {}
 
         self._name = config.get(CONF_NAME)
+        self._did_prefix = did_prefix + '_'
         self._update_instant = config.get(CONF_UPDATE_INSTANT)
-        self._model = device_info.model
         
-        self._unique_id = f"{device_info.model.split('.')[-1]}-cloud-{config.get(CONF_CLOUD)['did'][-6:]}"
+        self._unique_id = f"miotir-cloud-{config.get(CONF_CLOUD)['did'][-6:]}"
         self._entity_id = self._unique_id
         self.entity_id = f"{DOMAIN}.{self._entity_id}"
 
@@ -928,9 +924,8 @@ class MiotIRDevice(GenericMiotDevice):
             self._body_for_update_cloud = json.dumps(data1,separators=(',', ':'))
 
         self._state = None
-        self._state_attrs = {
-            ATTR_MODEL: self._model,
-        }
+        self._state_attrs = {}
+        self._available = True
 
     @property
     def assumed_state(self):
@@ -939,5 +934,27 @@ class MiotIRDevice(GenericMiotDevice):
 
     @property
     def should_poll(self):
-        """Poll the miio device."""
+        """Poll the IR device."""
         return False
+
+    @property
+    def device_info(self):
+        return {
+            'identifiers': {(DOMAIN, self._unique_id)},
+            'name': self._name,
+            'manufacturer': 'Xiaomi'
+        }
+
+    async def async_send_ir_command(self, command:str):
+        _LOGGER.warn(self._mapping)
+        if 'a_l' not in self._mapping:
+            _LOGGER.error(f'{self._name} does not support any action!')
+            return False
+        if self._did_prefix + command not in self._mapping['a_l']:
+            _LOGGER.error(f'Failed to send IR command {command} to {self._name} because it cannot be found in mapping.')
+            return False
+        result = await self.call_action_new(*(self._mapping['a_l'][self._did_prefix + command].values())) 
+        return True if result else False
+
+    # async def async_update(self):
+    #     pass
