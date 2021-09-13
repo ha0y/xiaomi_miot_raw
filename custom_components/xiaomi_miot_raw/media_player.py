@@ -17,6 +17,7 @@ from homeassistant.components import persistent_notification
 
 from .basic_dev_class import (
     GenericMiotDevice,
+    MiotIRDevice,
     ToggleableMiotDevice,
     MiotSubDevice,
     MiotSubToggleableDevice
@@ -50,65 +51,14 @@ class dev_info:
 
 @asyncio.coroutine
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
-    """Set up the fan from config."""
-
-    if DATA_KEY not in hass.data:
-        hass.data[DATA_KEY] = {}
-
-    host = config.get(CONF_HOST)
-    token = config.get(CONF_TOKEN)
-    mapping = config.get(CONF_MAPPING)
-    params = config.get(CONF_CONTROL_PARAMS)
-
-    mappingnew = {}
-
-    main_mi_type = None
-    other_mi_type = []
-
-    for t in MAP[TYPE]:
-        if mapping.get(t):
-            other_mi_type.append(t)
-        if 'main' in (params.get(t) or ""):
-            main_mi_type = t
-
-    try:
-        other_mi_type.remove(main_mi_type)
-    except:
-        pass
-
-    if main_mi_type or type(params) == OrderedDict:
-        for k,v in mapping.items():
-            for kk,vv in v.items():
-                mappingnew[f"{k[:10]}_{kk}"] = vv
-
-        if 'a_l' not in mapping.keys():
-            persistent_notification.async_create(
-                hass,
-                f"为了支持更多种类小爱，配置参数有变动，\n"
-                f"请删除您的 **{config.get(CONF_NAME)}** 重新配置。谢谢\n",
-                "Xiaomi MIoT")
-
-        _LOGGER.info("Initializing %s with host %s (token %s...)", config.get(CONF_NAME), host, token[:5])
-
-        try:
-            if type(params) == OrderedDict:
-                miio_device = MiotDevice(ip=host, token=token, mapping=mapping)
-            else:
-                miio_device = MiotDevice(ip=host, token=token, mapping=mappingnew)
-            device_info = dev_info(host,token,"","")
-            device = MiotMediaPlayer(miio_device, config, device_info, hass, main_mi_type)
-        except DeviceException as de:
-            _LOGGER.warn(de)
-            raise PlatformNotReady
-
-        _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
-        hass.data[DOMAIN]['miot_main_entity'][config['config_entry'].entry_id] = device
-        hass.data[DOMAIN]['entities'][device.unique_id] = device
-        async_add_devices([device], update_before_add=True)
-
-    else:
-        _LOGGER.error("media player只能作为主设备！")
-        pass
+    await async_generic_setup_platform(
+        hass,
+        config,
+        async_add_devices,
+        discovery_info,
+        TYPE,
+        {'default': MiotMediaPlayer, '_ir_tv': MiotIRTV},
+    )
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     config = copy.copy(hass.data[DOMAIN]['configs'].get(config_entry.entry_id, dict(config_entry.data)))
@@ -235,16 +185,89 @@ class MiotMediaPlayer(GenericMiotDevice, MediaPlayerEntity):
 
     def _handle_platform_specific_attrs(self):
         super()._handle_platform_specific_attrs()
-    #     player_state = self._state_attrs.get(self._did_prefix + 'playing_state')
-    #     if player_state is not None and self._ctrl_params.get('playing_state'):
-    #         if player_state == self._ctrl_params['playing_state'].get('paused'):
-    #             self._player_state = STATE_PAUSED
-    #         elif player_state == self._ctrl_params['playing_state'].get('playing'):
-    #             self._player_state = STATE_PLAYING
-    #         else:
-    #             _LOGGER.warning(f"Unknown state for player {self._name}: {player_state}")
+        player_state = self._state_attrs.get(self._did_prefix + 'playing_state')
+        if player_state is not None and self._ctrl_params.get('playing_state'):
+            if player_state == self._ctrl_params['playing_state'].get('paused'):
+                self._player_state = STATE_PAUSED
+            elif player_state == self._ctrl_params['playing_state'].get('playing'):
+                self._player_state = STATE_PLAYING
+            else:
+                _LOGGER.warning(f"Unknown state for player {self._name}: {player_state}")
 
         self._volume_level = self.convert_value(
             self._state_attrs.get(self._did_prefix + 'volume') or 0,
             'volume', False, self._ctrl_params['volume']['value_range']
         )
+
+class MiotIRTV(MiotIRDevice, MediaPlayerEntity):
+    def __init__(self, config, hass, did_prefix):
+        super().__init__(config, hass, did_prefix)
+        self._player_state = STATE_PLAYING
+        self._sound_mode = ""
+        self._source = ""
+        self._volume_level = 0.5
+
+    @property
+    def supported_features(self):
+        """Return the supported features."""
+        return (
+            SUPPORT_VOLUME_SET
+            | SUPPORT_VOLUME_MUTE
+            | SUPPORT_TURN_ON
+            | SUPPORT_TURN_OFF
+            | SUPPORT_NEXT_TRACK
+            | SUPPORT_PREVIOUS_TRACK
+        )
+
+    @property
+    def device_class(self):
+        return DEVICE_CLASS_TV
+
+    @property
+    def state(self):
+        """Return the state of the player."""
+        return self._player_state
+
+    @property
+    def volume_level(self):
+        """Return the volume level of the media player (0..1)."""
+        return self._volume_level
+
+    async def async_turn_on(self):
+        result = await self.async_send_ir_command('turn_on')
+        if result:
+            self._player_state = STATE_PLAYING
+            self.async_write_ha_state()
+
+    async def async_turn_off(self):
+        result = await self.async_send_ir_command('turn_off')
+        if result:
+            self._player_state = STATE_OFF
+            self.async_write_ha_state()
+
+    async def async_volume_up(self):
+        await self.async_send_ir_command('volume_up')
+
+    async def async_volume_down(self):
+        await self.async_send_ir_command('volume_down')
+
+    async def async_set_volume_level(self, volume):
+        if volume < 0.5:
+            result = await self.async_volume_down()
+        elif volume > 0.5:
+            result = await self.async_volume_up()
+        else:
+            return
+        if result:
+            self._volume_level = 0.5
+            self.async_write_ha_state()
+
+
+    async def async_mute_volume(self):
+        await self.async_send_ir_command('mute_on')
+
+    async def async_media_next_track(self):
+        await self.async_send_ir_command('channel_up')
+
+    async def async_media_previous_track(self):
+        await self.async_send_ir_command('channel_down')

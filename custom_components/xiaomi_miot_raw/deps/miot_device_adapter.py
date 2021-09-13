@@ -559,7 +559,7 @@ class MiotAdapter:
             try:
                 ret[list(ret.keys())[0]]['main'] = True
             except IndexError:
-                _LOGGER.error("识别不出主设备，请手动指定")
+                pass
 
         for item in CUSTOM_SERVICES:
             ret.pop(item, None)
