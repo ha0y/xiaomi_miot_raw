@@ -513,7 +513,7 @@ class GenericMiotDevice(Entity):
             self._handle_platform_specific_attrs()
             self.publish_updates()
 
-        except DeviceException as ex:
+        except (DeviceException, OSError) as ex:
             if self._fail_count < 3:
                 self._fail_count += 1
                 _LOGGER.info("Got exception while fetching %s 's state: %s. Count %d", self._name, ex, self._fail_count)
@@ -555,7 +555,7 @@ class GenericMiotDevice(Entity):
         if sel_to_add:
             self._hass.data[DOMAIN]['add_handler']['select'][self._entry_id](sel_to_add, update_before_add=True)
 
-            
+
 
     def get_key_by_value(self, d:dict, value):
         try:
@@ -897,7 +897,7 @@ class MiotIRDevice(GenericMiotDevice):
         self._name = config.get(CONF_NAME)
         self._did_prefix = did_prefix + '_'
         self._update_instant = config.get(CONF_UPDATE_INSTANT)
-        
+
         self._unique_id = f"miotir-cloud-{config.get(CONF_CLOUD)['did'][-6:]}"
         self._entity_id = self._unique_id
         self.entity_id = f"{DOMAIN}.{self._entity_id}"
@@ -946,14 +946,13 @@ class MiotIRDevice(GenericMiotDevice):
         }
 
     async def async_send_ir_command(self, command:str):
-        _LOGGER.warn(self._mapping)
         if 'a_l' not in self._mapping:
             _LOGGER.error(f'{self._name} does not support any action!')
             return False
         if self._did_prefix + command not in self._mapping['a_l']:
             _LOGGER.error(f'Failed to send IR command {command} to {self._name} because it cannot be found in mapping.')
             return False
-        result = await self.call_action_new(*(self._mapping['a_l'][self._did_prefix + command].values())) 
+        result = await self.call_action_new(*(self._mapping['a_l'][self._did_prefix + command].values()))
         return True if result else False
 
     # async def async_update(self):

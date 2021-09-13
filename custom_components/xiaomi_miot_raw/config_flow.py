@@ -162,7 +162,7 @@ async def guess_mp_from_model(hass,model):
                 mp = ad.get_all_mapping()
                 prm = ad.get_all_params()
                 dt = ad.get_all_devtype() # 这一行必须在下面
-                
+
                 if str(model).startswith('miir.') and dt == ['fan']:
                     dt = []
                     if str(model).startswith('miir.light'):
@@ -172,7 +172,7 @@ async def guess_mp_from_model(hass,model):
                     elif str(model).startswith('miir.aircondition'):
                         dt.append('climate')
                     prm.update({'ir': True})
-                
+
                 return {
                     'device_type': dt or ['switch'],
                     'mapping': json.dumps(mp,separators=(',', ':')),
@@ -539,12 +539,14 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     else:
                         return self.async_create_entry(title=data_masking(user_input['username'], 4),
                                 data=user_input)
+                elif resp[0] == -2:
+                    return await self.async_step_xiaomi_account(error='connection_failed',hint=f"{resp[1]}\n")
                 else:
                     if resp[1] is None:
                         return await self.async_step_xiaomi_account(error='wrong_pwd')
                     else:
                         return await self.async_step_xiaomi_account(error='need_auth',hint=f"[{str(resp[1])[:100]+'...'}]({resp[1]})\n")
-                        
+
 
         return self.async_show_form(
             step_id='xiaomi_account',

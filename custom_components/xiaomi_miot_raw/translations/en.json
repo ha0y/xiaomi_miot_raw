@@ -10,6 +10,7 @@
         "error": {
             "unexpected_error": "Unexpected error. See logs for detail",
             "cannot_connect": "Can not connect",
+            "connection_failed": "Network unreachable",
             "value_error": "Wrong value",
             "bad_params": "Bad params",
             "no_local_access": "Local access is not supported on this device. Cloud Access has been enabled. Click 'SUBMIT' again.",

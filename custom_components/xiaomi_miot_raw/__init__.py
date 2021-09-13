@@ -15,7 +15,7 @@ from homeassistant.const import *
 from homeassistant.const import __version__ as current_version
 from homeassistant.core import callback
 from homeassistant.components import persistent_notification
-from homeassistant.exceptions import PlatformNotReady
+from homeassistant.exceptions import PlatformNotReady, ConfigEntryNotReady
 from homeassistant.helpers import aiohttp_client, discovery
 from homeassistant.helpers.entity import Entity, ToggleEntity
 from homeassistant.helpers.entity_component import EntityComponent
@@ -210,7 +210,8 @@ async def _setup_micloud_entry(hass, config_entry):
 
     if devices is None:
         _LOGGER.debug(f"Login to MiCloud for {config_entry.title}")
-        if await cloud.login(data['username'], data['password']) == (0, None):
+        login_result = await cloud.login(data['username'], data['password'])
+        if login_result == (0, None):
             # update MiCloud auth in .storage
             data.update(cloud.auth)
             hass.config_entries.async_update_entry(config_entry, data=data)
@@ -219,9 +220,12 @@ async def _setup_micloud_entry(hass, config_entry):
 
             if devices is None:
                 _LOGGER.error("Can't load devices from MiCloud")
-
+        elif login_result[0] == -2:
+            _LOGGER.error(f"Internal error occurred while logging in Xiaomi account: {login_result[1]}")
+            raise ConfigEntryNotReady(login_result[1])
         else:
             _LOGGER.error("Can't login to MiCloud")
+            raise ConfigEntryNotReady
     if userid := cloud.auth.get('user_id'):
         # TODO don't allow login the same account twice
         hass.data[DOMAIN]['cloud_instance_list'].append({
@@ -286,7 +290,7 @@ async def async_generic_setup_platform(
     mapping = config.get(CONF_MAPPING)
     params = config.get(CONF_CONTROL_PARAMS)
     if params is None: params = OrderedDict()
-    
+
     if 'config_entry' in config:
         id = config['config_entry'].entry_id
     if TYPE == 'sensor' and 'event_based' in params:
@@ -297,7 +301,7 @@ async def async_generic_setup_platform(
             di['fw_version'],
             ""
         )
-        
+
         sensor_devices = [main_class_dict['_event_based_sensor'](None, config, device_info, hass, item) for item in mapping.items()]
         if 'config_entry' in config:
             hass.data[DOMAIN]['miot_main_entity'][id] = sensor_devices[0]
@@ -319,7 +323,7 @@ async def async_generic_setup_platform(
             hass.data[DOMAIN]['miot_main_entity'][id] = device
         async_add_devices([device], update_before_add=False)
         return True
-            
+
     mappingnew = {}
     paramsnew = {}
 
@@ -366,11 +370,11 @@ async def async_generic_setup_platform(
         except DeviceException as de:
             if not config.get(CONF_CLOUD):
                 _LOGGER.warn(de)
-                raise PlatformNotReady
+                raise ConfigEntryNotReady(de) from None
             else:
                 if not (di := config.get('cloud_device_info')):
                     _LOGGER.error(f"未能获取到设备信息，请删除 {config.get(CONF_NAME)} 重新配置。")
-                    raise PlatformNotReady
+                    raise ConfigEntryNotReady from None
                 else:
                     device_info = dev_info(
                         di['model'],
@@ -378,7 +382,9 @@ async def async_generic_setup_platform(
                         di['fw_version'],
                         "N/A for Cloud Mode"
                     )
-        
+        except OSError as oe:
+            raise ConfigEntryNotReady(oe) from None
+
         if TYPE in ('sensor', 'binary_sensor'):
             """Begin special policy for sensor"""
             device = main_class_dict['_sensor'](miio_device, config, device_info, hass, main_mi_type)
@@ -501,7 +507,7 @@ async def async_generic_setup_platform(
                     mappingnew[f"{k[:10]}_{kk}"] = vv
 
         devices = []
-        
+
         for item in other_mi_type:
             if item == "indicator_light":
                 if not params[item].get('enabled'):
