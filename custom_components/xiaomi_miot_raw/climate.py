@@ -423,12 +423,14 @@ class MiotIRClimate(MiotIRDevice, ClimateEntity):
         self._hvac_modes = None
         self._swing_modes = []
 
+    @property
     def supported_features(self):
         s = 0
         if 'ir_temperature' in self._mapping['ir_aircondition_control']:
             s |= SUPPORT_TARGET_TEMPERATURE
         if 'fan_speed_up' in self._mapping['ir_aircondition_control']:
             s |= SUPPORT_FAN_MODE
+        return s
 
     @property
     def temperature_unit(self):
@@ -461,9 +463,14 @@ class MiotIRClimate(MiotIRDevice, ClimateEntity):
         return 16
 
     @property
+    def hvac_mode(self):
+        """Return hvac target hvac state."""
+        return self._hvac_mode
+
+    @property
     def hvac_modes(self):
         """Return the list of available operation modes."""
         try:
-            return [next(a[0] for a in HVAC_MAPPING.items() if b in a[1]) for b in self._ctrl_params['mode']] + [HVAC_MODE_OFF]
+            return [next(a[0] for a in HVAC_MAPPING.items() if b in a[1]) for b in self._ctrl_params['ir_aircondition_control']['ir_mode']['value_list']] + [HVAC_MODE_OFF]
         except:
-            _LOGGER.error(f"Modes {self._ctrl_params['mode']} contains unsupported ones. Please report this message to the developer.")
+            _LOGGER.error(f"Modes {self._ctrl_params['ir_aircondition_control']['ir_mode']['value_list']} contains unsupported ones. Please report this message to the developer.")

@@ -163,7 +163,7 @@ async def guess_mp_from_model(hass,model):
                 prm = ad.get_all_params()
                 dt = ad.get_all_devtype() # 这一行必须在下面
 
-                if str(model).startswith('miir.') and dt == ['fan']:
+                if str(model).startswith('miir.'):
                     dt = []
                     if str(model).startswith('miir.light'):
                         dt.append('light')

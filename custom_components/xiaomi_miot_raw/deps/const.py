@@ -201,6 +201,7 @@ MAP = {
         "air_conditioner",
         "air_condition_outlet",
         "heater",
+        "ir_aircondition_control",
         "thermostat",
     },
     "lock": {
