@@ -80,10 +80,3 @@ SPECIAL_DEVICES={
         "params": {"environment": {"relative_humidity": {"access": 5, "format": "uint8", "unit": "percentage", "value_range": [0, 100, 1]}, "pm2_5_density": {"access": 5, "format": "uint16", "unit": "\u03bcg/m3", "value_range": [0, 1000, 1]}, "pm10_density": {"access": 5, "format": "uint16", "unit": "\u03bcg/m3", "value_range": [0, 1000, 1]}, "temperature": {"access": 5, "format": "float", "unit": "celsius", "value_range": [-30, 100, 1e-05]}, "co2_density": {"access": 5, "format": "uint16", "unit": "ppm", "value_range": [0, 9999, 1]}, "main": True}, "settings": {"start_time": {"access": 7, "format": "int32", "value_range": [0, 2147483647, 1]}, "end_time": {"access": 7, "format": "int32", "value_range": [0, 2147483647, 1]}, "monitoring_frequency": {"access": 7, "format": "uint16", "unit": "seconds", "value_list": {"Second": 600, "Null": 0}}, "screen_off": {"access": 7, "format": "uint16", "unit": "seconds", "value_list": {"Second": 300, "Null": 0}}, "device_off": {"access": 7, "format": "int8", "unit": "minutes", "value_list": {"Minute": 60, "Null": 0}}, "tempature_unit": {"access": 7, "format": "string"}}, 'max_properties': 8}
     },
 }
-
-
-LOCK_PRM = {
-    "device_type": ['sensor'],
-    "mapping":'{"door":{"key":7,"type":"event"},"lock":{"key":11,"type":"event"}}',
-    "params":'{"event_based":true}'
-}

@@ -398,6 +398,8 @@ class GenericMiotDevice(Entity):
     async def async_update(self):
         """Fetch state from the device."""
         def pre_process_data(key, value):
+            if value is None:
+                return None
             try:
                 if key in self._ctrl_params_new:
                     if f := self._ctrl_params_new[key].get('value_ratio'):
@@ -511,7 +513,7 @@ class GenericMiotDevice(Entity):
             self._handle_platform_specific_attrs()
             self.publish_updates()
 
-        except DeviceException as ex:
+        except (DeviceException, OSError) as ex:
             if self._fail_count < 3:
                 self._fail_count += 1
                 _LOGGER.info("Got exception while fetching %s 's state: %s. Count %d", self._name, ex, self._fail_count)
@@ -553,7 +555,7 @@ class GenericMiotDevice(Entity):
         if sel_to_add:
             self._hass.data[DOMAIN]['add_handler']['select'][self._entry_id](sel_to_add, update_before_add=True)
 
-            
+
 
     def get_key_by_value(self, d:dict, value):
         try:
@@ -863,3 +865,104 @@ class MiotSubToggleableDevice(MiotSubDevice):
             return STATE_ON if self.device_state_attributes.get(f"{self._did_prefix}switch_status") else STATE_OFF
         except:
             return STATE_UNKNOWN
+
+class MiotIRDevice(GenericMiotDevice):
+    def __init__(self, config, hass, did_prefix):
+        def setup_cloud(self, hass) -> tuple:
+            try:
+                return next((cloud['cloud_instance'], cloud['coordinator']) for cloud in hass.data[DOMAIN]['cloud_instance_list']
+                            if cloud['user_id'] == self._cloud.get('userId'))
+            except StopIteration:
+                _LOGGER.info(f"Setting up xiaomi account for {self._name}...")
+                mc = MiCloud(
+                    aiohttp_client.async_create_clientsession(self._hass, auto_cleanup=False)
+                )
+                mc.login_by_credientals(
+                    self._cloud.get('userId'),
+                    self._cloud.get('serviceToken'),
+                    self._cloud.get('ssecurity')
+                )
+                co = MiotCloudCoordinator(hass, mc)
+                hass.data[DOMAIN]['cloud_instance_list'].append({
+                    "user_id": self._cloud.get('userId'),
+                    "username": None,  # 不是从UI配置的用户，没有用户名
+                    "cloud_instance": mc,
+                    "coordinator": co
+                })
+                return (mc, co)
+
+        self._mapping = config.get(CONF_MAPPING)
+        if type(self._mapping) == str:
+            # 旧版单设备配置格式
+            self._mapping = json.loads(self._mapping)
+        elif type(self._mapping) == OrderedDict:
+            # YAML 配置格式
+            pass
+        else:
+            mappingnew = {}
+            for k,v in self._mapping.items():
+                for kk,vv in v.items():
+                    mappingnew[f"{k}_{kk}"] = vv
+            self._mapping = mappingnew
+        self._ctrl_params = config.get(CONF_CONTROL_PARAMS) or {}
+
+        self._name = config.get(CONF_NAME)
+        self._did_prefix = did_prefix + '_'
+        self._update_instant = config.get(CONF_UPDATE_INSTANT)
+
+        self._unique_id = f"miotir-cloud-{config.get(CONF_CLOUD)['did'][-6:]}"
+        self._entity_id = self._unique_id
+        self.entity_id = f"{DOMAIN}.{self._entity_id}"
+
+        self._hass = hass
+        self._entry_id = config['config_entry'].entry_id if 'config_entry' in config else None
+        self._cloud = config.get(CONF_CLOUD)
+        self._cloud_write = config.get('cloud_write')
+        self._cloud_instance = None
+        self.coordinator = None
+        self._body_for_update_cloud = None
+        if self._cloud:
+            c = setup_cloud(self, hass)
+            self._cloud_instance = c[0]
+            self.coordinator = c[1]
+            self.coordinator.add_fixed_by_mapping(self._cloud, self._mapping)
+
+            data1 = {}
+            data1['datasource'] = 1
+            data1['params'] = []
+            for value in self._mapping.values():
+                if 'aiid' not in value:
+                    data1['params'].append({**{'did':self._cloud.get("did")},**value})
+            self._body_for_update_cloud = json.dumps(data1,separators=(',', ':'))
+
+        self._state = None
+        self._state_attrs = {}
+        self._available = True
+
+    @property
+    def assumed_state(self):
+        """Return true if unable to access real state of entity."""
+        return True
+
+    @property
+    def should_poll(self):
+        """Poll the IR device."""
+        return False
+
+    @property
+    def device_info(self):
+        return {
+            'identifiers': {(DOMAIN, self._unique_id)},
+            'name': self._name,
+            'manufacturer': 'Xiaomi'
+        }
+
+    async def async_send_ir_command(self, command:str):
+        if 'a_l_' + self._did_prefix + command not in self._mapping:
+            _LOGGER.error(f'Failed to send IR command {command} to {self._name} because it cannot be found in mapping.')
+            return False
+        result = await self.call_action_new(*(self._mapping['a_l_' + self._did_prefix + command].values()))
+        return True if result else False
+
+    # async def async_update(self):
+    #     pass

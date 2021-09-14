@@ -22,6 +22,7 @@ from .deps.miio_new import MiotDevice
 import copy
 from .basic_dev_class import (
     GenericMiotDevice,
+    MiotIRDevice,
     ToggleableMiotDevice,
     MiotSubDevice,
     MiotSubToggleableDevice
@@ -87,7 +88,7 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         async_add_devices,
         discovery_info,
         TYPE,
-        {'default': MiotClimate},
+        {'default': MiotClimate, '_ir_aircon': MiotIRClimate},
     )
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -401,3 +402,94 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
             ver = self._state_attrs.get(self._did_prefix + 'vertical_swing') or 0
             hor = self._state_attrs.get(self._did_prefix + 'horizontal_swing') or 0
             self._current_swing_mode = SWING_MAPPING[hor << 1 | ver]
+
+class MiotIRClimate(MiotIRDevice, ClimateEntity):
+    def __init__(self, config, hass, did_prefix):
+        super().__init__(config, hass, did_prefix)
+        self._speed = None
+        self._target_temperature = 26
+        self._unit_of_measurement = TEMP_CELSIUS
+        self._preset = None
+        self._preset_modes = None
+        self._current_temperature = None
+        self._current_fan_mode = None
+        self._hvac_action = None
+        self._hvac_mode = None
+        self._aux = None
+        self._current_swing_mode = None
+        self._fan_modes = []
+        self._hvac_modes = None
+        self._swing_modes = []
+
+    @property
+    def supported_features(self):
+        s = 0
+        if self._did_prefix + 'ir_temperature' in self._mapping:
+            s |= SUPPORT_TARGET_TEMPERATURE
+        if self._did_prefix + 'fan_speed_up' in self._mapping:
+            s |= SUPPORT_FAN_MODE
+        return s
+
+    @property
+    def temperature_unit(self):
+        """Return the unit of measurement."""
+        return self._unit_of_measurement
+
+    @property
+    def current_temperature(self):
+        """Return the current temperature."""
+        return self._current_temperature
+
+    @property
+    def target_temperature(self):
+        """Return the temperature we try to reach."""
+        return self._target_temperature
+
+    @property
+    def target_temperature_step(self):
+        """Return the temperature we try to reach."""
+        return 1
+
+    @property
+    def target_temperature_high(self):
+        """Return the highbound target temperature we try to reach."""
+        return 30
+
+    @property
+    def target_temperature_low(self):
+        """Return the lowbound target temperature we try to reach."""
+        return 16
+
+    @property
+    def hvac_mode(self):
+        """Return hvac target hvac state."""
+        return self._hvac_mode
+
+    @property
+    def hvac_modes(self):
+        """Return the list of available operation modes."""
+        try:
+            return [next(a[0] for a in HVAC_MAPPING.items() if b in a[1]) for b in self._ctrl_params['ir_aircondition_control']['ir_mode']['value_list']] + [HVAC_MODE_OFF]
+        except:
+            _LOGGER.error(f"Modes {self._ctrl_params['ir_aircondition_control']['ir_mode']['value_list']} contains unsupported ones. Please report this message to the developer.")
+
+    async def async_set_hvac_mode(self, hvac_mode):
+        if hvac_mode == HVAC_MODE_OFF:
+            await self.async_send_ir_command('turn_off')
+        else:
+            result = await self.set_property_new(
+                self._did_prefix + 'ir_mode',
+                self._ctrl_params['ir_aircondition_control']['ir_mode']
+            )
+            if not result:
+                await self.async_send_ir_command('turn_on')
+
+    async def async_set_temperature(self, **kwargs):
+        if kwargs.get(ATTR_TEMPERATURE) is not None:
+            result = await self.set_property_new(
+                self._did_prefix + 'ir_temperature',
+                kwargs.get(ATTR_TEMPERATURE)
+            )
+            if result:
+                self._target_temperature = kwargs.get(ATTR_TEMPERATURE)
+                self.async_write_ha_state()

@@ -23,7 +23,7 @@
                     "host": "IP",
                     "token": "Token"
                 },
-                "description": "登入小米帳號以後，可以更快速的新增裝置。\n注意：並非所有列表中的裝置都支持，請自行測試並進行回報。",
+                "description": "登入小米帳號以後，可以更快速的新增裝置。",
                 "title": "選擇操作"
             },
             "xiaomi_account": {

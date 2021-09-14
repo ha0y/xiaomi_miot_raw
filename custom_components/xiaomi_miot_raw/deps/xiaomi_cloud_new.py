@@ -58,25 +58,32 @@ class MiCloud:
     async def login(self, username: str, password: str):
         try:
             payload = await self._login_step1()
+            if isinstance(payload, Exception):
+                return (-2, payload)
+
             data = await self._login_step2(username, password, payload)
+            if isinstance(data, Exception):
+                return (-2, data)
             if 'notificationUrl' in data:
                 return (-1, data['notificationUrl'])
             elif not data['location']:
                 return (-1, None)
 
             token = await self._login_step3(data['location'])
+            if isinstance(token, Exception):
+                return (-2, token)
 
             self.auth = {
                 'user_id': data['userId'],
                 'ssecurity': data['ssecurity'],
                 'service_token': token
             }
-
             return (0, None)
 
         except Exception as e:
-            _LOGGER.exception(f"Can't login to Mi Cloud: {e}")
-            return False
+            # There should be no exception here?
+            _LOGGER.exception(f"Can't login to MiCloud: {e}")
+            raise e from None
 
     def login_by_credientals(self, userId, serviceToken, ssecurity):
         self.auth = {
@@ -88,37 +95,45 @@ class MiCloud:
         return True
 
     async def _login_step1(self):
-        r = await self.session.get(
-            'https://account.xiaomi.com/pass/serviceLogin',
-            cookies={'sdkVersion': '3.8.6', 'deviceId': self.device_id},
-            headers={'User-Agent': UA % self.device_id},
-            params={'sid': 'xiaomiio', '_json': 'true'})
-        raw = await r.read()
-        _LOGGER.debug(f"MiCloud step1")
-        resp: dict = json.loads(raw[11:])
-        return {k: v for k, v in resp.items()
-                if k in ('sid', 'qs', 'callback', '_sign')}
+        _LOGGER.debug(f"Logging in to Xiaomi Cloud (1/3)...")
+        try:
+            r = await self.session.get(
+                'https://account.xiaomi.com/pass/serviceLogin',
+                cookies={'sdkVersion': '3.8.6', 'deviceId': self.device_id},
+                headers={'User-Agent': UA % self.device_id},
+                params={'sid': 'xiaomiio', '_json': 'true'})
+            raw = await r.read()
+            resp: dict = json.loads(raw[11:])
+            return {k: v for k, v in resp.items()
+                    if k in ('sid', 'qs', 'callback', '_sign')}
+        except ClientConnectorError as ex:
+            return ex
 
     async def _login_step2(self, username: str, password: str, payload: dict):
+        _LOGGER.debug(f"Logging in to Xiaomi Cloud (2/3)...")
         payload['user'] = username
         payload['hash'] = hashlib.md5(password.encode()).hexdigest().upper()
-
-        r = await self.session.post(
-            'https://account.xiaomi.com/pass/serviceLoginAuth2',
-            cookies={'sdkVersion': '3.8.6', 'deviceId': self.device_id},
-            data=payload,
-            headers={'User-Agent': UA % self.device_id},
-            params={'_json': 'true'})
-        raw = await r.read()
-        _LOGGER.debug(f"MiCloud step2")
-        resp = json.loads(raw[11:])
-        return resp
+        try:
+            r = await self.session.post(
+                'https://account.xiaomi.com/pass/serviceLoginAuth2',
+                cookies={'sdkVersion': '3.8.6', 'deviceId': self.device_id},
+                data=payload,
+                headers={'User-Agent': UA % self.device_id},
+                params={'_json': 'true'})
+            raw = await r.read()
+            resp = json.loads(raw[11:])
+            return resp
+        except ClientConnectorError as ex:
+            return ex
 
     async def _login_step3(self, location):
-        r = await self.session.get(location, headers={'User-Agent': UA})
-        service_token = r.cookies['serviceToken'].value
-        _LOGGER.debug(f"MiCloud step3")
-        return service_token
+        _LOGGER.debug(f"Logging in to Xiaomi Cloud (3/3)...")
+        try:
+            r = await self.session.get(location, headers={'User-Agent': UA})
+            service_token = r.cookies['serviceToken'].value
+            return service_token
+        except ClientConnectorError as ex:
+            return ex
 
     async def get_total_devices(self, servers: list):
         total = []
@@ -164,6 +179,8 @@ class MiCloud:
 
         except asyncio.TimeoutError:
             _LOGGER.error("Timeout while loading MiCloud device list")
+        except ClientConnectorError:
+            _LOGGER.error("Failed loading MiCloud device list")
         except:
             _LOGGER.exception(f"Can't load devices list")
 
