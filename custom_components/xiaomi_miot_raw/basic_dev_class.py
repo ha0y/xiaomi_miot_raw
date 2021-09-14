@@ -892,6 +892,18 @@ class MiotIRDevice(GenericMiotDevice):
                 return (mc, co)
 
         self._mapping = config.get(CONF_MAPPING)
+        if type(self._mapping) == str:
+            # 旧版单设备配置格式
+            self._mapping = json.loads(self._mapping)
+        elif type(self._mapping) == OrderedDict:
+            # YAML 配置格式
+            pass
+        else:
+            mappingnew = {}
+            for k,v in self._mapping.items():
+                for kk,vv in v.items():
+                    mappingnew[f"{k}_{kk}"] = vv
+            self._mapping = mappingnew
         self._ctrl_params = config.get(CONF_CONTROL_PARAMS) or {}
 
         self._name = config.get(CONF_NAME)
@@ -946,13 +958,10 @@ class MiotIRDevice(GenericMiotDevice):
         }
 
     async def async_send_ir_command(self, command:str):
-        if 'a_l' not in self._mapping:
-            _LOGGER.error(f'{self._name} does not support any action!')
-            return False
-        if self._did_prefix + command not in self._mapping['a_l']:
+        if 'a_l_' + self._did_prefix + command not in self._mapping:
             _LOGGER.error(f'Failed to send IR command {command} to {self._name} because it cannot be found in mapping.')
             return False
-        result = await self.call_action_new(*(self._mapping['a_l'][self._did_prefix + command].values()))
+        result = await self.call_action_new(*(self._mapping['a_l_' + self._did_prefix + command].values()))
         return True if result else False
 
     # async def async_update(self):

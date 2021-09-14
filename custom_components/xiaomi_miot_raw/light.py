@@ -365,4 +365,3 @@ class MiotIRLight(MiotIRDevice, LightEntity):
         if result:
             self._state = False
             self.async_write_ha_state()
-

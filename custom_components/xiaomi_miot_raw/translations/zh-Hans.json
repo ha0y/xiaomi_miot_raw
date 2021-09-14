@@ -26,7 +26,7 @@
                     "host": "IP",
                     "token": "token"
                 },
-                "description": "登录小米账号以后，可以更快捷地添加设备。\n并非所有列表中的设备都支持。",
+                "description": "登录小米账号以后，可以更快捷地添加设备。",
                 "title": "选择操作"
             },
             "xiaomi_account": {

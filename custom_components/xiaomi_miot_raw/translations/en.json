@@ -26,12 +26,12 @@
                     "host": "IP",
                     "token": "token"
                 },
-                "description": "Enter your Xiaomi credientals.",
+                "description": "",
                 "title": "Select Operation"
             },
             "xiaomi_account": {
 				"title": "Log in Xiaomi Account",
-				"description": "{hint}",
+				"description": "{hint}Enter your Xiaomi credientals.",
 				"data": {
 					"username": "Email/Xiaomi ID",
 					"password": "Password"
