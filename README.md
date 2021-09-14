@@ -4,11 +4,13 @@
 
 [![version](https://img.shields.io/github/manifest-json/v/ha0y/xiaomi_miot_raw?filename=custom_components%2Fxiaomi_miot_raw%2Fmanifest.json)](https://github.com/ha0y/xiaomi_miot_raw/releases/latest) [![stars](https://img.shields.io/github/stars/ha0y/xiaomi_miot_raw)](https://github.com/ha0y/xiaomi_miot_raw/stargazers) [![issues](https://img.shields.io/github/issues/ha0y/xiaomi_miot_raw)](https://github.com/ha0y/xiaomi_miot_raw/issues) [![HACS](https://img.shields.io/badge/HACS-Default-orange.svg)](https://hacs.xyz)
 
+### 2021.9.14：🎉现在支持小爱万能遥控模拟出的红外设备啦！首批支持`灯`、`电视`、`空调`品类虚拟设备，接入 HA 后直接显示为对应类型设备并可以控制！欢迎试用，[如有问题可讨论>>](https://github.com/ha0y/xiaomi_miot_raw/issues/239)
+
 ## 介绍
 
-MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议规范，此后凡是已接入米家的设备均可通过此协议进行通信。此插件按照 MIoT 协议规范与设备或服务器通信，实现对设备的状态读取及控制。
+MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议规范，此后凡是已接入米家的设备均可通过此协议进行通信。此插件按照 MIoT 协议规范与米家设备或小米服务器通信，实现对设备的状态读取及控制。
 
-通过本插件，已接入米家的智能设备均可快速高效地接入 Home Assistant，而无关设备的具体型号。本插件已全面支持图形界面配置，全程无需编辑配置文件。
+通过本插件，已接入米家的智能设备均可快速高效地接入 Home Assistant，而无关设备的具体型号。**本插件已全面支持图形界面配置，全程无需编辑配置文件。**
 
 本插件具有本地（局域网）和云端两种工作方式。两种方式结合，可以接入绝大多数米家智能设备（包括蓝牙、蓝牙 Mesh 和 ZigBee 设备）。
 
@@ -46,10 +48,18 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 
 
 ## 使用方法
-**本插件已实现全面 UI 化，所有配置均可通过 UI（网页端）完成，无需您编辑配置文件。**  
+**本插件已实现全面 UI 化，所有配置均可通过 UI（网页端）完成，无需您编辑配置文件。**
+
+**对于您可能遇到的细节问题，例如空调没有温度传感器、晾衣架显示方向是反的、需要指示灯童锁开关等，作者都已经考虑到了，别忘了看[特色功能](https://github.com/ha0y/xiaomi_miot_raw#%E7%89%B9%E8%89%B2%E5%8A%9F%E8%83%BD)部分！**
+
 对本插件进行配置有以下两种途径：
-1. 点击集成页面右下角的`添加集成`，然后选择`Xiaomi MIoT`。如果您想要登录账号、添加设备，请使用此途径。
-2. 在集成页面找到已添加的设备/账号，然后点击`选项`。如果您想要修改账号地区、修改已添加设备的选项，请使用此途径。
+
+**途径 1**：点击集成页面右下角的`添加集成`，然后选择`Xiaomi MIoT`。  
+如果您想要登录账号、添加设备，请使用此途径。
+
+**途径 2**：在集成页面找到已添加的设备/账号，然后点击`选项`。  
+如果您想要修改账号地区、修改已添加设备的选项，请使用此途径。
+
 ---
 **首次使用建议您先登录小米账号。**
 
