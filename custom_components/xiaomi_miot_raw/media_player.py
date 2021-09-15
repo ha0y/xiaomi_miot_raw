@@ -185,14 +185,14 @@ class MiotMediaPlayer(GenericMiotDevice, MediaPlayerEntity):
 
     def _handle_platform_specific_attrs(self):
         super()._handle_platform_specific_attrs()
-        player_state = self._state_attrs.get(self._did_prefix + 'playing_state')
-        if player_state is not None and self._ctrl_params.get('playing_state'):
-            if player_state == self._ctrl_params['playing_state'].get('paused'):
-                self._player_state = STATE_PAUSED
-            elif player_state == self._ctrl_params['playing_state'].get('playing'):
-                self._player_state = STATE_PLAYING
-            else:
-                _LOGGER.warning(f"Unknown state for player {self._name}: {player_state}")
+        # player_state = self._state_attrs.get(self._did_prefix + 'playing_state')
+        # if player_state is not None and self._ctrl_params.get('playing_state'):
+        #     if player_state in (self._ctrl_params['playing_state'].get('pause'), 'pause'):
+        #         self._player_state = STATE_PAUSED
+        #     elif player_state in (self._ctrl_params['playing_state'].get('playing'), 'playing'):
+        #         self._player_state = STATE_PLAYING
+        #     else:
+        #         _LOGGER.warning(f"Unknown state for player {self._name}: {player_state}")
 
         self._volume_level = self.convert_value(
             self._state_attrs.get(self._did_prefix + 'volume') or 0,
