@@ -437,7 +437,8 @@ async def async_generic_setup_platform(
                 device = main_class_dict['default'](miio_device, config, device_info, hass, main_mi_type)
 
             _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
-            hass.data[DOMAIN]['miot_main_entity'][id] = device
+            if 'config_entry' in config:
+                hass.data[DOMAIN]['miot_main_entity'][id] = device
             hass.data[DOMAIN]['entities'][device.unique_id] = device
             async_add_devices([device], update_before_add=True)
 
