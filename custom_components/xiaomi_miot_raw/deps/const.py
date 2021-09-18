@@ -125,6 +125,7 @@ MAP = {
         "printer",
         "remain_clean_time",
         "repellent",
+        "repellent_liquid",
         "router",
         "sleep_info",
         "sleep_monitor",
