@@ -414,7 +414,7 @@ class MiotIRClimate(MiotIRDevice, ClimateEntity):
         self._current_temperature = None
         self._current_fan_mode = None
         self._hvac_action = None
-        self._hvac_mode = None
+        self._hvac_mode = HVAC_MODE_OFF
         self._aux = None
         self._current_swing_mode = None
         self._fan_modes = []
@@ -475,14 +475,20 @@ class MiotIRClimate(MiotIRDevice, ClimateEntity):
 
     async def async_set_hvac_mode(self, hvac_mode):
         if hvac_mode == HVAC_MODE_OFF:
-            await self.async_send_ir_command('turn_off')
+            result = await self.async_send_ir_command('turn_off')
+            if result:
+                self._hvac_mode = HVAC_MODE_OFF
+                self.async_write_ha_state()
         else:
             result = await self.set_property_new(
                 self._did_prefix + 'ir_mode',
                 self._ctrl_params['ir_aircondition_control']['ir_mode']
             )
             if not result:
-                await self.async_send_ir_command('turn_on')
+                result = await self.async_send_ir_command('turn_on')
+            if result:
+                self._hvac_mode = hvac_mode
+                self.async_write_ha_state()
 
     async def async_set_temperature(self, **kwargs):
         if kwargs.get(ATTR_TEMPERATURE) is not None:
