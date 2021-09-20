@@ -108,7 +108,9 @@ MIoT 协议是小米智能家居从 2018 年起推行的智能设备通信协议
 ## 技术支持
 如果在插件使用上遇到问题，可加入 QQ 群，大多数问题并非插件本身的问题，在 QQ 群中能更快地得到解答。若是插件存在 Bug，可通过 GitHub 的 Issue 功能提交问题，这样便于跟踪。
 
-您可以先[看看 Issue 列表](https://github.com/ha0y/xiaomi_miot_raw/issues)，找找这个问题是否已经有人提出或者已经有办法解决了？  
+这里有一个[常见问题列表](https://github.com/ha0y/xiaomi_miot_raw/issues?q=is%3Aissue+label%3AFAQ+)，汇总了许多常见的或具有共性的问题。
+
+您可以先[看看 Issue 列表](https://github.com/ha0y/xiaomi_miot_raw/issues)，找找您的问题是否已经有人提出或者已经有办法解决了？  
 如果没有的话，可点击绿色的`New Issue`按钮提交新问题。
 
 在某些情况下，插件作者可能需要您提供更为详细的调试日志。启用详细日志的方法是：
