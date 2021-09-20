@@ -1,7 +1,8 @@
 {
     "config": {
         "abort": {
-            "already_configured": "已設定過此裝置了"
+            "already_configured": "已設定過此裝置了",
+            "success": "登入成功！請稍待片刻後更新頁面、即可看到所新增的裝置。\n如果要繼續新增其他裝置，可點選帳號下的`選項`，**或者**點選`新增整合`、並選擇`Xiaomi MIoT`。"
         },
         "create_entry": {
             "default": ""
@@ -9,11 +10,13 @@
         "error": {
             "unexpected_error": "發生錯誤，請參閱日誌",
             "cannot_connect": "無法連線",
+            "connection_failed": "網路連線失敗",
             "value_error": "輸入錯誤",
             "bad_params": "參數有誤",
             "no_local_access": "裝置不支援本地通訊、已啟用為雲端通訊。請再次點選“傳送”",
             "no_connect_warning": "連接裝置失敗。如果新增的裝置為小愛音箱，此為正常現象；否則，請檢查裝置訊息是否有誤。請在下方輸入小愛音箱的型號 model。",
-            "cant_login": "登入失敗",
+            "wrong_pwd": "密碼錯誤",
+            "need_auth": "需要進行多步驟驗證。請開啟上方連結、並跟隨頁面網頁提示。確認 Ok 後、再重新登入。",
             "account_tips": "登入帳號是為了方便後續添加裝置、並不會自動增加所有裝置。\n請於登入後再次於整合中添加此整合，即可於列表中選擇要添加的裝置。"
         },
         "step": {
@@ -28,7 +31,7 @@
             },
             "xiaomi_account": {
 				"title": "登入小米帳號",
-				"description": "",
+				"description": "{hint}請輸入小米帳號與密碼。",
 				"data": {
 					"username": "電子郵件/小米 ID",
 					"password": "密碼"
@@ -64,6 +67,13 @@
                     "ssecurity": "ssecurity"
                 },
                 "description": "雲端通訊需要獲取以下資訊"
+            },
+            "select_devices": {
+                "data": {
+                    "devices": "裝置清單"
+                },
+                "description": "共擁有 {dev_count} 個裝置！於下方選擇所要新增的裝置！\n假設無法一次設定完成，亦可稍後繼續進行新增。",
+                "title": "選擇所要新增的裝置"
             }
         },
         "title": "MIoT"
