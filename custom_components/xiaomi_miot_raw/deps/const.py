@@ -160,6 +160,7 @@ MAP = {
         "light_8",
         "ambient_light",
         "ambient_light_custom",
+        "germicidal_lamp",
         "plant_light",
         "indicator_light",
         "night_light",
