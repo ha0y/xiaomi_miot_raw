@@ -291,8 +291,8 @@ async def async_generic_setup_platform(
     params = config.get(CONF_CONTROL_PARAMS)
     if params is None: params = OrderedDict()
 
-    if 'config_entry' in config:
-        id = config['config_entry'].entry_id
+    id = config['config_entry'].entry_id if 'config_entry' in config else None
+    # if id is None, then it is from YAML.
     if TYPE == 'sensor' and 'event_based' in params:
         di = config.get('cloud_device_info')
         device_info = dev_info(
@@ -303,7 +303,7 @@ async def async_generic_setup_platform(
         )
 
         sensor_devices = [main_class_dict['_event_based_sensor'](None, config, device_info, hass, item) for item in mapping.items()]
-        if 'config_entry' in config:
+        if id is not None:
             hass.data[DOMAIN]['miot_main_entity'][id] = sensor_devices[0]
         async_add_devices(sensor_devices, update_before_add=True)
         return True
@@ -319,7 +319,7 @@ async def async_generic_setup_platform(
         else:
             return False
         _LOGGER.info(f"Initializing InfraRed device {config.get(CONF_NAME)}, type: {TYPE}")
-        if 'config_entry' in config:
+        if id is not None:
             hass.data[DOMAIN]['miot_main_entity'][id] = device
         async_add_devices([device], update_before_add=False)
         return True
@@ -391,7 +391,7 @@ async def async_generic_setup_platform(
             sensor_devices = [device]
             binary_devices = []
             _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
-            if 'config_entry' in config:
+            if id is not None:
                 hass.data[DOMAIN]['miot_main_entity'][id] = device
             hass.data[DOMAIN]['entities'][device.unique_id] = device
             if main_mi_type:
@@ -437,7 +437,7 @@ async def async_generic_setup_platform(
                 device = main_class_dict['default'](miio_device, config, device_info, hass, main_mi_type)
 
             _LOGGER.info(f"{main_mi_type} is the main device of {host}.")
-            if 'config_entry' in config:
+            if id is not None:
                 hass.data[DOMAIN]['miot_main_entity'][id] = device
             hass.data[DOMAIN]['entities'][device.unique_id] = device
             async_add_devices([device], update_before_add=True)
@@ -487,8 +487,7 @@ async def async_generic_setup_platform(
             # device = MiotSubSensor(parent_device, "switch_switch_status")
             async_add_devices(sensor_devices, update_before_add=True)
         return
-
-    if sub_class_dict:
+    if sub_class_dict and id is not None:
         retry_time = 1
         while True:
             if parent_device := hass.data[DOMAIN]['miot_main_entity'].get(id):

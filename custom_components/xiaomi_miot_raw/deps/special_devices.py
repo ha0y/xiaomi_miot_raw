@@ -84,4 +84,9 @@ SPECIAL_DEVICES={
         "mapping":{"button":{"key":4097,"type":"event"}},
         "params":{"event_based":True}
     },
+    "ateai.mosq.dakuo": {
+        "device_type": ["sensor", "fan"],
+        "mapping": {"mosquito_dispeller": {"switch_status": {"siid": 6, "piid": 1},"mode":{"siid": 6, "piid": 2}}, "repellent_liquid": {"liquid_left": {"siid": 5, "piid": 1}}, "a_l": {"repellent_liquid_reset_liquid": {"siid": 5, "aiid": 1}}},
+        "params": {"mosquito_dispeller":{"switch_status":{"power_on":1,"power_off":0},"main":True,"mode":{"Strong":0,"Baby":1}},"repellent_liquid":{"liquid_left":{"access":5,"format":"uint8","unit":"percentage","value_range":[0,100,1]}}}
+    },
 }

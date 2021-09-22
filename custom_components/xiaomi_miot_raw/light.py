@@ -83,6 +83,7 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
         self._color = None
         self._color_temp = None
         self._effect = None
+        hass.async_add_job(self.create_sub_entities)
 
     @property
     def supported_features(self):
