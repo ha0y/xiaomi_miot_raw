@@ -49,6 +49,7 @@ from .deps.ble_event_parser import (
     TimestampParser,
     ZgbIlluminationParser,
     BleMotionWithIlluParser,
+    BleButtonParser,
 )
 from collections import OrderedDict
 from .deps.miot_coordinator import MiotEventCoordinator
@@ -428,6 +429,16 @@ class MiotEventBasedSensor(Entity):
                     'data_processor': BleMotionWithIlluParser,
                     'property': 'illumination',
                     'icon': 'mdi:white-balance-sunny',
+                })
+            )
+        elif k == 4097:
+            ett_to_add.append(
+                MiotEventBasedSubSensor(self, {
+                    'id': 'click_type',
+                    'name': 'Click type',
+                    'data_processor': BleButtonParser,
+                    'property': 'action_name',
+                    'icon': 'mdi:gesture-double-tap',
                 })
             )
 
