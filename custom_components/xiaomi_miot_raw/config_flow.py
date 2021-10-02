@@ -219,8 +219,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._model = None
         self._did = None
         self._cloud_device = None
-        self._input2 = {}
-        self._input2.update({"ett_id_migrated": True}) # 新的实体ID格式，相对稳定，为避免已有ID变化，灰度选项
+        self._all_config = {}
+        self._all_config.update({"ett_id_migrated": True}) # 新的实体ID格式，相对稳定，为避免已有ID变化，灰度选项
         self._actions = {
             'xiaomi_account': "登录小米账号",
             'localinfo': "通过 IP/token 添加设备"
@@ -291,7 +291,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if user_input[CONF_TOKEN] == '0':
                 user_input[CONF_TOKEN] = '0'*32
             self._token = user_input[CONF_TOKEN]
-            self._input2 = {**self._input2, **user_input}
+            self._all_config = {**self._all_config, **user_input}
 
             device = MiioDevice(self._host, self._token)
             try:
@@ -384,19 +384,19 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         local_failed = False
         if user_input is not None:
             self._devtype = user_input['devtype']
-            self._input2['devtype'] = self._devtype
-            self._input2[CONF_MAPPING] = user_input[CONF_MAPPING]
-            self._input2[CONF_CONTROL_PARAMS] = user_input[CONF_CONTROL_PARAMS]
-            self._input2['cloud_write'] = user_input.get('cloud_write')
+            self._all_config['devtype'] = self._devtype
+            self._all_config[CONF_MAPPING] = user_input[CONF_MAPPING]
+            self._all_config[CONF_CONTROL_PARAMS] = user_input[CONF_CONTROL_PARAMS]
+            self._all_config['cloud_write'] = user_input.get('cloud_write')
 
             try:
                 # print(result)
                 if not user_input.get('cloud_read') and not user_input.get('cloud_write'):
-                    device = MiotDevice(ip=self._input2[CONF_HOST], token=self._input2[CONF_TOKEN], mapping=list(json.loads(self._input2[CONF_MAPPING]).values())[0])
+                    device = MiotDevice(ip=self._all_config[CONF_HOST], token=self._all_config[CONF_TOKEN], mapping=list(json.loads(self._all_config[CONF_MAPPING]).values())[0])
                     result = device.get_properties_for_mapping()
                     return self.async_create_entry(
-                        title=self._input2[CONF_NAME],
-                        data=self._input2,
+                        title=self._all_config[CONF_NAME],
+                        data=self._all_config,
                     )
                 else:
                     if DOMAIN not in self.hass.data:
@@ -408,19 +408,19 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     if cloud:
                         if not self._did:
                             for dev in self.hass.data[DOMAIN]['micloud_devices']:
-                                if dev.get('localip') == self._input2[CONF_HOST]:
+                                if dev.get('localip') == self._all_config[CONF_HOST]:
                                     self._did = dev['did']
                         if self._did:
-                            self._input2['update_from_cloud'] = {
+                            self._all_config['update_from_cloud'] = {
                                 'did': self._did,
                                 'userId': cloud.auth['user_id'],
                                 'serviceToken': cloud.auth['service_token'],
                                 'ssecurity': cloud.auth['ssecurity'],
                             }
                             if s := cloud.svr:
-                                self._input2['update_from_cloud']['server_location'] = s
+                                self._all_config['update_from_cloud']['server_location'] = s
                             if self._cloud_device:
-                                self._input2['cloud_device_info'] = {
+                                self._all_config['cloud_device_info'] = {
                                     'name': self._cloud_device.get('name'),
                                     'mac': self._cloud_device.get('mac'),
                                     'did': self._cloud_device.get('did'),
@@ -429,24 +429,24 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                                 }
                             else:
                                 # 3rd party device and Manually added device doesn't have one
-                                self._input2['cloud_device_info'] = {
-                                    'name': self._input2[CONF_NAME],
+                                self._all_config['cloud_device_info'] = {
+                                    'name': self._all_config[CONF_NAME],
                                     'mac': "",
                                     'did': self._did,
-                                    'model': self._input2[CONF_MODEL],
+                                    'model': self._all_config[CONF_MODEL],
                                     'fw_version': "",
                                 }
                             return self.async_create_entry(
-                                title=self._input2[CONF_NAME],
-                                data=self._input2,
+                                title=self._all_config[CONF_NAME],
+                                data=self._all_config,
                             )
                         else:
                             # 3rd party device and Manually added device doesn't have one
-                            self._input2['cloud_device_info'] = {
-                                'name': self._input2[CONF_NAME],
+                            self._all_config['cloud_device_info'] = {
+                                'name': self._all_config[CONF_NAME],
                                 'mac': "",
                                 'did': self._did,
-                                'model': self._input2[CONF_MODEL],
+                                'model': self._all_config[CONF_MODEL],
                                 'fw_version': "",
                             }
                             return self.async_show_form(
@@ -496,22 +496,22 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_cloudinfo(self, user_input=None):  # 4. 云端通信信息
         errors = {}
         if user_input is not None:
-            self._input2['update_from_cloud'] = {}
-            self._input2['update_from_cloud']['did'] = user_input['did']
-            self._input2['update_from_cloud']['userId'] = user_input['userId']
-            self._input2['update_from_cloud']['serviceToken'] = user_input['serviceToken']
-            self._input2['update_from_cloud']['ssecurity'] = user_input['ssecurity']
+            self._all_config['update_from_cloud'] = {}
+            self._all_config['update_from_cloud']['did'] = user_input['did']
+            self._all_config['update_from_cloud']['userId'] = user_input['userId']
+            self._all_config['update_from_cloud']['serviceToken'] = user_input['serviceToken']
+            self._all_config['update_from_cloud']['ssecurity'] = user_input['ssecurity']
             cloud = None
             for item in self.hass.data[DOMAIN]['cloud_instance_list']:
                 if item['username']:
                     cloud = item['cloud_instance']
             if cloud:
                 if s := cloud.svr:
-                    self._input2['update_from_cloud']['server_location'] = s
+                    self._all_config['update_from_cloud']['server_location'] = s
 
             return self.async_create_entry(
-                title=self._input2[CONF_NAME],
-                data=self._input2,
+                title=self._all_config[CONF_NAME],
+                data=self._all_config,
             )
 
     async def async_step_import(self, user_input):
@@ -530,10 +530,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                                     user_input['password'])
                 if resp == (0, None):
                     user_input.update(cloud.auth)
-                    self._input2 = user_input
+                    self._all_config = user_input
                     if not self._non_interactive:
                         self.hass.async_add_job(self.hass.config_entries.flow.async_init(
-                            DOMAIN, context={"source": "user"}, data={'action': 'xiaomi_account', 'username': user_input['username'],'password': user_input['password']}
+                            DOMAIN, context={"source": "user"}, data={'action': 'xiaomi_account', 'username': user_input['username'],'password': user_input['password'],'server_location': user_input['server_location']}
                         ))
                         return await self.async_step_select_devices()
                     else:
@@ -553,7 +553,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema({
                 vol.Required('username'): str,
                 vol.Required('password'): str,
-                # vol.Required('servers', default=['cn']):
+                vol.Required('server_location', default=self._all_config.get('server_location') or 'cn'): vol.In(SERVERS),
                     # cv.multi_select(SERVERS)
             }),
             description_placeholders={"hint": hint},
@@ -563,7 +563,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_xiaoai(self, user_input=None, error=None): # 本地发现不了设备，需要手动输入model，输入后再修改mapping，params
         errors = {}
         if user_input is not None:
-            self._input2 = {**self._input2, **user_input}
+            self._all_config = {**self._all_config, **user_input}
             self._model = user_input[CONF_MODEL]
             # Line 240-270
             self._info = await guess_mp_from_model(self.hass, self._model)
