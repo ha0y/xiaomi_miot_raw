@@ -74,7 +74,7 @@
                     "devices": "Devices list"
                 },
                 "description": "You have {dev_count} devices! Select devices to add below.\nYou can still select more in the future.",
-                "title": "选择要添加的设备"
+                "title": "Select Devices"
             }
         },
         "title": "MIoT"
@@ -128,21 +128,21 @@
                 "data": {
                 },
                 "description": "If checked, there will be a sensor entity for each attribule.",
-                "title": "Sensor options"
+                "title": "Sensor Options"
             },
             "cover": {
                 "data": {
                     "reverse_position_percentage": "Reverse position percentage"
                 },
                 "description": "Reversing position percentage can fix some problems.",
-                "title": "Cover options"
+                "title": "Cover Options"
             },
             "climate": {
                 "data": {
                     "current_temp_source": "Environment temperature sensor entity ID"
                 },
                 "description": "Enter a entity ID of temperature sensor here to use it as the current temperature sensor.",
-                "title": "Climate options"
+                "title": "Climate Options"
             },
             "light_and_lock": {
                 "data": {
@@ -150,14 +150,14 @@
                     "show_physical_controls_locked": "Enable switch for child lock"
                 },
                 "description": "",
-                "title": "Indicator light / child lock options"
+                "title": "Indicator Light / Child Lock Options"
             },
             "select_devices": {
                 "data": {
                     "devices": "Devices list"
                 },
                 "description": "Select devices to add.\n\nAfter submitting, devices will be added in background. Refresh to see them.",
-                "title": "Batch adding devices"
+                "title": "Batch Adding Devices"
             },
             "edit_mpprm": {
                 "data": {
