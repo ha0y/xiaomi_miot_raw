@@ -2,6 +2,8 @@ import json
 import re
 
 import asyncio
+from types import coroutine
+from typing import OrderedDict
 import async_timeout
 import homeassistant.helpers.config_validation as cv
 import requests
@@ -551,7 +553,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id='xiaomi_account',
             data_schema=vol.Schema({
-                vol.Required('username'): str,
+                vol.Required('username', default=self._all_config.get('username')): str,
                 vol.Required('password'): str,
                 vol.Required('server_location', default=self._all_config.get('server_location') or 'cn'): vol.In(SERVERS),
                     # cv.multi_select(SERVERS)
@@ -658,45 +660,94 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     def __init__(self, config_entry: config_entries.ConfigEntry):
         """Initialize options flow."""
         self.config_entry = config_entry
-        self._input2 = config_entry.data.copy()
+        self._all_config = config_entry.data.copy()
         self._steps = []
-        self._prm = {}
-        if 'password' not in self._input2:
-            self._prm = json.loads(self._input2[CONF_CONTROL_PARAMS])
+        self._prm = {}  # Note that params is independent, not in all_config
+        if 'password' not in self._all_config:
+            self._prm = json.loads(self._all_config[CONF_CONTROL_PARAMS])
 
     async def async_step_init(self, user_input=None):
         """Handle options flow."""
-        if 'password' in self._input2:
-            self._steps.append(self.async_step_account())
-        else:
-            if 'indicator_light' in self._prm or 'physical_controls_locked' in self._prm:
+        if user_input:
+            # Not knowing why getattr does not work here,
+            # we do it manually
+            if user_input.get('async_step_update_xiaomi_account', False):
+                self._steps.append(self.async_step_update_xiaomi_account())
+            if user_input.get('async_step_select_devices', False):
+                self._steps.append(self.async_step_select_devices())
+            if user_input.get('async_step_light_and_lock', False):
                 self._steps.append(self.async_step_light_and_lock())
-            if 'climate' in self._input2['devtype']:
+            if user_input.get('async_step_climate', False):
                 self._steps.append(self.async_step_climate())
-            if 'cover' in self._input2['devtype']:
+            if user_input.get('async_step_cover', False):
                 self._steps.append(self.async_step_cover())
+            if user_input.get('async_step_re_adapt', False):
+                self._steps.append(self.async_step_re_adapt())
+            if user_input.get('async_step_edit_mpprm', False):
+                self._steps.append(self.async_step_edit_mpprm())
 
-        if self._steps:
-            self._steps.append(self.async_finish())
-            return await self._steps[0]
+            if self._steps:
+                self._steps.append(self.async_finish())
+                return await self._steps[0]
+            else:
+                return self.async_abort(reason="no_configurable_options")
+
+        fields = OrderedDict()
+        if 'password' in self._all_config:
+            fields[vol.Optional("async_step_update_xiaomi_account")] = bool
+            fields[vol.Optional("async_step_select_devices")] = bool
         else:
+            fields[vol.Optional("async_step_re_adapt")] = bool
+            fields[vol.Optional("async_step_edit_mpprm")] = bool
+            
+            if 'indicator_light' in self._prm or 'physical_controls_locked' in self._prm:
+                fields[vol.Optional("async_step_light_and_lock")] = bool
+            if 'climate' in self._all_config['devtype']:
+                fields[vol.Optional("async_step_climate")] = bool
+            if 'cover' in self._all_config['devtype']:
+                fields[vol.Optional("async_step_cover")] = bool
+        if not fields:
             return self.async_abort(reason="no_configurable_options")
 
-    async def async_step_account(self, user_input=None):
-        if user_input is not None:
-            if user_input['batch_add']:
-                return await self.async_step_batch_agreement()
-            self._input2.update(user_input)
-            self._steps.pop(0)
-            return await self._steps[0]
 
         return self.async_show_form(
-            step_id='account',
-            data_schema=vol.Schema({
-                vol.Required('server_location', default=self._input2.get('server_location') or 'cn'): vol.In(SERVERS),
-                vol.Optional('batch_add', default=False): bool,
-            })
+            step_id='init',
+            data_schema=vol.Schema(fields)
         )
+
+    async def async_step_update_xiaomi_account(self, user_input=None, error=None, hint=""): # 登录小米账号
+        if user_input:
+            user_input['username'] = self._all_config.get('username')
+            if 'username' in user_input:
+                session = aiohttp_client.async_create_clientsession(self.hass)
+                cloud = MiCloud(session)
+                resp = await cloud.login(user_input['username'],
+                                    user_input['password'])
+                if resp == (0, None):
+                    self._all_config.update(user_input)
+                    self._all_config.update(cloud.auth)
+                    self._steps.pop(0)
+                    return await self._steps[0]
+                elif resp[0] == -2:
+                    return await self.async_step_update_xiaomi_account(error='connection_failed',hint=f"{resp[1]}\n")
+                else:
+                    if resp[1] is None:
+                        return await self.async_step_update_xiaomi_account(error='wrong_pwd')
+                    else:
+                        return await self.async_step_update_xiaomi_account(error='need_auth',hint=f"[{str(resp[1])[:100]+'...'}]({resp[1]})\n")
+
+        return self.async_show_form(
+            step_id='update_xiaomi_account',
+            data_schema=vol.Schema({
+                # vol.Required('username', default=self._all_config.get('username')): str,
+                vol.Required('password'): str,
+                vol.Required('server_location', default=self._all_config.get('server_location') or 'cn'): vol.In(SERVERS),
+                    # cv.multi_select(SERVERS)
+            }),
+            description_placeholders={"hint": hint, "username": self._all_config.get('username')},
+            errors={'base': error}
+        )
+
 
     async def async_step_light_and_lock(self, user_input=None):
         if user_input is not None:
@@ -778,29 +829,53 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             errors=errors,
         )
 
-    async def async_step_batch_agreement(self, user_input=None):
+    async def async_step_re_adapt(self, user_input=None):
+        model = self._all_config.get('model')
+        info = await guess_mp_from_model(self.hass, model)
+        if info and info.get('mapping') != "{}":
+            self._all_config.update(info)
+            self._prm = json.loads(info.get('params'))
+
+            self._steps.pop(0)
+            return await self._steps[0]
+        else:
+            return self.async_abort(reason="dev_readapt_failed")
+
+    async def async_step_edit_mpprm(self, user_input=None):
         errors = {}
         if user_input is not None:
-            if not user_input['iagree']:
-                errors['base'] = 'plz_agree'
-            else:
-                return await self.async_step_select_devices()
+            try:
+                json.loads(user_input['mapping'])
+            except json.decoder.JSONDecodeError:
+                errors['mapping'] = 'invalid_json'
+            try:
+                json.loads(user_input['params'])
+            except json.decoder.JSONDecodeError:
+                errors['params'] = 'invalid_json'
+            if not errors:
+                self._all_config.update(user_input)
+                self._prm = json.loads(user_input['params'])
+
+                self._steps.pop(0)
+                return await self._steps[0]
+
         return self.async_show_form(
-            step_id='batch_agreement',
+            step_id='edit_mpprm',
             data_schema=vol.Schema({
-                vol.Optional('iagree', default=False): bool,
+                vol.Required(CONF_MAPPING, default=self._all_config.get(CONF_MAPPING)): str,
+                vol.Required(CONF_CONTROL_PARAMS, default=self._all_config.get(CONF_CONTROL_PARAMS)): str,
             }),
             errors=errors,
         )
 
     async def async_finish(self, reload=True):
         if self._prm:
-            self._input2[CONF_CONTROL_PARAMS] = json.dumps(self._prm,separators=(',', ':'))
+            self._all_config[CONF_CONTROL_PARAMS] = json.dumps(self._prm,separators=(',', ':'))
         self.hass.config_entries.async_update_entry(
-            self.config_entry, data=self._input2
+            self.config_entry, data=self._all_config
         )
         if reload:
             await self.hass.config_entries.async_reload(
                 self.config_entry.entry_id
             )
-        return self.async_create_entry(title="", data=None)
+        return self.async_create_entry(title="5565", data=None)
