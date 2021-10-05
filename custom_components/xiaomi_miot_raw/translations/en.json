@@ -34,7 +34,8 @@
 				"description": "{hint}Enter your Xiaomi credientals.",
 				"data": {
 					"username": "Email/Xiaomi ID",
-					"password": "Password"
+					"password": "Password",
+                    "server_location": "Server Location"
 				}
 			},
             "localinfo": {
@@ -89,21 +90,40 @@
     },
     "options": {
         "abort": {
-            "no_configurable_options": "No options available.",
-            "no_configurable_account": "No options available for the account.\nTo log out, use **Delete**. This will not affect added devices.\nTo refresh devices list, use **Reload**."
+            "no_configurable_options": "No options available."
         },
         "error": {
-            "plz_agree": "Please read carefully"
+            "plz_agree": "Please read carefully",
+            "cannot_connect": "Cannot connect",
+            "connection_failed": "Network connection failed",
+            "wrong_pwd": "Wrong password",
+            "need_auth": "Two-factor authentication required. Open the link above to finish authentication, and log in again.",
+            "dev_readapt_failed": "Failed re-adapting device. Parameters were not changed.",
+            "invalid_json": "Invalid JSON"
         },
         "step": {
-            "account": {
+            "init": {
                 "data": {
-                    "server_location": "Server location",
-                    "batch_add": "Batch add devices"
+                    "async_step_update_xiaomi_account": "Update Xiaomi Account Crediental and Server Location",
+                    "async_step_select_devices": "Batch Adding Devices (Do not select with the one above)",
+                    "async_step_light_and_lock": "Show or Hide Switch for Indicator Light and Child Lock",
+                    "async_step_climate": "Attach a Sensor to Climate for Current Temperature",
+                    "async_step_cover": "Reverse Cover Position",
+                    "async_step_re_adapt": "Re-Adapt Device",
+                    "async_step_edit_mpprm": "Edit Mapping and Params"
                 },
-                "description": "Select which server are your devices in.\nTo log out, use **Delete**. This will not affect added devices.\nTo refresh devices list, use **Reload**.\nTo add devices, use'Add Integration'-'Xiaomi MIoT' instead of 'Batch add devices'.",
-                "title": "Account options"
+                "description": "",
+                "title": "Would you like to..."
             },
+            "update_xiaomi_account": {
+				"title": "Update Xiaomi Account Crediental",
+				"description": "{hint}Update password for “{username}”.",
+				"data": {
+					"username": "Email/Xiaomi ID",
+					"password": "Password",
+                    "server_location": "Server Location"
+				}
+			},
             "sensor": {
                 "data": {
                 },
@@ -139,12 +159,13 @@
                 "description": "Select devices to add.\n\nAfter submitting, devices will be added in background. Refresh to see them.",
                 "title": "Batch adding devices"
             },
-            "batch_agreement": {
+            "edit_mpprm": {
                 "data": {
-                    "iagree": "I have read and understand"
+                    "mapping": "mapping",
+                    "params": "params"
                 },
-                "description": "You can select multiple devices and add them with a single click.\nAfter submitting, devices will be added in background. This takes up to 1 minute.\nIf some devices doesn't work properly, delete them and add them manually by \"Add Integration\".\nDevices added in this way are integrated by **Cloud**. If they support LAN access, delete them and add them manually by \"Add Integration\".",
-                "title": "Please read these instructions"
+                "description": "If you don’t know what they are, keep them as default.\nIf the device was re-adapted, the latest config is shown below.",
+                "title": "Edit Mapping and Params"
             }
         }
     }

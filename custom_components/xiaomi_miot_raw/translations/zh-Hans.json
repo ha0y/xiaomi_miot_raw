@@ -34,7 +34,8 @@
 				"description": "{hint}请输入小米账号和密码。",
 				"data": {
 					"username": "邮箱/小米 ID/手机号",
-					"password": "密码"
+					"password": "密码",
+                    "server_location": "设备所在服务器"
 				}
 			},
             "localinfo": {
@@ -89,8 +90,7 @@
     },
     "options": {
         "abort": {
-            "no_configurable_options": "没有可配置的选项",
-            "no_configurable_account": "小米账号没有可配置的选项。\n如需退出登录，删除此配置项即可。删除后不影响已添加的设备。\n如需刷新设备列表，请点击“重载”。"
+            "no_configurable_options": "没有可配置的选项"
         },
         "error": {
             "plz_agree": "请阅读说明",
@@ -115,20 +115,13 @@
                 "description": "",
                 "title": "您想要……"
             },
-            "account": {
-                "data": {
-                    "server_location": "设备所在服务器",
-                    "batch_add": "批量添加设备"
-                },
-                "description": "可以在此选择设备所在的服务器。\n如需退出登录，请点击“删除”。删除后不影响已添加的设备。\n如需刷新设备列表，请点击“重载”。\n**如需添加 WiFi 设备，请点击“添加集成”-“Xiaomi MIoT”，勿使用“批量添加设备”**。",
-                "title": "账号设置"
-            },
             "update_xiaomi_account": {
 				"title": "更新小米账号信息",
 				"description": "{hint}为小米账号“{username}”更新密码和服务器地区。",
 				"data": {
 					"username": "邮箱/小米 ID/手机号",
-					"password": "密码"
+					"password": "密码",
+                    "server_location": "设备所在服务器"
 				}
 			},
             "sensor": {
@@ -165,13 +158,6 @@
                 },
                 "description": "请选择要添加的设备。\n\n点击完成后，设备将在后台添加，请刷新页面查看已添加的设备。",
                 "title": "批量添加"
-            },
-            "batch_agreement": {
-                "data": {
-                    "iagree": "我已阅读并理解"
-                },
-                "description": "接下来，您可以选择多个要添加的设备，一次性将它们添加到 Home Assistant。\n点击提交后，设备会在后台添加，请等待一分钟。刷新页面可以实时看到已添加成功的设备。\n如果添加的某个设备不能正常工作，请将其删除，然后通过“添加集成”的方式手动添加。\n通过此方式添加设备，都是**云端接入**，需要互联网连接才能工作。\n如果设备支持本地接入，请不要通过此方法添加，请通过“添加集成”的方式手动添加。",
-                "title": "请认真阅读以下说明"
             },
             "edit_mpprm": {
                 "data": {
