@@ -110,7 +110,8 @@
                     "async_step_climate": "为空调绑定外部温度传感器",
                     "async_step_cover": "反转卷帘上下位置",
                     "async_step_re_adapt": "重新适配设备",
-                    "async_step_edit_mpprm": "修改 mapping 和配置参数"
+                    "async_step_edit_mpprm": "修改 mapping 和配置参数",
+                    "async_step_edit_iptoken": "更新设备 IP 和 token"
                 },
                 "description": "",
                 "title": "您想要……"
@@ -166,6 +167,13 @@
                 },
                 "description": "如果您不了解以下参数，请保持默认即可。\n如果刚刚进行过“重新适配”，那么下面显示的是最新的适配结果。",
                 "title": "编辑 Mapping 和参数"
+            },
+            "edit_iptoken": {
+                "data": {
+                    "host": "IP",
+                    "token": "token"
+                },
+                "title": "更新设备 IP 和 token"
             }
         }
     }

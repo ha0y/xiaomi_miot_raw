@@ -685,6 +685,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 self._steps.append(self.async_step_re_adapt())
             if user_input.get('async_step_edit_mpprm', False):
                 self._steps.append(self.async_step_edit_mpprm())
+            if user_input.get('async_step_edit_iptoken', False):
+                self._steps.append(self.async_step_edit_iptoken())
 
             if self._steps:
                 self._steps.append(self.async_finish())
@@ -699,7 +701,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         else:
             fields[vol.Optional("async_step_re_adapt")] = bool
             fields[vol.Optional("async_step_edit_mpprm")] = bool
-            
+            if self._all_config.get(CONF_HOST) != DUMMY_IP and \
+                self._all_config.get(CONF_TOKEN) != DUMMY_TOKEN:
+                fields[vol.Optional("async_step_edit_iptoken")] = bool
+
             if 'indicator_light' in self._prm or 'physical_controls_locked' in self._prm:
                 fields[vol.Optional("async_step_light_and_lock")] = bool
             if 'climate' in self._all_config['devtype']:
@@ -864,6 +869,23 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             data_schema=vol.Schema({
                 vol.Required(CONF_MAPPING, default=self._all_config.get(CONF_MAPPING)): str,
                 vol.Required(CONF_CONTROL_PARAMS, default=self._all_config.get(CONF_CONTROL_PARAMS)): str,
+            }),
+            errors=errors,
+        )
+
+    async def async_step_edit_iptoken(self, user_input=None):
+        errors = {}
+        if user_input is not None:
+            self._all_config.update(user_input)
+
+            self._steps.pop(0)
+            return await self._steps[0]
+
+        return self.async_show_form(
+            step_id='edit_iptoken',
+            data_schema=vol.Schema({
+                vol.Required(CONF_HOST, default=self._all_config.get(CONF_HOST)): str,
+                vol.Required(CONF_TOKEN, default=self._all_config.get(CONF_TOKEN)): str,
             }),
             errors=errors,
         )

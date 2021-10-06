@@ -110,7 +110,8 @@
                     "async_step_climate": "Attach a Sensor to Climate for Current Temperature",
                     "async_step_cover": "Reverse Cover Position",
                     "async_step_re_adapt": "Re-Adapt Device",
-                    "async_step_edit_mpprm": "Edit Mapping and Params"
+                    "async_step_edit_mpprm": "Edit Mapping and Params",
+                    "async_step_edit_iptoken": "Update IP and Token"
                 },
                 "description": "",
                 "title": "Would you like to..."
@@ -166,6 +167,13 @@
                 },
                 "description": "If you don’t know what they are, keep them as default.\nIf the device was re-adapted, the latest config is shown below.",
                 "title": "Edit Mapping and Params"
+            },
+            "edit_iptoken": {
+                "data": {
+                    "host": "IP",
+                    "token": "token"
+                },
+                "title": "Update IP and Token"
             }
         }
     }
