@@ -34,7 +34,8 @@
 				"description": "{hint}請輸入小米帳號與密碼。",
 				"data": {
 					"username": "電子郵件/小米 ID",
-					"password": "密碼"
+					"password": "密碼",
+                     "server_location": "伺服器位置"
 				}
 			},
             "localinfo": {
@@ -89,21 +90,41 @@
     },
     "options": {
         "abort": {
-            "no_configurable_options": "沒有可設定的選項",
-            "no_configurable_account": "小米帳號沒有可進行設定的選項。\n如需退出登入，請刪除此設定項即可。刪除後不影響已添加的裝置。\n如需更新裝置列表，請點選「重新載入」。"
+            "no_configurable_options": "沒有可設定的選項"
         },
         "error": {
-            "plz_agree": "請仔細閱讀說明"
+            "plz_agree": "請仔細閱讀說明",
+            "cannot_connect": "無法連線",
+            "connection_failed": "網路連線失敗",
+            "wrong_pwd": "密碼錯誤",
+            "need_auth": "需要進行兩步驟認證。請開啟上方連結、跟隨頁面指示完成後、重新登入。",
+            "dev_readapt_failed": "裝置重新設定失敗、參數未變更。",
+            "invalid_json": "JSON 格式無效"
         },
         "step": {
-            "account": {
+            "init": {
                 "data": {
-                    "server_location": "裝置所在伺服器",
-                    "batch_add": "單次新增多個裝置"
+                    "async_step_update_xiaomi_account": "更新小米帳號憑證與伺服器位置",
+                    "async_step_select_devices": "單次增加多個裝置（請不要與上一項一起選擇）",
+                    "async_step_light_and_lock": "顯示/隱藏指示燈或兒童鎖開關",
+                    "async_step_climate": "為溫控器指定外部溫濕度感測器",
+                    "async_step_cover": "反轉窗簾上下捲動方向",
+                    "async_step_re_adapt": "重新設定裝置",
+                    "async_step_edit_mpprm": "修改 mapping 與設定參數",
+                    "async_step_edit_iptoken": "更新裝置 IP 與權杖 Token"
                 },
-                "description": "可選擇裝置所在的伺服器。\n如需退出登入，請點選「刪除」。刪除後不影響已添加的裝置。\n如需更新裝置列表，請點選「重新載入」。",
-                "title": "帳號設定"
+                "description": "",
+                "title": "欲進行……"
             },
+            "update_xiaomi_account": {
+				"title": "更新小米帳號資訊",
+				"description": "{hint}为小米帳號“{username}”更新密碼與伺服器位置。",
+				"data": {
+					"username": "電子郵件/小米 ID/手機號碼",
+					"password": "密碼",
+                    "server_location": "伺服器位置"
+				}
+			},
             "sensor": {
                 "data": {
                 },
@@ -139,12 +160,20 @@
                 "description": "請選擇所要新增的裝置。\n\n點選送出後，裝置將於背景進行新增。請重新更新以查看新增的裝置。",
                 "title": "單次新增多個裝置"
             },
-            "batch_agreement": {
+            "edit_mpprm": {
                 "data": {
-                    "iagree": "我已詳細閱讀並了解"
+                    "mapping": "mapping",
+                    "params": "參數"
                 },
-                "description": "接下来，可以一次同時選擇多個裝置進行新增。\n於點選送出後，裝置將於背景進行新增。請稍候一分鐘後、更新頁面即可查看新增裝置。\n假如新增的某個裝置無法正常工作。請先進行刪除、然後透過手動新增整合的方式進行新增。\n透過此方式新增的裝置，都為 **雲端接入**，需要網際網路連線才能正常工作。\n假如裝置支援本地端，請勿透過此方式進行新增。請以手動新增整合的方式進行。",
-                "title": "請詳細閱讀以下說明"
+                "description": "如果不確定以下參數設定，請維持預設值即可。\n如果剛剛點選過“重新設定”、下方顯示之參數即為最新設定內容。",
+                "title": "編輯 Mapping 與參數"
+            },
+            "edit_iptoken": {
+                "data": {
+                    "host": "IP",
+                    "token": "Token"
+                },
+                "title": "更新裝置 IP 與權杖 Token"
             }
         }
     }
