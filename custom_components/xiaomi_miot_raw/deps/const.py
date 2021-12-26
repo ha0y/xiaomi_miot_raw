@@ -87,6 +87,9 @@ SERVICE_TO_METHOD = {
 }
 
 MAP = {
+    "camera": {
+        "camera",
+    },
     "sensor": {
         "air_fryer",
         "air_monitor",
