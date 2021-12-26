@@ -101,21 +101,17 @@ class MiotCamera(ToggleableMiotDevice, Camera):
         return self._is_on
 
     async def async_turn_on(self) -> None:
-        """Turn on."""
-        prm = self._ctrl_params['switch_status']['power_on']
-        d: miio.chuangmi_camera.ChuangmiCamera = self._device
-        d.send("set_" + ATTR_SYSSTATUS, ['normal'])
-        result = await self.set_property_new(self._did_prefix + "switch_status", prm)
-        if result:
-            self._state = True
-            self.async_write_ha_state()
+        await self.async_do_turn("normal")
 
     async def async_turn_off(self) -> None:
-        """Turn off."""
-        prm = self._ctrl_params['switch_status']['power_on']
+        await self.async_do_turn("sleep")
+
+    async def async_do_turn(self, cmd) -> None:
         d: miio.chuangmi_camera.ChuangmiCamera = self._device
-        d.send("set_" + ATTR_SYSSTATUS, ['sleep'])
-        result = await self.set_property_new(self._did_prefix + "switch_status", prm)
-        if result:
-            self._state = True
-            self.async_write_ha_state()
+        result = d.send("set_" + ATTR_SYSSTATUS, [cmd])
+        if result != ['ok']:
+            _LOGGER.warning("result for send {}, {}".format(cmd, result))
+            return
+
+        self._state = True
+        self.async_write_ha_state()
