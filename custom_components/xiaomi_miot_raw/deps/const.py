@@ -15,9 +15,11 @@ ATTR_STATE_VALUE = "state_value"
 ATTR_MODEL = "model"
 ATTR_FIRMWARE_VERSION = "firmware_version"
 ATTR_HARDWARE_VERSION = "hardware_version"
+ATTR_SYSSTATUS = "sysstatus"
 
 DOMAIN = 'xiaomi_miot_raw'
 SUPPORTED_DOMAINS = [
+    "camera",
     "sensor",
     "switch",
     "light",
