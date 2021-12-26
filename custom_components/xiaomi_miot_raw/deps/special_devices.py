@@ -1,6 +1,7 @@
 SPECIAL_DEVICES={
     "chuangmi.camera.xiaobai":{
         "device_type": ['camera'],
+        "mapping": {"camera": {"switch_status": {"siid": 1, "piid": 1}},
         "params": {"camera": {"switch_status": {"power_on": True, "power_off": False}, "main": True}}
     },
     "chuangmi.plug.212a01":{
