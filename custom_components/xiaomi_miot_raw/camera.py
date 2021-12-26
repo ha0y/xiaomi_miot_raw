@@ -19,6 +19,7 @@ from homeassistant.util import color
 from miio.exceptions import DeviceException
 from .deps.miio_new import MiotDevice
 import miio
+import copy
 
 from .basic_dev_class import (
     GenericMiotDevice,
@@ -68,6 +69,11 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         TYPE,
         {'default': MiotCamera}
     )
+
+
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    config = copy.copy(hass.data[DOMAIN]['configs'].get(config_entry.entry_id, dict(config_entry.data)))
+    await async_setup_platform(hass, config, async_add_entities)
 
 
 class MiotCamera(ToggleableMiotDevice, Camera):
