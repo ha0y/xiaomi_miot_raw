@@ -2,6 +2,7 @@
 import asyncio
 import logging
 from functools import partial
+import collections
 
 from datetime import timedelta
 import json
@@ -80,6 +81,8 @@ class MiotCamera(ToggleableMiotDevice, Camera):
     def __init__(self, device, config, device_info, hass, main_mi_type):
         ToggleableMiotDevice.__init__(self, device, config, device_info, hass, main_mi_type)
         self._is_on = False
+        self.access_tokens: collections.deque = collections.deque([], 2)
+        self.access_tokens.append('00000000000000000000000000000000')
 
     @property
     def supported_features(self) -> int:
