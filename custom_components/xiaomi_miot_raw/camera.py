@@ -78,12 +78,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 class MiotCamera(GenericMiotDevice, Camera):
-    async def async_handle_web_rtc_offer(self, offer_sdp: str) -> str | None:
-        pass
-
-    def camera_image(self, width: int | None = None, height: int | None = None) -> bytes | None:
-        pass
-
     def turn_off(self) -> None:
         pass
 
