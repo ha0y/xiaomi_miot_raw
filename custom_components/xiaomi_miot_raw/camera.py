@@ -77,12 +77,36 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     await async_setup_platform(hass, config, async_add_entities)
 
 
-class MiotCamera(ToggleableMiotDevice, Camera):
+class MiotCamera(GenericMiotDevice, Camera):
+    async def async_handle_web_rtc_offer(self, offer_sdp: str) -> str | None:
+        pass
+
+    def camera_image(self, width: int | None = None, height: int | None = None) -> bytes | None:
+        pass
+
+    def turn_off(self) -> None:
+        pass
+
+    def turn_on(self) -> None:
+        pass
+
+    def enable_motion_detection(self) -> None:
+        pass
+
+    def disable_motion_detection(self) -> None:
+        pass
+
     def __init__(self, device, config, device_info, hass, main_mi_type):
-        ToggleableMiotDevice.__init__(self, device, config, device_info, hass, main_mi_type)
+        GenericMiotDevice.__init__(self, device, config, device_info, hass, main_mi_type)
+        Camera.__init__(self)
         self._state = False
-        self.access_tokens: collections.deque = collections.deque([], 2)
-        self.access_tokens.append('00000000000000000000000000000000')
+
+    @property
+    def should_poll(self):
+        return True
+
+    def update(self):
+        return True
 
     @property
     def supported_features(self) -> int:
@@ -90,21 +114,23 @@ class MiotCamera(ToggleableMiotDevice, Camera):
 
     @property
     def is_recording(self) -> bool:
-        return False
+        return self._state
 
     @property
     def is_streaming(self) -> bool:
-        return False
+        return self._state
 
     @property
     def is_on(self) -> bool:
         return self._state
 
     async def async_turn_on(self) -> None:
-        await self.async_do_turn_on(True)
+        self._state = True
+        # await self.async_do_turn_on(True)
 
     async def async_turn_off(self) -> None:
-        await self.async_do_turn_on(False)
+        self._state = False
+        # await self.async_do_turn_on(False)
 
     async def async_do_turn_on(self, new_status) -> None:
         d: miio.chuangmi_camera.ChuangmiCamera = self._device
