@@ -80,7 +80,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 class MiotCamera(ToggleableMiotDevice, Camera):
     def __init__(self, device, config, device_info, hass, main_mi_type):
         ToggleableMiotDevice.__init__(self, device, config, device_info, hass, main_mi_type)
-        self._is_on = False
+        self._state = False
         self.access_tokens: collections.deque = collections.deque([], 2)
         self.access_tokens.append('00000000000000000000000000000000')
 
@@ -98,7 +98,7 @@ class MiotCamera(ToggleableMiotDevice, Camera):
 
     @property
     def is_on(self) -> bool:
-        return self._is_on
+        return self._state
 
     async def async_turn_on(self) -> None:
         await self.async_do_turn_on(True)
@@ -117,6 +117,5 @@ class MiotCamera(ToggleableMiotDevice, Camera):
             _LOGGER.warning("result for send {}, {}".format(cmd, result))
             return
 
-        self._is_on = new_status
-        self._state = True
+        self._state = new_status
         self.async_write_ha_state()
