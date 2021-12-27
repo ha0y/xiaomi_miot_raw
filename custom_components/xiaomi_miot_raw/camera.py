@@ -78,12 +78,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 class MiotCamera(GenericMiotDevice, Camera):
-    def turn_off(self) -> None:
-        pass
-
-    def turn_on(self) -> None:
-        pass
-
     def enable_motion_detection(self) -> None:
         pass
 
@@ -93,14 +87,11 @@ class MiotCamera(GenericMiotDevice, Camera):
     def __init__(self, device, config, device_info, hass, main_mi_type):
         GenericMiotDevice.__init__(self, device, config, device_info, hass, main_mi_type)
         Camera.__init__(self)
-        self._state = False
+        self._state = True
 
     @property
     def should_poll(self):
-        return True
-
-    def update(self):
-        return True
+        return False
 
     @property
     def supported_features(self) -> int:
@@ -112,19 +103,17 @@ class MiotCamera(GenericMiotDevice, Camera):
 
     @property
     def is_streaming(self) -> bool:
-        return self._state
+        return False
 
     @property
     def is_on(self) -> bool:
-        return self._state
+        return True
 
     async def async_turn_on(self) -> None:
-        self._state = True
-        # await self.async_do_turn_on(True)
+        await self.async_do_turn_on(True)
 
     async def async_turn_off(self) -> None:
-        self._state = False
-        # await self.async_do_turn_on(False)
+        await self.async_do_turn_on(False)
 
     async def async_do_turn_on(self, new_status) -> None:
         d: miio.chuangmi_camera.ChuangmiCamera = self._device
@@ -138,4 +127,4 @@ class MiotCamera(GenericMiotDevice, Camera):
             return
 
         self._state = new_status
-        self.async_write_ha_state()
+        self.schedule_update_ha_state()
