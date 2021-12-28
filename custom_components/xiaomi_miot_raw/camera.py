@@ -88,7 +88,7 @@ class MiotCamera(GenericMiotDevice, Camera):
         self._device: miio.chuangmi_camera.ChuangmiCamera = None  # Just for type hint
         GenericMiotDevice.__init__(self, device, config, device_info, hass, main_mi_type)
         Camera.__init__(self)
-        self._state: bool = None
+        self._state: bool = True
 
     @property
     def should_poll(self):
