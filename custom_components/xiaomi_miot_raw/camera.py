@@ -95,6 +95,7 @@ class MiotCamera(GenericMiotDevice, Camera):
         return True
 
     async def async_update(self):
+        _LOGGER.debug("Start camera.async_update")
         device_status = self.get_devicestatus()
         # sleep will return [{'sysstatus': 'sleep'}]
         # otherwise will return all other status
@@ -134,6 +135,8 @@ class MiotCamera(GenericMiotDevice, Camera):
         await self.async_do_turn_on(False)
 
     async def async_do_turn_on(self, new_status) -> None:
+        _LOGGER.debug(f"Start camera.async_do_turn_on( {new_status} )")
+
         if new_status:
             cmd = "normal"
         else:
