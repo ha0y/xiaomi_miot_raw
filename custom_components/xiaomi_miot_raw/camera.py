@@ -88,19 +88,20 @@ class MiotCamera(GenericMiotDevice, Camera):
         self._device: miio.chuangmi_camera.ChuangmiCamera = None  # Just for type hint
         GenericMiotDevice.__init__(self, device, config, device_info, hass, main_mi_type)
         Camera.__init__(self)
-        self._state: bool = True
+        self._state: bool = None
+        self.register_callback(self.update_callback)
 
     @property
     def should_poll(self):
         return True
 
-    def update(self):
-        _LOGGER.debug("Start camera.update")
+    def update_callback(self):
+        _LOGGER.debug("Start camera.update_callback")
         device_status = self.get_devicestatus()
         # sleep will return [{'sysstatus': 'sleep'}]
         # otherwise will return all other status
         self._state = (len(device_status) > 1)
-        _LOGGER.debug(f"camera.update result: {self._state}")
+        _LOGGER.debug(f"camera.update_callback result: {self._state}")
 
     def get_devicestatus(self):
         return self._device.send('get_devicestatus', {
