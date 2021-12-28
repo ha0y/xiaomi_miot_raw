@@ -86,9 +86,9 @@ class MiotCamera(GenericMiotDevice, Camera):
 
     def __init__(self, device, config, device_info, hass, main_mi_type):
         self._device: miio.chuangmi_camera.ChuangmiCamera = None  # Just for type hint
+        self._state: bool = None
         GenericMiotDevice.__init__(self, device, config, device_info, hass, main_mi_type)
         Camera.__init__(self)
-        self._state: bool = None
         self.register_callback(self.update_callback)
 
     @property
@@ -96,7 +96,6 @@ class MiotCamera(GenericMiotDevice, Camera):
         return True
 
     def update_callback(self):
-        _LOGGER.debug("Start camera.update_callback")
         device_status = self.get_devicestatus()
         # sleep will return [{'sysstatus': 'sleep'}]
         # otherwise will return all other status
@@ -120,7 +119,6 @@ class MiotCamera(GenericMiotDevice, Camera):
 
     @property
     def is_recording(self) -> bool:
-        _LOGGER.debug(f"camera.is_recording: {self._state}")
         return self._state
 
     @property
@@ -129,7 +127,6 @@ class MiotCamera(GenericMiotDevice, Camera):
 
     @property
     def is_on(self) -> bool:
-        _LOGGER.debug("camera.is_on: True")
         return True
 
     async def async_turn_on(self) -> None:
@@ -139,7 +136,7 @@ class MiotCamera(GenericMiotDevice, Camera):
         await self.async_do_turn_on(False)
 
     async def async_do_turn_on(self, new_status) -> None:
-        _LOGGER.debug(f"Start camera.async_do_turn_on( {new_status} )")
+        _LOGGER.info(f"Start camera.async_do_turn_on( {new_status} )")
 
         if new_status:
             cmd = "normal"
