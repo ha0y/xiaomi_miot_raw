@@ -94,13 +94,13 @@ class MiotCamera(GenericMiotDevice, Camera):
     def should_poll(self):
         return True
 
-    async def async_update(self):
-        _LOGGER.debug("Start camera.async_update")
+    def update(self):
+        _LOGGER.debug("Start camera.update")
         device_status = self.get_devicestatus()
         # sleep will return [{'sysstatus': 'sleep'}]
         # otherwise will return all other status
         self._state = (len(device_status) > 1)
-        _LOGGER.debug(f"camera.async_update result: {self._state}")
+        _LOGGER.debug(f"camera.update result: {self._state}")
 
     def get_devicestatus(self):
         return self._device.send('get_devicestatus', {
@@ -119,6 +119,7 @@ class MiotCamera(GenericMiotDevice, Camera):
 
     @property
     def is_recording(self) -> bool:
+        _LOGGER.debug(f"camera.is_recording: {self._state}")
         return self._state
 
     @property
@@ -127,6 +128,7 @@ class MiotCamera(GenericMiotDevice, Camera):
 
     @property
     def is_on(self) -> bool:
+        _LOGGER.debug("camera.is_on: True")
         return True
 
     async def async_turn_on(self) -> None:
