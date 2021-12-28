@@ -85,13 +85,31 @@ class MiotCamera(GenericMiotDevice, Camera):
         pass
 
     def __init__(self, device, config, device_info, hass, main_mi_type):
+        self._device: miio.chuangmi_camera.ChuangmiCamera = None  # Just for type hint
         GenericMiotDevice.__init__(self, device, config, device_info, hass, main_mi_type)
         Camera.__init__(self)
-        self._state = True
+        self._state = None
 
     @property
     def should_poll(self):
-        return False
+        return True
+
+    async def async_update(self):
+        device_status = self.get_devicestatus()
+        # sleep will return [{'sysstatus': 'sleep'}]
+        # otherwise will return all other status
+        self._state = (len(device_status) > 1)
+
+    def get_devicestatus(self):
+        return self._device.send('get_devicestatus', {
+            'alarmsensitivity': "",
+            'cameraprompt': "",
+            'flip': "",
+            'infraredlight': "",
+            'ledstatus': "",
+            'recordtype': "",
+            'wakeuplevel': "",
+        })
 
     @property
     def supported_features(self) -> int:
@@ -116,12 +134,11 @@ class MiotCamera(GenericMiotDevice, Camera):
         await self.async_do_turn_on(False)
 
     async def async_do_turn_on(self, new_status) -> None:
-        d: miio.chuangmi_camera.ChuangmiCamera = self._device
         if new_status:
             cmd = "normal"
         else:
             cmd = "sleep"
-        result = d.send("set_" + ATTR_SYSSTATUS, [cmd])
+        result = self._device.send("set_" + ATTR_SYSSTATUS, [cmd])
         if result != ['ok']:
             _LOGGER.warning("result for send {}, {}".format(cmd, result))
             return
