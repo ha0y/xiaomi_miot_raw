@@ -90,12 +90,20 @@ class MiotSubBinarySensor(MiotSubDevice, BinarySensorEntity):
     @property
     def state(self):
         """Return the state of the device."""
-        if self.is_on == True:
-            return STATE_ON
-        elif self.is_on == False:
-            return STATE_OFF
+        if self.device_class == "door":
+            if self.is_on == True:
+                return STATE_OFF
+            elif self.is_on == False:
+                return STATE_ON
+            else:
+                return STATE_UNKNOWN
         else:
-            return STATE_UNKNOWN
+            if self.is_on == True:
+                return STATE_ON
+            elif self.is_on == False:
+                return STATE_OFF
+            else:
+                return STATE_UNKNOWN
 
     @property
     def is_on(self):
