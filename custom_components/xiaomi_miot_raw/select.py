@@ -103,7 +103,7 @@ class MiotPropertySelector(SelectEntity, MiotSubDevice):
     @property
     def current_option(self):
         """Return the selected entity option to represent the entity state."""
-        return self._parent_device.device_state_attributes[self._full_did]
+        return self._parent_device.extra_state_attributes[self._full_did]
 
     async def async_select_option(self, option: str):
         """Change the selected option."""

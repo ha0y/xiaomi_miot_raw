@@ -80,7 +80,7 @@ class MiotNumberInput(NumberEntity, MiotSubDevice):
     def state(self):
         """Return the state of the device."""
         try:
-            return self._parent_device.device_state_attributes[self._full_did]
+            return self._parent_device.extra_state_attributes[self._full_did]
         except:
             return None
 

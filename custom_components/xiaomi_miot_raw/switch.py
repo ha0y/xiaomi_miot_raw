@@ -106,12 +106,12 @@ class BinarySelectorEntity(MiotSubToggleableDevice, SwitchEntity):
 
     @property
     def is_on(self):
-        return self._parent_device.device_state_attributes.get(self._did_prefix + self._field)
+        return self._parent_device.extra_state_attributes.get(self._did_prefix + self._field)
 
     @property
     def state(self):
         return self._state
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         return {}

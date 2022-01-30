@@ -210,7 +210,7 @@ class GenericMiotDevice(Entity):
         return self._available
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Return the state attributes of the device."""
         return self._state_attrs
 
@@ -802,9 +802,9 @@ class MiotSubDevice(Entity):
         return self._parent_device.available
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         try:
-            return self._parent_device.device_state_attributes or {}
+            return self._parent_device.extra_state_attributes or {}
         except:
             return None
 
@@ -826,7 +826,7 @@ class MiotSubDevice(Entity):
         if self._skip_update:
             self._skip_update = False
             return
-        attrs = self._parent_device.device_state_attributes or {}
+        attrs = self._parent_device.extra_state_attributes or {}
         self._state_attrs = attrs
         pass
 
@@ -862,7 +862,7 @@ class MiotSubToggleableDevice(MiotSubDevice):
     @property
     def state(self):
         try:
-            return STATE_ON if self.device_state_attributes.get(f"{self._did_prefix}switch_status") else STATE_OFF
+            return STATE_ON if self.extra_state_attributes.get(f"{self._did_prefix}switch_status") else STATE_OFF
         except:
             return STATE_UNKNOWN
 

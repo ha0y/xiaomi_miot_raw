@@ -165,7 +165,7 @@ class MiotSubSensor(MiotSubDevice):
     def state(self):
         """Return the state of the device."""
         try:
-            return self._parent_device.device_state_attributes[self._sensor_property]
+            return self._parent_device.extra_state_attributes[self._sensor_property]
         except:
             return None
 
@@ -295,7 +295,7 @@ class MiotEventBasedSensor(Entity):
         return self.coordinator.data[0][0]
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Return the state attributes of the device."""
         return self._state_attrs
 
@@ -490,7 +490,7 @@ class MiotEventBasedSubSensor(Entity):
         return self._icon
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Return the state attributes of the device."""
         return self._state_attrs
 

@@ -101,7 +101,7 @@ class MiotSubBinarySensor(MiotSubDevice, BinarySensorEntity):
     def is_on(self):
         """Return true if the binary sensor is on."""
         try:
-            return self._parent_device.device_state_attributes[self._sensor_property]
+            return self._parent_device.extra_state_attributes[self._sensor_property]
         except:
             return None
 
