@@ -15,7 +15,7 @@ from homeassistant.components.cover import (
     ENTITY_ID_FORMAT, PLATFORM_SCHEMA,
     SUPPORT_CLOSE, SUPPORT_OPEN,
     SUPPORT_SET_POSITION, SUPPORT_STOP,
-    CoverDevice, CoverEntity)
+    CoverEntity)
 from homeassistant.const import *
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers import aiohttp_client
