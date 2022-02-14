@@ -681,6 +681,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 self._steps.append(self.async_step_climate())
             if user_input.get('async_step_cover', False):
                 self._steps.append(self.async_step_cover())
+            if user_input.get('async_step_binary_sensor', False):
+                self._steps.append(self.async_step_binary_sensor())
             if user_input.get('async_step_re_adapt', False):
                 self._steps.append(self.async_step_re_adapt())
             if user_input.get('async_step_edit_mpprm', False):
@@ -711,6 +713,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 fields[vol.Optional("async_step_climate")] = bool
             if 'cover' in self._all_config['devtype']:
                 fields[vol.Optional("async_step_cover")] = bool
+            if 'binary_sensor' in self._all_config['devtype']:
+                fields[vol.Optional("async_step_binary_sensor")] = bool
         if not fields:
             return self.async_abort(reason="no_configurable_options")
 
@@ -790,7 +794,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         return self.async_show_form(
             step_id='cover',
             data_schema=vol.Schema({
-                vol.Optional('reverse_position_percentage', default=d): bool,
+                vol.Required('reverse_position_percentage', default=d): bool,
             }),
         )
 
@@ -806,6 +810,33 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             step_id='climate',
             data_schema=vol.Schema({
                 vol.Optional('current_temp_source', default=""): str,
+            }),
+        )
+
+    async def async_step_binary_sensor(self, user_input=None):
+        if user_input is not None:
+            for device,p in self._prm.items():
+                if isinstance(p, dict):
+                    for prop, item in p.items():
+                        if isinstance(item, dict):
+                            if item.get('format') == 'bool':
+                                 item.update(user_input)
+            self._steps.pop(0)
+            return await self._steps[0]
+
+        d = True
+        for device,p in self._prm.items():
+            if isinstance(p, dict):
+                for prop, item in p.items():
+                    if isinstance(item, dict):
+                        if item.get('format') == 'bool' and not item.get('reverse', False):
+                            d = False
+                            break
+
+        return self.async_show_form(
+            step_id='binary_sensor',
+            data_schema=vol.Schema({
+                vol.Required('reverse', default=d): bool,
             }),
         )
 

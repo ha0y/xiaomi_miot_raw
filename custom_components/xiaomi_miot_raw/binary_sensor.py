@@ -86,14 +86,18 @@ class MiotSubBinarySensor(MiotSubDevice, BinarySensorEntity):
         super().__init__(parent_device, mapping, params, mitype)
         self._sensor_property = others.get('sensor_property')
         self.entity_id = f"{DOMAIN}.{parent_device._entity_id}-{others.get('sensor_property').split('_')[-1]}"
+        self._reverse_state = False
+        if self._ctrl_params:
+            if self._ctrl_params.get(self._sensor_property):
+                self._reverse_state = self._ctrl_params[self._sensor_property].get('reverse', False)
 
     @property
     def state(self):
         """Return the state of the device."""
         if self.is_on == True:
-            return STATE_ON
+            return STATE_ON if not self._reverse_state else STATE_OFF
         elif self.is_on == False:
-            return STATE_OFF
+            return STATE_OFF if not self._reverse_state else STATE_ON
         else:
             return STATE_UNKNOWN
 
