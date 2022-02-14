@@ -138,6 +138,13 @@
                 "description": "Reversing position percentage can fix some problems.",
                 "title": "Cover Options"
             },
+            "binary_sensor": {
+                "data": {
+                    "reverse": "Reverse binary sensor state"
+                },
+                "description": "Enable this feature to reverse states of all binary sensors that belong to this device.\nYou can also edit mapping and params to reverse only some of them.",
+                "title": "Binary Sensor Options"
+            },
             "climate": {
                 "data": {
                     "current_temp_source": "Environment temperature sensor entity ID"
