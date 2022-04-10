@@ -1,4 +1,9 @@
 SPECIAL_DEVICES={
+    "chuangmi.camera.xiaobai":{
+        "device_type": ['camera'],
+        "mapping": {"camera": {"switch_status": {"siid": 1, "piid": 1}}},
+        "params": {"camera": {"switch_status": {"power_on": True, "power_off": False}, "main": True}}
+    },
     "chuangmi.plug.212a01":{
         "device_type": ['switch','sensor'],
         "mapping": {"switch": {"switch_status": {"siid": 2, "piid": 1}, "temperature": {"siid": 2, "piid": 6}, "working_time": {"siid": 2, "piid": 7}}, "power_consumption": {"power_consumption": {"siid": 5, "piid": 1}, "electric_current": {"siid": 5, "piid": 2}, "voltage": {"siid": 5, "piid": 3}, "electric_power": {"siid": 5, "piid": 6}}},
