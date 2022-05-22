@@ -1,0 +1,186 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Você já configurou este dispositivo!",
+            "success": "Login bem sucedido! Aguarde um momento e atualize para ver os dispositivos adicionados.\nPara adicionar mais, clique em 'CONFIGURAÇÃO' em sua conta ou em 'ADICIONAR INTEGRAÇÃO' - `Xiaomi MIoT`."
+        },
+        "create_entry": {
+            "default": ""
+        },
+        "error": {
+            "unexpected_error": "Erro inesperado. Veja os registros para detalhes",
+            "cannot_connect": "Não pode conectar",
+            "connection_failed": "Rede inacessível",
+            "value_error": "Valor errado",
+            "bad_params": "Parâmetros ruins",
+            "no_local_access": "O acesso local não é compatível com este dispositivo. O acesso à nuvem foi ativado. Clique em 'ENVIAR' novamente.",
+            "no_connect_warning": "Falha ao descobrir seu dispositivo. Se for um Xiaomi Speaker, é normal e você precisa inserir seu modelo manualmente acima. Caso contrário, verifique sua entrada.",
+            "wrong_pwd": "Senha incorreta",
+            "need_auth": "Autenticação de dois fatores necessária. Abra o link acima para concluir a autenticação e faça login novamente.",
+            "account_tips": "Isso é para facilitar a adição de dispositivos. \nDepois de fazer login, volte aqui para selecionar os dispositivos a serem adicionados."
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "name": "Nome",
+                    "host": "IP",
+                    "token": "token"
+                },
+                "description": "",
+                "title": "Selecionar Operação"
+            },
+            "xiaomi_account": {
+				"title": "Login da conta Xiaomi",
+				"description": "{hint}Insira suas credenciais da Xiaomi.",
+				"data": {
+					"username": "E-mail/Xiaomi ID",
+					"password": "Senha",
+                    "server_location": "Localização do servidor"
+				}
+			},
+            "localinfo": {
+                "data": {
+                    "name": "Nome",
+                    "host": "IP",
+                    "token": "token"
+                },
+                "description": "O acesso local requer as informações acima",
+                "title": "Configurar"
+            },
+            "devinfo": {
+                "title": "Informação do dispositivo",
+                "data": {
+                    "devtype": "Tipos de dispositivo(s)",
+                    "mapping": "mapeamento",
+                    "params": "parâmetros",
+                    "cloud_read": "Leia o status da nuvem",
+                    "cloud_write": "Controle o dispositivo da nuvem"
+
+                },
+                "description": "{device_info}"
+            },
+            "cloudinfo": {
+                "title": "Credenciais da conta",
+                "data": {
+                    "did": "fez",
+                    "userId": "Id de usuário",
+                    "serviceToken": "Token do serviço",
+                    "ssecurity": "segurança"
+                },
+                "description": "O acesso à nuvem requer as informações acima"
+            },
+            "select_devices": {
+                "data": {
+                    "devices": "Lista de dispositivos"
+                },
+                "description": "Você tem {dev_count} dispositivos! Selecione os dispositivos a serem adicionados abaixo.\nVocê ainda pode selecionar mais no futuro.",
+                "title": "Selecionar dispositivos"
+            }
+        },
+        "title": "MIoT"
+    },
+    "system_health": {
+        "info": {
+            "logged_in": "Logado na conta Xiaomi",
+            "can_reach_micloud_server": "Alcance o Xiaomi Cloud Server",
+            "added_devices": "Dispositivos adicionados",
+            "accounts_count": "Contas Xiaomi"
+        }
+    },
+    "options": {
+        "abort": {
+            "no_configurable_options": "Nenhuma opção disponível."
+        },
+        "error": {
+            "plz_agree": "Por favor, leia atentamente",
+            "cannot_connect": "Não pode se conectar",
+            "connection_failed": "Falha na conexão de rede",
+            "wrong_pwd": "Senha incorreta",
+            "need_auth": "Autenticação de dois fatores necessária. Abra o link acima para concluir a autenticação e faça login novamente.",
+            "dev_readapt_failed": "Falha ao readaptar o dispositivo. Os parâmetros não foram alterados.",
+            "invalid_json": "JSON inválido"
+        },
+        "step": {
+            "init": {
+                "data": {
+                    "async_step_update_xiaomi_account": "Atualizar a credencial da conta Xiaomi e a localização do servidor",
+                    "async_step_select_devices": "Adição de lote de dispositivos (não selecione com o acima)",
+                    "async_step_light_and_lock": "Mostrar ou ocultar o interruptor para luz indicadora e bloqueio para crianças",
+                    "async_step_climate": "Anexar um sensor ao climate para temperatura atual",
+                    "async_step_cover": "Posição reversa da cortina",
+                    "async_step_re_adapt": "Readaptar dispositivo",
+                    "async_step_edit_mpprm": "Editar mapeamento e parâmetros",
+                    "async_step_edit_iptoken": "Atualizar IP e Token"
+                },
+                "description": "",
+                "title": "Você gostaria de..."
+            },
+            "update_xiaomi_account": {
+				"title": "Atualizar a credencial da conta Xiaomi",
+				"description": "{hint}Atualizar senha para “{username}”.",
+				"data": {
+					"username": "E-mail/Xiaomi ID",
+					"password": "Senha",
+                    "server_location": "Localização do servidor"
+				}
+			},
+            "sensor": {
+                "data": {
+                },
+                "description": "Se marcado, haverá uma entidade de sensor para cada atributo.",
+                "title": "Opções de sensor"
+            },
+            "cover": {
+                "data": {
+                    "reverse_position_percentage": "Reverter posição da porcentagem"
+                },
+                "description": "A reversão da posição da porcentagem pode corrigir alguns problemas.",
+                "title": "Opções de cortina"
+            },
+            "binary_sensor": {
+                "data": {
+                    "reverse": "Estado do sensor binário reverso"
+                },
+                "description": "Ative este recurso para reverter os estados de todos os sensores binários que pertencem a este dispositivo.\nVocê também pode editar mapeamentos e parâmetros para reverter apenas alguns deles.",
+                "title": "Opções de sensores binários"
+            },
+            "climate": {
+                "data": {
+                    "current_temp_source": "ID da entidade do sensor de temperatura ambiente"
+                },
+                "description": "Insira um ID de entidade do sensor de temperatura aqui para usá-lo como o sensor de temperatura atual.",
+                "title": "Opções de climate"
+            },
+            "light_and_lock": {
+                "data": {
+                    "show_indicator_light": "Ativar interruptor para luz indicadora",
+                    "show_physical_controls_locked": "Ativar interruptor para bloqueio infantil"
+                },
+                "description": "",
+                "title": "Luz Indicadora / Opções de Bloqueio Infantil"
+            },
+            "select_devices": {
+                "data": {
+                    "devices": "Lista de dispositivos"
+                },
+                "description": "Selecione os dispositivos a serem adicionados.\n\nApós o envio, os dispositivos serão adicionados em segundo plano. Atualize para vê-los.",
+                "title": "Adição de lote de dispositivos"
+            },
+            "edit_mpprm": {
+                "data": {
+                    "mapping": "mapeamento",
+                    "params": "parâmetros"
+                },
+                "description": "Se você não sabe quais são, mantenha-os como padrão.\nSe o dispositivo foi readaptado, a configuração mais recente é mostrada abaixo.",
+                "title": "Editar mapeamento e parâmetros"
+            },
+            "edit_iptoken": {
+                "data": {
+                    "host": "IP",
+                    "token": "token"
+                },
+                "title": "Atualizar IP e Token"
+            }
+        }
+    }
+}
