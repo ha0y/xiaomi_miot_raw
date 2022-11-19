@@ -12,6 +12,7 @@ import voluptuous as vol
 from homeassistant.components import fan
 from homeassistant.components.fan import (
     PLATFORM_SCHEMA,
+    ATTR_SPEED,
     SUPPORT_OSCILLATE,
     SUPPORT_SET_SPEED,
     SUPPORT_DIRECTION,
