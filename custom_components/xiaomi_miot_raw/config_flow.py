@@ -1,6 +1,7 @@
 import json
 import re
 
+import logging
 import asyncio
 from types import coroutine
 from typing import OrderedDict
@@ -39,6 +40,8 @@ from .deps.const import (
 from .deps.miot_device_adapter import MiotAdapter
 from .deps.special_devices import SPECIAL_DEVICES
 from .deps.xiaomi_cloud_new import MiCloud
+
+_LOGGER = logging.getLogger(__name__)
 
 SERVERS = {
     'cn': "China",
@@ -735,6 +738,40 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 if resp == (0, None):
                     self._all_config.update(user_input)
                     self._all_config.update(cloud.auth)
+
+                    #让新 token 实时生效
+                    for item in self.hass.data[DOMAIN]['cloud_instance_list']:
+                      mc = item['cloud_instance']
+                      mc.login_by_credientals(
+                        cloud.auth["user_id"],
+                        cloud.auth['service_token'],
+                        cloud.auth['ssecurity']
+                      )
+
+                    if self.hass.config_entries.async_entries(DOMAIN):  #更新每个设备的token
+                      _LOGGER.info("Found existing config entries")
+                      for entry in self.hass.config_entries.async_entries(DOMAIN):
+                        if (
+                          entry.data.get("update_from_cloud")
+                        ):
+                          _LOGGER.info("Updating existing entry")
+                          update_from_cloud=entry.data.get("update_from_cloud")
+                          update_from_cloud_new={
+                             "did": update_from_cloud["did"],
+                             "userId": update_from_cloud["userId"],
+                             "serviceToken": cloud.auth['service_token'],
+                             "ssecurity": cloud.auth['ssecurity'],
+                             "server_location": update_from_cloud["server_location"]
+                          }
+                          entry_data_new=dict(entry.data)
+                          entry_data_new.update({"update_from_cloud":update_from_cloud_new})
+                          entry_id = entry.entry_id
+                          self.hass.data[DOMAIN]['configs'][entry_id] = entry_data_new 
+                          self.hass.config_entries.async_update_entry(  #保存新token到文件
+                            entry,
+                            data=entry_data_new,
+                         )
+
                     self._steps.pop(0)
                     return await self._steps[0]
                 elif resp[0] == -2:
