@@ -195,6 +195,7 @@ async def async_remove_entry(hass, entry):
 async def _setup_micloud_entry(hass, config_entry):
     """Thanks to @AlexxIT """
     data: dict = config_entry.data.copy()
+    hass.data[DOMAIN]['micloud_config'] = data
     server_location = data.get('server_location') or 'cn'
 
     session = aiohttp_client.async_create_clientsession(hass, auto_cleanup=False)
