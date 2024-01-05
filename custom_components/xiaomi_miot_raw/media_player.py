@@ -78,20 +78,20 @@ class MiotMediaPlayer(GenericMiotDevice, MediaPlayerEntity):
         """Return the supported features."""
         s = 0
         if 'a_l_play_control_play' in self._mapping:
-            s |= SUPPORT_PLAY
+            s |= MediaPlayerEntityFeature.PLAY
         if 'a_l_play_control_pause' in self._mapping:
-            s |= SUPPORT_PAUSE
+            s |= MediaPlayerEntityFeature.PAUSE
         if 'a_l_play_control_next' in self._mapping:
-            s |= SUPPORT_NEXT_TRACK
+            s |= MediaPlayerEntityFeature.NEXT_TRACK
         if 'a_l_play_control_previous' in self._mapping:
-            s |= SUPPORT_PREVIOUS_TRACK
+            s |= MediaPlayerEntityFeature.PREVIOUS_TRACK
         if self._did_prefix + 'mp_sound_mode' in self._mapping:
-            s |= SUPPORT_SELECT_SOUND_MODE
+            s |= MediaPlayerEntityFeature.SELECT_SOUND_MODE
         if 'mp_source' in self._ctrl_params:
-            s |= SUPPORT_SELECT_SOURCE
+            s |= MediaPlayerEntityFeature.SELECT_SOURCE
         if self._did_prefix + 'volume' in self._mapping:
-            s |= SUPPORT_VOLUME_SET
-        # s |= SUPPORT_PLAY_MEDIA
+            s |= MediaPlayerEntityFeature.VOLUME_SET
+        # s |= MediaPlayerEntityFeature.PLAY_MEDIA
         return s
 
     @property
@@ -210,12 +210,12 @@ class MiotIRTV(MiotIRDevice, MediaPlayerEntity):
     def supported_features(self):
         """Return the supported features."""
         return (
-            SUPPORT_VOLUME_SET
-            | SUPPORT_VOLUME_MUTE
-            | SUPPORT_TURN_ON
-            | SUPPORT_TURN_OFF
-            | SUPPORT_NEXT_TRACK
-            | SUPPORT_PREVIOUS_TRACK
+            MediaPlayerEntityFeature.VOLUME_SET
+            | MediaPlayerEntityFeature.VOLUME_MUTE
+            | MediaPlayerEntityFeature.TURN_ON
+            | MediaPlayerEntityFeature.TURN_OFF
+            | MediaPlayerEntityFeature.NEXT_TRACK
+            | MediaPlayerEntityFeature.PREVIOUS_TRACK
         )
 
     @property

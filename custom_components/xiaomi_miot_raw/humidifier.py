@@ -85,7 +85,7 @@ class MiotHumidifier(ToggleableMiotDevice, HumidifierEntity):
         """Return the list of supported features."""
         s = 0
         if self._did_prefix + 'mode' in self._mapping:
-            s |= SUPPORT_MODES
+            s |= HumidifierEntityFeature.MODES
         return s
 
     @property

@@ -13,8 +13,8 @@ from aiohttp import ClientSession
 from homeassistant.components.cover import (
     DEVICE_CLASS_CURTAIN, DOMAIN,
     ENTITY_ID_FORMAT, PLATFORM_SCHEMA,
-    SUPPORT_CLOSE, SUPPORT_OPEN,
-    SUPPORT_SET_POSITION, SUPPORT_STOP,
+    CoverEntityFeature.CLOSE, CoverEntityFeature.OPEN,
+    CoverEntityFeature.SET_POSITION, CoverEntityFeature.STOP,
     CoverEntity)
 from homeassistant.const import *
 from homeassistant.exceptions import PlatformNotReady
@@ -102,9 +102,9 @@ class MiotCover(GenericMiotDevice, CoverEntity):
     @property
     def supported_features(self):
         if self._did_prefix + 'target_position' in self._mapping:
-            return SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_STOP | SUPPORT_SET_POSITION
+            return CoverEntityFeature.OPEN | CoverEntityFeature.CLOSE | CoverEntityFeature.STOP | CoverEntityFeature.SET_POSITION
         else:
-            return SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_STOP
+            return CoverEntityFeature.OPEN | CoverEntityFeature.CLOSE | CoverEntityFeature.STOP
 
     @property
     def current_cover_position(self):

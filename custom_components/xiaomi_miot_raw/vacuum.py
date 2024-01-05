@@ -18,19 +18,19 @@ from homeassistant.components.vacuum import (
     STATE_IDLE,
     STATE_PAUSED,
     STATE_RETURNING,
-    SUPPORT_BATTERY,
-    SUPPORT_CLEAN_SPOT,
-    SUPPORT_FAN_SPEED,
-    SUPPORT_LOCATE,
-    SUPPORT_PAUSE,
-    SUPPORT_RETURN_HOME,
-    SUPPORT_SEND_COMMAND,
-    SUPPORT_START,
-    SUPPORT_STATE,
-    SUPPORT_STATUS,
-    SUPPORT_STOP,
-    SUPPORT_TURN_OFF,
-    SUPPORT_TURN_ON,
+    VaccumEntityFeature.BATTERY,
+    VaccumEntityFeature.CLEAN_SPOT,
+    VaccumEntityFeature.FAN_SPEED,
+    VaccumEntityFeature.LOCATE,
+    VaccumEntityFeature.PAUSE,
+    VaccumEntityFeature.RETURN_HOME,
+    VaccumEntityFeature.SEND_COMMAND,
+    VaccumEntityFeature.START,
+    VaccumEntityFeature.STATE,
+    VaccumEntityFeature.STATUS,
+    VaccumEntityFeature.STOP,
+    VaccumEntityFeature.TURN_OFF,
+    VaccumEntityFeature.TURN_ON,
     StateVacuumEntity,
     VacuumEntity,
     PLATFORM_SCHEMA
@@ -118,21 +118,21 @@ class MiotVacuum(GenericMiotDevice, StateVacuumEntity):
         """Flag supported features."""
         s = 0
         if 'a_l_vacuum_start_sweep' in self._mapping:
-            s |= SUPPORT_START
+            s |= VaccumEntityFeature.START
         if 'a_l_vacuum_pause_sweeping' in self._mapping:
-            s |= SUPPORT_PAUSE
+            s |= VaccumEntityFeature.PAUSE
         if 'a_l_vacuum_stop_sweeping' in self._mapping:
-            s |= SUPPORT_STOP
+            s |= VaccumEntityFeature.STOP
         if self._did_prefix + 'mode' in self._mapping:
-            s |= SUPPORT_FAN_SPEED
+            s |= VaccumEntityFeature.FAN_SPEED
         if self._did_prefix + 'battery_level' in self._mapping or \
             'battery_battery_level' in self._mapping:
-            s |= SUPPORT_BATTERY
+            s |= VaccumEntityFeature.BATTERY
         if 'a_l_battery_start_charge' in self._mapping:
-            s |= SUPPORT_RETURN_HOME
+            s |= VaccumEntityFeature.RETURN_HOME
         if 'a_l_voice_find_device' in self._mapping or \
             'a_l_identify_identify' in self._mapping:
-            s |= SUPPORT_LOCATE
+            s |= VaccumEntityFeature.LOCATE
         return s
 
     @property
@@ -157,7 +157,7 @@ class MiotVacuum(GenericMiotDevice, StateVacuumEntity):
 
     async def async_start(self):
         """Start or resume the cleaning task."""
-        if self.supported_features & SUPPORT_START == 0:
+        if self.supported_features & VaccumEntityFeature.START == 0:
             return
 
         result = await self.call_action_new(*(self._mapping['a_l_vacuum_start_sweep'].values()))
@@ -168,7 +168,7 @@ class MiotVacuum(GenericMiotDevice, StateVacuumEntity):
 
     async def async_pause(self):
         """Pause the cleaning task."""
-        if self.supported_features & SUPPORT_PAUSE == 0:
+        if self.supported_features & VaccumEntityFeature.PAUSE == 0:
             return
 
         result = await self.call_action_new(*(self._mapping['a_l_vacuum_pause_sweeping'].values()))
@@ -178,7 +178,7 @@ class MiotVacuum(GenericMiotDevice, StateVacuumEntity):
 
     async def async_stop(self, **kwargs):
         """Stop the cleaning task, do not return to dock."""
-        if self.supported_features & SUPPORT_STOP == 0:
+        if self.supported_features & VaccumEntityFeature.STOP == 0:
             return
 
         result = await self.call_action_new(*(self._mapping['a_l_vacuum_stop_sweeping'].values()))
@@ -188,7 +188,7 @@ class MiotVacuum(GenericMiotDevice, StateVacuumEntity):
 
     async def async_return_to_base(self, **kwargs):
         """Return dock to charging base."""
-        if self.supported_features & SUPPORT_RETURN_HOME == 0:
+        if self.supported_features & VaccumEntityFeature.RETURN_HOME == 0:
             return
 
         result = await self.call_action_new(*(self._mapping['a_l_battery_start_charge'].values()))
@@ -202,7 +202,7 @@ class MiotVacuum(GenericMiotDevice, StateVacuumEntity):
 
     async def async_set_fan_speed(self, fan_speed, **kwargs):
         """Set the vacuum's fan speed."""
-        if self.supported_features & SUPPORT_FAN_SPEED == 0:
+        if self.supported_features & VaccumEntityFeature.FAN_SPEED == 0:
             return
 
         result = await self.set_property_new(self._did_prefix + "mode", self._ctrl_params['mode'][fan_speed])

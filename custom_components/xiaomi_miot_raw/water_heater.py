@@ -12,9 +12,9 @@ import voluptuous as vol
 from aiohttp import ClientSession
 from homeassistant.components import water_heater
 from homeassistant.components.water_heater import (
-    SUPPORT_AWAY_MODE,
-    SUPPORT_OPERATION_MODE,
-    SUPPORT_TARGET_TEMPERATURE,
+    WaterHeaterEntityFeature.AWAY_MODE,
+    WaterHeaterEntityFeature.OPERATION_MODE,
+    WaterHeaterEntityFeature.TARGET_TEMPERATURE,
     WaterHeaterEntity,
     PLATFORM_SCHEMA,
 )
@@ -92,9 +92,9 @@ class MiotWaterHeater(ToggleableMiotDevice, WaterHeaterEntity):
     @property
     def supported_features(self):
         """Return the list of supported features."""
-        s = SUPPORT_OPERATION_MODE
+        s = WaterHeaterEntityFeature.OPERATION_MODE
         if self._did_prefix + 'target_temperature' in self._mapping:
-            s |= SUPPORT_TARGET_TEMPERATURE
+            s |= WaterHeaterEntityFeature.TARGET_TEMPERATURE
         return s
 
     @property

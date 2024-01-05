@@ -137,21 +137,21 @@ class MiotClimate(ToggleableMiotDevice, ClimateEntity):
         """Return the supported features."""
         s = 0
         if self._did_prefix + 'target_temperature' in self._mapping:
-            s |= SUPPORT_TARGET_TEMPERATURE
+            s |= ClimateEntityFeature.TARGET_TEMPERATURE
         if self._did_prefix + 'speed' in self._mapping:
-            s |= SUPPORT_FAN_MODE
+            s |= ClimateEntityFeature.FAN_MODE
         if self._did_prefix + 'preset' in self._mapping:
-            s |= SUPPORT_PRESET_MODE
+            s |= ClimateEntityFeature.PRESET_MODE
         if self._did_prefix + 'target_humidity' in self._mapping:
-            s |= SUPPORT_TARGET_HUMIDITY
+            s |= ClimateEntityFeature.TARGET_HUMIDITY
         if self._swing_modes:
-            s |= SUPPORT_SWING_MODE
+            s |= ClimateEntityFeature.SWING_MODE
         # if 'aux_heat' in self._mapping:
-        #     s |= SUPPORT_AUX_HEAT
+        #     s |= ClimateEntityFeature.AUX_HEAT
         # if 'temprature_range' in self._mapping:
-        #     s |= SUPPORT_TARGET_TEMPERATURE_RANGE
+        #     s |= ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
 
-        # s = SUPPORT_TARGET_TEMPERATURE|SUPPORT_FAN_MODE|SUPPORT_PRESET_MODE|SUPPORT_SWING_MODE
+        # s = ClimateEntityFeature.TARGET_TEMPERATURE|ClimateEntityFeature.FAN_MODE|ClimateEntityFeature.PRESET_MODE|ClimateEntityFeature.SWING_MODE
         return s
 
     @property
@@ -424,9 +424,9 @@ class MiotIRClimate(MiotIRDevice, ClimateEntity):
     def supported_features(self):
         s = 0
         if self._did_prefix + 'ir_temperature' in self._mapping:
-            s |= SUPPORT_TARGET_TEMPERATURE
+            s |= ClimateEntityFeature.TARGET_TEMPERATURE
         if self._did_prefix + 'fan_speed_up' in self._mapping:
-            s |= SUPPORT_FAN_MODE
+            s |= ClimateEntityFeature.FAN_MODE
         return s
 
     @property

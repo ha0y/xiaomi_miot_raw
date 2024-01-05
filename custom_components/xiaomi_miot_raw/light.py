@@ -13,7 +13,7 @@ from homeassistant.components.light import (
     ATTR_EFFECT, ATTR_HS_COLOR,
     PLATFORM_SCHEMA,
     SUPPORT_BRIGHTNESS, SUPPORT_COLOR,
-    SUPPORT_COLOR_TEMP, SUPPORT_EFFECT,
+    SUPPORT_COLOR_TEMP, LightEntityFeature.EFFECT,
     LightEntity)
 from homeassistant.const import *
 from homeassistant.exceptions import PlatformNotReady
@@ -93,7 +93,7 @@ class MiotLight(ToggleableMiotDevice, LightEntity):
         if self._did_prefix + 'color_temperature' in self._mapping:
             s |= SUPPORT_COLOR_TEMP
         if self._did_prefix + 'mode' in self._mapping:
-            s |= SUPPORT_EFFECT
+            s |= LightEntityFeature.EFFECT
         if self._did_prefix + 'color' in self._mapping:
             s |= SUPPORT_COLOR
         return s
@@ -225,7 +225,7 @@ class MiotSubLight(MiotSubToggleableDevice, LightEntity):
         if 'color_temperature' in self._mapping:
             s |= SUPPORT_COLOR_TEMP
         if 'mode' in self._mapping:
-            s |= SUPPORT_EFFECT
+            s |= LightEntityFeature.EFFECT
         if 'color' in self._mapping:
             s |= SUPPORT_COLOR
         return s

@@ -12,9 +12,9 @@ import voluptuous as vol
 from homeassistant.components import fan
 from homeassistant.components.fan import (
     PLATFORM_SCHEMA,
-    SUPPORT_OSCILLATE,
-    SUPPORT_SET_SPEED,
-    SUPPORT_DIRECTION,
+    FanEntityFeature.OSCILLATE,
+    FanEntityFeature.SET_SPEED,
+    FanEntityFeature.DIRECTION,
     FanEntity)
 from homeassistant.const import *
 from homeassistant.exceptions import PlatformNotReady
@@ -61,7 +61,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 SCAN_INTERVAL = timedelta(seconds=10)
 
 NEW_FAN = True if StrictVersion(current_version.replace(".dev","a")) >= StrictVersion("2021.2.9") else False
-SUPPORT_PRESET_MODE = 8
+FanEntityFeature.PRESET_MODE = 8
 
 # pylint: disable=unused-argument
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
@@ -97,13 +97,13 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
         """Return the supported features."""
         s = 0
         if self._did_prefix + 'oscillate' in self._mapping:
-            s |= SUPPORT_OSCILLATE
+            s |= FanEntityFeature.OSCILLATE
             if self._did_prefix + 'motor_control' in self._mapping:
-                s |= SUPPORT_DIRECTION
+                s |= FanEntityFeature.DIRECTION
         if self._did_prefix + 'speed' in self._mapping:
-            s |= (SUPPORT_SET_SPEED if not NEW_FAN else SUPPORT_SET_SPEED)
+            s |= (FanEntityFeature.SET_SPEED if not NEW_FAN else FanEntityFeature.SET_SPEED)
         if self._did_prefix + 'mode' in self._mapping:
-            s |= (SUPPORT_SET_SPEED if not NEW_FAN else SUPPORT_PRESET_MODE)
+            s |= (FanEntityFeature.SET_SPEED if not NEW_FAN else FanEntityFeature.PRESET_MODE)
         return s
 
     @property
@@ -254,9 +254,9 @@ class MiotSubFan(MiotSubToggleableDevice, FanEntity):
         """Return the supported features."""
         s = 0
         if 'oscillate' in self._mapping:
-            s |= SUPPORT_OSCILLATE
+            s |= FanEntityFeature.OSCILLATE
         if 'speed' in self._mapping:
-            s |= (SUPPORT_SET_SPEED if not NEW_FAN else SUPPORT_PRESET_MODE)
+            s |= (FanEntityFeature.SET_SPEED if not NEW_FAN else FanEntityFeature.PRESET_MODE)
         return s
 
     @property
@@ -355,7 +355,7 @@ class MiotActionList(MiotSubDevice, FanEntity):
     @property
     def supported_features(self):
         """Return the supported features."""
-        return SUPPORT_SET_SPEED if not NEW_FAN else SUPPORT_PRESET_MODE
+        return FanEntityFeature.SET_SPEED if not NEW_FAN else FanEntityFeature.PRESET_MODE
 
     @property
     def speed_list(self) -> list:
@@ -434,7 +434,7 @@ class SelectorEntity(MiotSubDevice, FanEntity):
     @property
     def supported_features(self):
         """Return the supported features."""
-        return SUPPORT_SET_SPEED if not NEW_FAN else SUPPORT_PRESET_MODE
+        return FanEntityFeature.SET_SPEED if not NEW_FAN else FanEntityFeature.PRESET_MODE
 
     @property
     def speed_list(self) -> list:
