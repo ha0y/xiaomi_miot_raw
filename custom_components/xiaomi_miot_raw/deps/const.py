@@ -233,7 +233,7 @@ UNIT_MAPPING = {
     "pascal"     : "Pa"                                      , # 帕斯卡(大气压强单位)
     "arcdegrees" : "rad"                                     , # 弧度(角度单位)
     "rgb"        : "RGB"                                     , # RGB(颜色)
-    "watt"       : UnitOfPower_WATT                          , # 瓦特(功率)
+    "watt"       : UnitOfPower.WATT                          , # 瓦特(功率)
     "litre"      : UnitOfVolume.LITERS                       , # 升
     "ppm"        : CONCENTRATION_PARTS_PER_MILLION           , # ppm浓度
     "lux"        : LIGHT_LUX                                 , # 勒克斯(照度)
