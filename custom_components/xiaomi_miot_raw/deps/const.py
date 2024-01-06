@@ -182,6 +182,7 @@ MAP = {
         "fan_control",
         "dryer",
         "toilet",
+        "function",
         "settings",
         "settings_2",
         "air_fresh_heater",
