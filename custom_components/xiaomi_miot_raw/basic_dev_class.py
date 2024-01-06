@@ -732,8 +732,7 @@ class GenericMiotDevice(Entity):
     def _handle_platform_specific_attrs(self):
         pass
 
-    @asyncio.coroutine
-    def async_service_handler(self, service):
+    async def async_service_handler(self, service):
         """Map services to methods on XiaomiMiioDevice."""
         method = SERVICE_TO_METHOD.get(service.service)
         params = {
@@ -753,11 +752,11 @@ class GenericMiotDevice(Entity):
 
         update_tasks = []
         for device in devices:
-            yield from getattr(device, method["method"])(**params)
+            yield getattr(device, method["method"])(**params)
             update_tasks.append(device.async_update_ha_state(True))
 
         if update_tasks:
-            yield from asyncio.wait(update_tasks, loop=self.hass.loop)
+            yield asyncio.wait(update_tasks, loop=self.hass.loop)
 
 class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
     def __init__(self, device, config, device_info, hass = None, mi_type = None):
