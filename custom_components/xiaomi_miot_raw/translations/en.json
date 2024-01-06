@@ -31,7 +31,7 @@
             },
             "xiaomi_account": {
 				"title": "Log in Xiaomi Account",
-				"description": "{hint}Enter your Xiaomi credentials.",
+				"description": "{hint}Enter your Xiaomi Credentials.",
 				"data": {
 					"username": "Email/Xiaomi ID",
 					"password": "Password",
@@ -60,7 +60,7 @@
                 "description": "{device_info}"
             },
             "cloudinfo": {
-                "title": "Account credentials",
+                "title": "Account Credentials",
                 "data": {
                     "did": "did",
                     "userId": "userId",
@@ -104,7 +104,7 @@
         "step": {
             "init": {
                 "data": {
-                    "async_step_update_xiaomi_account": "Update Xiaomi Account credential and Server Location",
+                    "async_step_update_xiaomi_account": "Update Xiaomi Account Credential and Server Location",
                     "async_step_select_devices": "Batch Adding Devices (Do not select with the one above)",
                     "async_step_light_and_lock": "Show or Hide Switch for Indicator Light and Child Lock",
                     "async_step_climate": "Attach a Sensor to Climate for Current Temperature",
@@ -117,7 +117,7 @@
                 "title": "Would you like to..."
             },
             "update_xiaomi_account": {
-				"title": "Update Xiaomi Account credential",
+				"title": "Update Xiaomi Account Credential",
 				"description": "{hint}Update password for “{username}”.",
 				"data": {
 					"username": "Email/Xiaomi ID",
@@ -137,6 +137,13 @@
                 },
                 "description": "Reversing position percentage can fix some problems.",
                 "title": "Cover Options"
+            },
+            "binary_sensor": {
+                "data": {
+                    "reverse": "Reverse binary sensor state"
+                },
+                "description": "Enable this feature to reverse states of all binary sensors that belong to this device.\nYou can also edit mapping and params to reverse only some of them.",
+                "title": "Binary Sensor Options"
             },
             "climate": {
                 "data": {

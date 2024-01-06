@@ -58,7 +58,6 @@ DEVCLASS_MAPPING = {
 }
 
 # pylint: disable=unused-argument
-@asyncio.coroutine
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     hass.data[DOMAIN]['add_handler'].setdefault(TYPE, {})
     if 'config_entry' in config:
@@ -86,14 +85,18 @@ class MiotSubBinarySensor(MiotSubDevice, BinarySensorEntity):
         super().__init__(parent_device, mapping, params, mitype)
         self._sensor_property = others.get('sensor_property')
         self.entity_id = f"{DOMAIN}.{parent_device._entity_id}-{others.get('sensor_property').split('_')[-1]}"
+        self._reverse_state = False
+        if self._ctrl_params:
+            if self._ctrl_params.get(self._sensor_property):
+                self._reverse_state = self._ctrl_params[self._sensor_property].get('reverse', False)
 
     @property
     def state(self):
         """Return the state of the device."""
         if self.is_on == True:
-            return STATE_ON
+            return STATE_ON if not self._reverse_state else STATE_OFF
         elif self.is_on == False:
-            return STATE_OFF
+            return STATE_OFF if not self._reverse_state else STATE_ON
         else:
             return STATE_UNKNOWN
 
@@ -101,7 +104,7 @@ class MiotSubBinarySensor(MiotSubDevice, BinarySensorEntity):
     def is_on(self):
         """Return true if the binary sensor is on."""
         try:
-            return self._parent_device.device_state_attributes[self._sensor_property]
+            return self._parent_device.extra_state_attributes[self._sensor_property]
         except:
             return None
 

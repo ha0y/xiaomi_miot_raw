@@ -52,7 +52,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 )
 
 # pylint: disable=unused-argument
-@asyncio.coroutine
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     """Set up the light from config."""
     if DATA_KEY not in hass.data:
@@ -116,7 +115,7 @@ class MiotPhysicalControlLock(MiotSubDevice, LockEntity):
 
     @property
     def is_locked(self):
-        return self.device_state_attributes.get(f"{self._did_prefix}physical_controls_locked") == True
+        return self.extra_state_attributes.get(f"{self._did_prefix}physical_controls_locked") == True
 
     async def async_lock(self, **kwargs):
         result = await self._parent_device.set_property_new(self._did_prefix + "physical_controls_locked", True)

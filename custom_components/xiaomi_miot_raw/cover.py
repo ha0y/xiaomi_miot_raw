@@ -15,7 +15,7 @@ from homeassistant.components.cover import (
     ENTITY_ID_FORMAT, PLATFORM_SCHEMA,
     SUPPORT_CLOSE, SUPPORT_OPEN,
     SUPPORT_SET_POSITION, SUPPORT_STOP,
-    CoverDevice, CoverEntity)
+    CoverEntity)
 from homeassistant.const import *
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers import aiohttp_client
@@ -60,7 +60,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 SCAN_INTERVAL = timedelta(seconds=2)
 # pylint: disable=unused-argument
 
-@asyncio.coroutine
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     hass.data[DOMAIN]['add_handler'].setdefault(TYPE, {})
     if 'config_entry' in config:

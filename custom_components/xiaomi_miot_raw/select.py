@@ -57,7 +57,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 SCAN_INTERVAL = timedelta(seconds=10)
 
 # pylint: disable=unused-argument
-@asyncio.coroutine
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     hass.data[DOMAIN]['add_handler'].setdefault(TYPE, {})
     if 'config_entry' in config:
@@ -103,7 +102,7 @@ class MiotPropertySelector(SelectEntity, MiotSubDevice):
     @property
     def current_option(self):
         """Return the selected entity option to represent the entity state."""
-        return self._parent_device.device_state_attributes[self._full_did]
+        return self._parent_device.extra_state_attributes[self._full_did]
 
     async def async_select_option(self, option: str):
         """Change the selected option."""

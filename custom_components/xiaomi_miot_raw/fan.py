@@ -11,12 +11,7 @@ import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components import fan
 from homeassistant.components.fan import (
-    ATTR_SPEED,
     PLATFORM_SCHEMA,
-    SPEED_HIGH,
-    SPEED_LOW,
-    SPEED_MEDIUM,
-    SPEED_OFF,
     SUPPORT_OSCILLATE,
     SUPPORT_SET_SPEED,
     SUPPORT_DIRECTION,
@@ -69,7 +64,6 @@ NEW_FAN = True if StrictVersion(current_version.replace(".dev","a")) >= StrictVe
 SUPPORT_PRESET_MODE = 8
 
 # pylint: disable=unused-argument
-@asyncio.coroutine
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     hass.data[DOMAIN]['add_handler'].setdefault(TYPE, {})
     if 'config_entry' in config:
@@ -283,7 +277,7 @@ class MiotSubFan(MiotSubToggleableDevice, FanEntity):
         """Return the current speed."""
         if not NEW_FAN:
             try:
-                self._speed = self.get_key_by_value(self._ctrl_params['speed'],self.device_state_attributes[self._did_prefix + 'speed'])
+                self._speed = self.get_key_by_value(self._ctrl_params['speed'],self.extra_state_attributes[self._did_prefix + 'speed'])
             except KeyError:
                 self._speed = None
             return self._speed
@@ -294,7 +288,7 @@ class MiotSubFan(MiotSubToggleableDevice, FanEntity):
     def preset_mode(self):
         """Return the current speed."""
         try:
-            self._speed = self.get_key_by_value(self._ctrl_params['speed'],self.device_state_attributes[self._did_prefix + 'speed'])
+            self._speed = self.get_key_by_value(self._ctrl_params['speed'],self.extra_state_attributes[self._did_prefix + 'speed'])
         except KeyError:
             self._speed = None
         return self._speed
@@ -310,7 +304,7 @@ class MiotSubFan(MiotSubToggleableDevice, FanEntity):
     @property
     def oscillating(self):
         """Return the oscillation state."""
-        return self.device_state_attributes.get(self._did_prefix + 'oscillate')
+        return self.extra_state_attributes.get(self._did_prefix + 'oscillate')
 
     async def async_oscillate(self, oscillating: bool) -> None:
         """Set oscillation."""
@@ -416,7 +410,7 @@ class MiotActionList(MiotSubDevice, FanEntity):
         return self._state2
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         return {ATTR_ATTRIBUTION: "在上方列表选择动作。选择后会立即执行。\n操作成功后，开关会短暂回弹。"}
 
     async def async_update(self):
@@ -450,7 +444,7 @@ class SelectorEntity(MiotSubDevice, FanEntity):
     @property
     def speed(self):
         """Return the current speed."""
-        return self._parent_device.get_key_by_value(self._value_list, self._parent_device.device_state_attributes.get(self._did_prefix + self._field))
+        return self._parent_device.get_key_by_value(self._value_list, self._parent_device.extra_state_attributes.get(self._did_prefix + self._field))
 
     @property
     def percentage(self) -> str:
@@ -491,7 +485,7 @@ class SelectorEntity(MiotSubDevice, FanEntity):
         return self._state2
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         return {ATTR_ATTRIBUTION: f"可在此设置“{self._parent_device.name}”的 {self._field}。开关仅用于反馈操作是否成功，无控制功能。"}
 
     async def async_update(self):
