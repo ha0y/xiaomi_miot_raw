@@ -64,7 +64,6 @@ NEW_FAN = True if StrictVersion(current_version.replace(".dev","a")) >= StrictVe
 SUPPORT_PRESET_MODE = 8
 
 # pylint: disable=unused-argument
-@asyncio.coroutine
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     hass.data[DOMAIN]['add_handler'].setdefault(TYPE, {})
     if 'config_entry' in config:
@@ -148,9 +147,9 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
         """Return the current speed."""
         return self._mode
 
-    # @property
-    # def percentage(self):
-    #     return None
+    @property
+    def percentage(self):
+        return self.speed
 
     @property
     def speed_count(self):
@@ -226,9 +225,9 @@ class MiotFan(ToggleableMiotDevice, FanEntity):
             raise TypeError(f"Your fan does not support {direction}.")
         await self.set_property_new(self._did_prefix + "motor_control", self._ctrl_params['motor_control'][d])
 
-    # async def async_set_percentage(self, percentage: int) -> None:
-    #     """Set the speed percentage of the fan."""
-    #     pass
+    async def async_set_percentage(self, percentage: int) -> None:
+        """Set the speed percentage of the fan."""
+        await self.async_set_speed(percentage)
 
     def _handle_platform_specific_attrs(self):
         super()._handle_platform_specific_attrs()

@@ -60,7 +60,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 SCAN_INTERVAL = timedelta(seconds=2)
 # pylint: disable=unused-argument
 
-@asyncio.coroutine
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     hass.data[DOMAIN]['add_handler'].setdefault(TYPE, {})
     if 'config_entry' in config:
@@ -121,7 +120,7 @@ class MiotCover(GenericMiotDevice, CoverEntity):
         """ Most of Xiaomi covers does not report position as 0 when they are fully closed.
             It can be 0, 1, 2... So we consider it closed when it is <= 3. The _current_position
             has been converted so it is always percentage. (#227) """
-        return self.current_cover_position <= 3
+        return int(self.current_cover_position) <= 3
 
     @property
     def is_closing(self):

@@ -2,7 +2,7 @@ import asyncio
 import json
 import time
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 from functools import partial
 from dataclasses import dataclass
 
@@ -62,7 +62,9 @@ UPDATE_BETA_FLAG = False
 
 class GenericMiotDevice(Entity):
     """通用 MiOT 设备"""
-
+    
+    lastAutoUpdateAccountTime=datetime.now()-timedelta(seconds=3600)
+    
     def __init__(self, device, config, device_info, hass = None, mi_type = None):
         """Initialize the entity."""
 
@@ -506,7 +508,56 @@ class GenericMiotDevice(Entity):
                         statedict[key] = pre_process_data(key, dict1[value['siid']][value['piid']])
 
                 else:
-                    pass
+                    # auth err
+                    # 小米账号登录信息失效
+                    # 自动重新登录，间隔3600秒
+                    lostTime=(datetime.now()-GenericMiotDevice.lastAutoUpdateAccountTime).total_seconds()
+                    _LOGGER.debug("miaccount auth err:lostTime:%d" % (lostTime))
+                    if (lostTime>3600):
+                        _LOGGER.warning("auto update mi_account token")
+                        GenericMiotDevice.lastAutoUpdateAccountTime=datetime.now()
+                    
+                        config=self.hass.data[DOMAIN]['micloud_config']
+                        #_LOGGER.debug(f"self.hass.data[DOMAIN]['config']: {json.dumps (config)}")
+                        if 'username' in config:
+                            cloud=self._cloud_instance
+                            resp = await cloud.login(config['username'],
+                                                config['password'])
+                            if resp == (0, None):
+                                #让新 token 实时生效
+                                for item in self.hass.data[DOMAIN]['cloud_instance_list']:
+                                  mc = item['cloud_instance']
+                                  mc.login_by_credientals(
+                                    cloud.auth["user_id"],
+                                    cloud.auth['service_token'],
+                                    cloud.auth['ssecurity']
+                                  )
+                        
+                                if self.hass.config_entries.async_entries(DOMAIN):  #更新每个设备的token
+                                  _LOGGER.warning("Found existing config entries")
+                                  for entry in self.hass.config_entries.async_entries(DOMAIN):
+                                    if (
+                                      entry.data.get("update_from_cloud")
+                                    ):
+                                      _LOGGER.warning("Updating existing entry")
+                                      update_from_cloud=entry.data.get("update_from_cloud")
+                                      update_from_cloud_new={
+                                         "did": update_from_cloud["did"],
+                                         "userId": update_from_cloud["userId"],
+                                         "serviceToken": cloud.auth['service_token'],
+                                         "ssecurity": cloud.auth['ssecurity'],
+                                         "server_location": update_from_cloud["server_location"]
+                                      }
+                                      entry_data_new=dict(entry.data)
+                                      entry_data_new.update({"update_from_cloud":update_from_cloud_new})
+                                      entry_id = entry.entry_id
+                                      self.hass.data[DOMAIN]['configs'][entry_id] = entry_data_new 
+                                      self.hass.config_entries.async_update_entry(  #保存新token到文件
+                                        entry,
+                                        data=entry_data_new,
+                                     )
+                            else: 
+                                _LOGGER.error("config.data no username")
 
             self._fail_count = 0
             self._state_attrs.update(statedict)
@@ -681,8 +732,7 @@ class GenericMiotDevice(Entity):
     def _handle_platform_specific_attrs(self):
         pass
 
-    @asyncio.coroutine
-    def async_service_handler(self, service):
+    async def async_service_handler(self, service):
         """Map services to methods on XiaomiMiioDevice."""
         method = SERVICE_TO_METHOD.get(service.service)
         params = {
@@ -702,11 +752,11 @@ class GenericMiotDevice(Entity):
 
         update_tasks = []
         for device in devices:
-            yield from getattr(device, method["method"])(**params)
+            yield getattr(device, method["method"])(**params)
             update_tasks.append(device.async_update_ha_state(True))
 
         if update_tasks:
-            yield from asyncio.wait(update_tasks, loop=self.hass.loop)
+            yield asyncio.wait(update_tasks, loop=self.hass.loop)
 
 class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
     def __init__(self, device, config, device_info, hass = None, mi_type = None):

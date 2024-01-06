@@ -78,6 +78,7 @@ class MiCloud:
                 'ssecurity': data['ssecurity'],
                 'service_token': token
             }
+            _LOGGER.info(f"user_id:{data['userId']},service_token: {token}")
             return (0, None)
 
         except Exception as e:
@@ -160,6 +161,7 @@ class MiCloud:
         except Exception:
             loc = "en_US"
         try:
+            _LOGGER.info(f"user_id:{self.auth['user_id']},token:{self.auth['service_token']}")
             r = await self.session.post(baseurl + url, cookies={
                 'userId': self.auth['user_id'],
                 'serviceToken': self.auth['service_token'],
@@ -171,7 +173,7 @@ class MiCloud:
                 'signature': signature,
                 '_nonce': nonce,
                 'data': data
-            }, timeout=5)
+            }, timeout=30)
 
             resp = await r.json(content_type=None)
             assert resp['code'] == 0, resp
@@ -203,6 +205,7 @@ class MiCloud:
             'cache-control': "no-cache",
         }
         try:
+            _LOGGER.info(f"user_id:{self.auth['user_id']},token:{self.auth['service_token']}")
             r = await self.session.post(url, cookies={
                 'userId': self.auth['user_id'],
                 'serviceToken': self.auth['service_token'],
@@ -213,7 +216,7 @@ class MiCloud:
                 'signature': signature,
                 '_nonce': nonce,
                 'data': data
-            }, timeout=5)
+            }, timeout=30)
 
             self._fail_count = 0
             resp = await r.json(content_type=None)
@@ -230,6 +233,7 @@ class MiCloud:
                 return resp
 
         except (asyncio.TimeoutError, ClientConnectorError) as ex:
+            _LOGGER.exception("request_miot_api:")
             if self._fail_count < 3 and api == "/miotspec/prop/get":
                 self._fail_count += 1
                 _LOGGER.info(f"Error while requesting MIoT api {api} : {ex} ({self._fail_count})")
