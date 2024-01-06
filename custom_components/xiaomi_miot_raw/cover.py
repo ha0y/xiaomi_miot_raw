@@ -120,7 +120,7 @@ class MiotCover(GenericMiotDevice, CoverEntity):
         """ Most of Xiaomi covers does not report position as 0 when they are fully closed.
             It can be 0, 1, 2... So we consider it closed when it is <= 3. The _current_position
             has been converted so it is always percentage. (#227) """
-        return self.current_cover_position <= 3
+        return int(self.current_cover_position) <= 3
 
     @property
     def is_closing(self):
