@@ -1,0 +1,184 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Ja has configurat aquest dispositiu!",
+            "success": "Inici de sessió correcte! Espereu un moment i actualitzeu per veure els dispositius afegits. Per afegir-ne més, feu clic a `CONFIGURACIÓ` al vostre compte o a `AFEGEIX INTEGRACIÓ - Xiaomi MIoT`."
+        },
+        "create_entry": {
+            "default": "per defecte"
+        },
+        "error": {
+            "unexpected_error": "Error inesperat. Consulteu els registres per obtenir més informació",
+            "cannot_connect": "No es pot connectar",
+            "connection_failed": "Xarxa inaccessible",
+            "value_error": "Valor incorrecte",
+            "bad_params": "Paràmetres erronis",
+            "no_local_access": "Aquest dispositiu no admet l'accés local. S'ha habilitat l'accés al núvol. Feu clic a \"ENVIA\" de nou",
+            "no_connect_warning": "No s'ha pogut descobrir el teu dispositiu. Si es tracta d'un altaveu Xiaomi, és normal i cal introduir el model manualment a dalt. Si no, si us plau, comproveu la vostra entrada.",
+            "wrong_pwd": "Contrasenya incorrecta",
+            "need_auth": "Es requereix autenticació de dos factors. Obriu l'enllaç anterior per finalitzar l'autenticació i torneu a iniciar sessió.",
+            "account_tips": "Això és per facilitar l'addició de dispositius. Després d'iniciar la sessió, torneu aquí per seleccionar els dispositius que voleu afegir."
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "name": "Nom",
+                    "host": "IP",
+                    "token": "testimoni"
+                },
+                "description": "descripció",
+                "title": "Seleccioneu Operació"
+            },
+            "xiaomi_account": {
+                "title": "Inicieu sessió al compte Xiaomi",
+                "description": "{hint}Introduïu les vostres credencials de Xiaomi.",
+                "data": {
+                    "username": "Correu electrònic/identificador de Xiaomi",
+                    "password": "Contrasenya",
+                    "server_location": "Ubicació del servidor"
+                }
+            },
+            "localinfo": {
+                "data": {
+                    "name": "Nom",
+                    "host": "IP",
+                    "token": "testimoni"
+                },
+                "description": "L'accés local requereix la informació anterior",
+                "title": "Configura"
+            },
+            "devinfo": {
+                "title": "Informació del dispositiu",
+                "data": {
+                    "devtype": "Tipus de dispositiu",
+                    "mapping": "mapatge",
+                    "params": "paràmetres",
+                    "cloud_read": "Llegeix l'estat des del núvol",
+                    "cloud_write": "Controla el dispositiu des del núvol"
+                },
+                "description": "{device_info}"
+            },
+            "cloudinfo": {
+                "title": "Credencials del compte",
+                "data": {
+                    "did": "DID",
+                    "userId": "ID d'usuari",
+                    "serviceToken": "Testimoni de servei",
+                    "ssecurity": "seguretat"
+                },
+                "description": "L'accés al núvol requereix la informació anterior"
+            },
+            "select_devices": {
+                "data": {
+                    "devices": "Llista de dispositius"
+                },
+                "description": "Tens {dev_count} dispositius! Seleccioneu els dispositius que voleu afegir a continuació. Encara en podeu seleccionar més en el futur.",
+                "title": "Seleccioneu Dispositius"
+            }
+        },
+        "title": "MIoT"
+    },
+    "system_health": {
+        "info": {
+            "logged_in": "Inicieu sessió al compte Xiaomi",
+            "can_reach_micloud_server": "Troba un servidor Xiaomi Cloud",
+            "account_devices_count": "Dispositius al compte",
+            "added_devices": "Dispositius afegits",
+            "accounts_count": "Comptes Xiaomi"
+        }
+    },
+    "options": {
+        "abort": {
+            "no_configurable_options": "No hi ha opcions disponibles."
+        },
+        "error": {
+            "plz_agree": "Si us plau, llegiu atentament",
+            "cannot_connect": "No es pot connectar",
+            "connection_failed": "La connexió a la xarxa ha fallat",
+            "wrong_pwd": "Contrasenya incorrecta",
+            "need_auth": "Es requereix autenticació de dos factors. Obriu l'enllaç anterior per finalitzar l'autenticació i torneu a iniciar sessió.",
+            "dev_readapt_failed": "No s'ha pogut reconfigurar el dispositiu. Els paràmetres no s'han modificat.",
+            "invalid_json": "JSON no vàlid"
+        },
+        "step": {
+            "init": {
+                "data": {
+                    "async_step_update_xiaomi_account": "Actualitzeu la credencial del compte Xiaomi i la ubicació del servidor",
+                    "async_step_select_devices": "Afegir dispositius per lots (no seleccioneu amb el de dalt)",
+                    "async_step_light_and_lock": "Mostra o amaga l'interruptor per a la llum indicadora i el bloqueig infantil",
+                    "async_step_climate": "Connecteu un sensor al climatització per a la temperatura actual",
+                    "async_step_cover": "Posició inversa de la coberta",
+                    "async_step_re_adapt": "Reconfigura el dispositiu",
+                    "async_step_edit_mpprm": "Edita mapes i paràmetres",
+                    "async_step_edit_iptoken": "Actualitza la IP i el testimoni"
+                },
+                "description": "descripció",
+                "title": ""
+            },
+            "update_xiaomi_account": {
+                "title": "Actualitza les credencials del compte Xiaomi",
+                "description": "{hint}Actualitza la contrasenya per a \"{username}\".",
+                "data": {
+                    "username": "Correu electrònic/identificador de Xiaomi\n",
+                    "password": "Contrasenya",
+                    "server_location": "Ubicació del servidor"
+                }
+            },
+            "sensor": {
+                "description": "Si està marcat, es crearà una entitat sensor per a cada atribut.",
+                "title": "Opcions del sensor"
+            },
+            "cover": {
+                "data": {
+                    "reverse_position_percentage": "Percentatge de posició inversa"
+                },
+                "description": "Invertir el percentatge de posició pot solucionar alguns problemes.",
+                "title": "Opcions de coberta"
+            },
+            "binary_sensor": {
+                "data": {
+                    "reverse": "Estat del sensor binari invers"
+                },
+                "description": "Activeu aquesta funció per invertir els estats de tots els sensors binaris que pertanyen a aquest dispositiu. També podeu editar els mapes i els paràmetres per revertir només alguns d'ells.",
+                "title": "Opcions del sensor binari"
+            },
+            "climate": {
+                "data": {
+                    "current_temp_source": "Identificador d'entitat del sensor de temperatura ambiental"
+                },
+                "description": "Introduïu aquí un ID d'entitat del sensor de temperatura per utilitzar-lo com a sensor de temperatura actual.",
+                "title": "Opcions de climatització"
+            },
+            "light_and_lock": {
+                "data": {
+                    "show_indicator_light": "Activa l'interruptor de la llum indicadora",
+                    "show_physical_controls_locked": "Activa l'interruptor per al bloqueig infantil"
+                },
+                "description": "descripció",
+                "title": "Llum indicador / Opcions de bloqueig per a nens"
+            },
+            "select_devices": {
+                "data": {
+                    "devices": "Llistat de dispositius"
+                },
+                "description": "Seleccioneu els dispositius que voleu afegir. Després de l'enviament, els dispositius s'afegiran en segon pla. Actualitza per veure'ls.",
+                "title": "Dispositius d'addició per lots"
+            },
+            "edit_mpprm": {
+                "data": {
+                    "mapping": "mapatge",
+                    "params": "paràmetres"
+                },
+                "description": "Si no sabeu què són, manteniu els predeterminats. Si el dispositiu s'ha reconfigurat, a continuació es mostra la darrera configuració.",
+                "title": "Edita mapes i paràmetres"
+            },
+            "edit_iptoken": {
+                "data": {
+                    "host": "IP",
+                    "token": "testimoni"
+                },
+                "title": "Actualitza la IP i el testimoni"
+            }
+        }
+    }
+}
