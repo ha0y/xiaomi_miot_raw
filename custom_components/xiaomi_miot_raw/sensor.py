@@ -87,7 +87,6 @@ DEVCLASS_MAPPING = {
     "carbon_dioxide"  : ["co2_density"],
 }
 # pylint: disable=unused-argument
-@asyncio.coroutine
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     """Set up the sensor from config."""
     hass.data.setdefault(DATA_KEY, {})
