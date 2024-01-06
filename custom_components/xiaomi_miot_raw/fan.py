@@ -11,12 +11,7 @@ import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components import fan
 from homeassistant.components.fan import (
-    ATTR_SPEED,
     PLATFORM_SCHEMA,
-    SPEED_HIGH,
-    SPEED_LOW,
-    SPEED_MEDIUM,
-    SPEED_OFF,
     SUPPORT_OSCILLATE,
     SUPPORT_SET_SPEED,
     SUPPORT_DIRECTION,
@@ -69,7 +64,6 @@ NEW_FAN = True if StrictVersion(current_version.replace(".dev","a")) >= StrictVe
 SUPPORT_PRESET_MODE = 8
 
 # pylint: disable=unused-argument
-@asyncio.coroutine
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     hass.data[DOMAIN]['add_handler'].setdefault(TYPE, {})
     if 'config_entry' in config:
