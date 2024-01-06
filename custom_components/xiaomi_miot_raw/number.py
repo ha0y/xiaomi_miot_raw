@@ -85,14 +85,14 @@ class MiotNumberInput(NumberEntity, MiotSubDevice):
             return None
 
     @property
-    def value(self):
+    def native_value(self):
         if self.state is not None:
             try:
                 return float(self.state)
             except Exception as ex:
                 _LOGGER.error(ex)
 
-    async def async_set_value(self, value):
+    async def async_set_native_value(self, value):
         result = await self._parent_device.set_property_new(self._full_did, value)
         if result:
             self._state_attrs[self._full_did] = value
@@ -100,16 +100,16 @@ class MiotNumberInput(NumberEntity, MiotSubDevice):
             self._skip_update = True
 
     @property
-    def min_value(self):
+    def native_min_value(self):
         """Return the minimum value."""
         return self._value_range[0]
 
     @property
-    def max_value(self):
+    def native_max_value(self):
         """Return the maximum value."""
         return self._value_range[1]
 
     @property
-    def step(self):
+    def native_step(self):
         """Return the increment/decrement step."""
         return self._value_range[2]
