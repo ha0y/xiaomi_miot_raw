@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import homeassistant.helpers.config_validation as cv
 import homeassistant.util.dt as dt_util
 import voluptuous as vol
+from  homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.components import media_player
 from homeassistant.components.media_player import *
 from homeassistant.components.media_player.const import *
@@ -40,6 +41,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 )
 
 SCAN_INTERVAL = timedelta(seconds=10)
+VOLUME_LEVEL_VALUE = "volume_level_value"
+IS_VOLUME_MUTED = "is_volume_muted"
 
 
 @dataclass
@@ -198,7 +201,8 @@ class MiotMediaPlayer(GenericMiotDevice, MediaPlayerEntity):
             'volume', False, self._ctrl_params['volume']['value_range']
         )
 
-class MiotIRTV(MiotIRDevice, MediaPlayerEntity):
+
+class MiotIRTV(MiotIRDevice, MediaPlayerEntity, RestoreEntity):
     def __init__(self, config, hass, did_prefix):
         super().__init__(config, hass, did_prefix)
         self._player_state = STATE_PLAYING
@@ -211,6 +215,7 @@ class MiotIRTV(MiotIRDevice, MediaPlayerEntity):
         """Return the supported features."""
         return (
             SUPPORT_VOLUME_SET
+            | SUPPORT_VOLUME_STEP
             | SUPPORT_VOLUME_MUTE
             | SUPPORT_TURN_ON
             | SUPPORT_TURN_OFF
@@ -242,31 +247,57 @@ class MiotIRTV(MiotIRDevice, MediaPlayerEntity):
         result = await self.async_send_ir_command('turn_off')
         if result:
             self._player_state = STATE_OFF
+            self._attr_is_volume_muted = False
             self.async_write_ha_state()
 
     async def async_volume_up(self):
-        await self.async_send_ir_command('volume_up')
+        result = await self.async_send_ir_command('volume_up')
+        if result:
+            self._volume_level = min(self._volume_level + 0.01, 1)
+            if self._attr_is_volume_muted:
+                self._attr_is_volume_muted = False
+            self.async_write_ha_state()
+    
 
     async def async_volume_down(self):
-        await self.async_send_ir_command('volume_down')
-
-    async def async_set_volume_level(self, volume):
-        if volume < 0.5:
-            result = await self.async_volume_down()
-        elif volume > 0.5:
-            result = await self.async_volume_up()
-        else:
-            return
+        result = await self.async_send_ir_command('volume_down')
         if result:
-            self._volume_level = 0.5
+            self._volume_level = max(self._volume_level - 0.01, 0)
             self.async_write_ha_state()
 
+    async def async_set_volume_level(self, volume):
+        if volume < self._volume_level:
+            await self.async_volume_down()
+        elif volume > self.volume_level:
+            await self.async_volume_up()
+        else:
+            return
 
-    async def async_mute_volume(self):
+    async def async_mute_volume(self, mute):
         await self.async_send_ir_command('mute_on')
+        self._attr_is_volume_muted = mute
+        self.async_write_ha_state()
 
     async def async_media_next_track(self):
         await self.async_send_ir_command('channel_up')
 
     async def async_media_previous_track(self):
         await self.async_send_ir_command('channel_down')
+
+    async def async_added_to_hass(self):
+        await super().async_added_to_hass()
+        last_state = await self.async_get_last_state()
+        if not last_state:
+            return
+        self._player_state = last_state.state
+        if VOLUME_LEVEL_VALUE in last_state.attributes:
+            self._volume_level = last_state.attributes[VOLUME_LEVEL_VALUE]
+        if IS_VOLUME_MUTED in last_state.attributes:
+            self._attr_is_volume_muted = last_state.attributes[VOLUME_LEVEL_VALUE]
+
+    @property
+    def extra_state_attributes(self):
+        attributes = {}
+        attributes[VOLUME_LEVEL_VALUE] = self._volume_level
+        attributes[IS_VOLUME_MUTED] = self._attr_is_volume_muted
+        return attributes
