@@ -59,7 +59,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 )
 
 # pylint: disable=unused-argument
-@asyncio.coroutine
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     await async_generic_setup_platform(
         hass,
@@ -235,7 +234,7 @@ class MiotSubLight(MiotSubToggleableDevice, LightEntity):
     def brightness(self):
         """Return the brightness of the light."""
         try:
-            return self.convert_value(self.device_state_attributes[self._did_prefix + 'brightness'],"brightness",False,self._ctrl_params['brightness']['value_range'])
+            return self.convert_value(self.extra_state_attributes[self._did_prefix + 'brightness'],"brightness",False,self._ctrl_params['brightness']['value_range'])
         except:
             return None
 
@@ -291,7 +290,7 @@ class MiotSubLight(MiotSubToggleableDevice, LightEntity):
     def color_temp(self):
         """Return the color temperature in mired."""
         try:
-            self._color_temp = self.convert_value(self.device_state_attributes[self._did_prefix + 'color_temperature'], "color_temperature") or 100
+            self._color_temp = self.convert_value(self.extra_state_attributes[self._did_prefix + 'color_temperature'], "color_temperature") or 100
         except KeyError: pass
         return self._color_temp
 
@@ -318,7 +317,7 @@ class MiotSubLight(MiotSubToggleableDevice, LightEntity):
     def effect(self):
         """Return the current effect."""
         try:
-            self._effect = self.get_key_by_value(self._ctrl_params['mode'],self.device_state_attributes[self._did_prefix + 'mode'])
+            self._effect = self.get_key_by_value(self._ctrl_params['mode'],self.extra_state_attributes[self._did_prefix + 'mode'])
         except KeyError:
             self._effect = None
         return self._effect
@@ -327,7 +326,7 @@ class MiotSubLight(MiotSubToggleableDevice, LightEntity):
     def hs_color(self):
         """Return the hs color value."""
         try:
-            self._color = self.convert_value(self.device_state_attributes[self._did_prefix + 'color'],"color",False)
+            self._color = self.convert_value(self.extra_state_attributes[self._did_prefix + 'color'],"color",False)
         except KeyError:
             self._color = None
         return self._color

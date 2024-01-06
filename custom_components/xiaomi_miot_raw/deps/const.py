@@ -229,17 +229,17 @@ MAP = {
 
 UNIT_MAPPING = {
     "percentage" : PERCENTAGE                                , # 百分比
-    "celsius"    : TEMP_CELSIUS                              , # 摄氏度
+    "celsius"    : UnitOfTemperature.CELSIUS                 , # 摄氏度
     "seconds"    : "秒"                                      , # 秒
     "minutes"    : "分钟"                                    , # 分
     "hours"      : "小时"                                    , # 小时
     "days"       : "天"                                      , # 天
-    "kelvin"     : TEMP_KELVIN                               , # 开氏温标
+    "kelvin"     : UnitOfTemperature.KELVIN                  , # 开氏温标
     "pascal"     : "Pa"                                      , # 帕斯卡(大气压强单位)
     "arcdegrees" : "rad"                                     , # 弧度(角度单位)
     "rgb"        : "RGB"                                     , # RGB(颜色)
-    "watt"       : POWER_WATT                                , # 瓦特(功率)
-    "litre"      : VOLUME_LITERS                             , # 升
+    "watt"       : UnitOfPower.WATT                          , # 瓦特(功率)
+    "litre"      : UnitOfVolume.LITERS                       , # 升
     "ppm"        : CONCENTRATION_PARTS_PER_MILLION           , # ppm浓度
     "lux"        : LIGHT_LUX                                 , # 勒克斯(照度)
     "mg/m3"      : CONCENTRATION_MILLIGRAMS_PER_CUBIC_METER  , # 毫克每立方米

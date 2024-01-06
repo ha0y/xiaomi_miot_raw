@@ -210,7 +210,7 @@ class GenericMiotDevice(Entity):
         return self._available
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Return the state attributes of the device."""
         return self._state_attrs
 
@@ -681,8 +681,7 @@ class GenericMiotDevice(Entity):
     def _handle_platform_specific_attrs(self):
         pass
 
-    @asyncio.coroutine
-    def async_service_handler(self, service):
+    async def async_service_handler(self, service):
         """Map services to methods on XiaomiMiioDevice."""
         method = SERVICE_TO_METHOD.get(service.service)
         params = {
@@ -702,11 +701,11 @@ class GenericMiotDevice(Entity):
 
         update_tasks = []
         for device in devices:
-            yield from getattr(device, method["method"])(**params)
+            yield getattr(device, method["method"])(**params)
             update_tasks.append(device.async_update_ha_state(True))
 
         if update_tasks:
-            yield from asyncio.wait(update_tasks, loop=self.hass.loop)
+            yield asyncio.wait(update_tasks, loop=self.hass.loop)
 
 class ToggleableMiotDevice(GenericMiotDevice, ToggleEntity):
     def __init__(self, device, config, device_info, hass = None, mi_type = None):
@@ -802,9 +801,9 @@ class MiotSubDevice(Entity):
         return self._parent_device.available
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         try:
-            return self._parent_device.device_state_attributes or {}
+            return self._parent_device.extra_state_attributes or {}
         except:
             return None
 
@@ -826,7 +825,7 @@ class MiotSubDevice(Entity):
         if self._skip_update:
             self._skip_update = False
             return
-        attrs = self._parent_device.device_state_attributes or {}
+        attrs = self._parent_device.extra_state_attributes or {}
         self._state_attrs = attrs
         pass
 
@@ -862,7 +861,7 @@ class MiotSubToggleableDevice(MiotSubDevice):
     @property
     def state(self):
         try:
-            return STATE_ON if self.device_state_attributes.get(f"{self._did_prefix}switch_status") else STATE_OFF
+            return STATE_ON if self.extra_state_attributes.get(f"{self._did_prefix}switch_status") else STATE_OFF
         except:
             return STATE_UNKNOWN
 

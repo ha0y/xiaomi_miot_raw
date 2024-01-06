@@ -109,6 +109,7 @@
                     "async_step_light_and_lock": "显示/隐藏指示灯或童锁开关",
                     "async_step_climate": "为空调绑定外部温度传感器",
                     "async_step_cover": "反转卷帘上下位置",
+                    "async_step_binary_sensor": "反转二元传感器状态",
                     "async_step_re_adapt": "重新适配设备",
                     "async_step_edit_mpprm": "修改 mapping 和配置参数",
                     "async_step_edit_iptoken": "更新设备 IP 和 token"
@@ -137,6 +138,13 @@
                 },
                 "description": "Home Assistant 定义的卷帘位置百分比：0 为关闭（放下），100 为开启（升起）。\n如果厂商的定义与之相反，就会出现“下降到底时上升按钮变灰”的问题。\n勾选后，位置百分比反转，可解决此问题。",
                 "title": "卷帘设置"
+            },
+            "binary_sensor": {
+                "data": {
+                    "reverse": "反转二元传感器状态"
+                },
+                "description": "如果二元传感器的状态与实际状态相反，勾选此选项可反转该设备下所有二元传感器的状态。\n如果只需要反转部分传感器的状态，您可以手动修改 mapping 和配置参数。",
+                "title": "二元传感器设置"
             },
             "climate": {
                 "data": {

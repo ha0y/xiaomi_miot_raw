@@ -49,7 +49,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     SCHEMA
 )
 # pylint: disable=unused-argument
-@asyncio.coroutine
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     hass.data[DOMAIN]['add_handler'].setdefault(TYPE, {})
     if 'config_entry' in config:
@@ -106,12 +105,12 @@ class BinarySelectorEntity(MiotSubToggleableDevice, SwitchEntity):
 
     @property
     def is_on(self):
-        return self._parent_device.device_state_attributes.get(self._did_prefix + self._field)
+        return self._parent_device.extra_state_attributes.get(self._did_prefix + self._field)
 
     @property
     def state(self):
         return self._state
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         return {}
